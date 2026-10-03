@@ -1543,9 +1543,9 @@ button.cell:active {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   max-width: none;
-  max-height: none;
+  max-height: 100dvh;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1558,12 +1558,12 @@ button.cell:active {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: fade-in 240ms ease-out both;
+  animation: fade-in 200ms var(--ease-out) both;
 }
 
 .sheet[data-state='closing'] {
   opacity: 0;
-  transition: opacity 260ms ease-out;
+  transition: opacity 260ms var(--ease-out);
 }
 
 .sheet::backdrop {
@@ -1574,14 +1574,15 @@ button.cell:active {
   display: flex;
   width: 100%;
   max-width: 560px;
-  max-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - env(safe-area-inset-top) - 12px);
+  min-height: 0;
   flex-direction: column;
   border: 2px solid var(--ink);
   border-bottom: 0;
   border-radius: 20px 20px 0 0;
   background: var(--surface);
   padding-bottom: env(safe-area-inset-bottom);
-  animation: sheet-up 420ms var(--ease-drawer);
+  animation: sheet-enter 220ms var(--ease-drawer);
   transition: transform 260ms var(--ease-drawer);
   will-change: transform;
 }
@@ -1597,6 +1598,7 @@ button.cell:active {
 .sheet-head {
   position: relative;
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1644,8 +1646,11 @@ button.cell:active {
 }
 
 .sheet-body {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 8px 20px 0;
 }
 
@@ -1658,7 +1663,7 @@ button.cell:active {
   position: sticky;
   bottom: 0;
   margin: 18px -20px 0;
-  padding: 14px 20px 24px;
+  padding: 14px 20px 14px;
   border-top: 2px solid var(--ink);
   background: var(--surface);
 }
@@ -1724,9 +1729,14 @@ button.cell:active {
   }
 }
 
-@keyframes sheet-up {
+@keyframes sheet-enter {
   from {
-    transform: translateY(100%);
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

@@ -8,6 +8,31 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Hola, Ana/ })).toBeVisible()
 })
 
+test('keeps modal actions reachable in a short mobile viewport', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 390, height: 640 })
+  await page.locator('.account-button').click()
+  await page.getByRole('button', { name: 'Ajustar mi plan' }).click()
+
+  const panel = page.locator('.sheet-panel')
+  const body = page.locator('.sheet-body')
+  const saveButton = page.getByRole('button', { name: 'Guardar plan' })
+  await expect(panel).toBeVisible()
+  await expect(panel).toHaveCSS('transform', 'none')
+  await expect(saveButton).toBeVisible()
+  await body.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
+  await expect(saveButton).toBeInViewport()
+
+  const fitsViewport = await panel.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return bounds.top >= 0 && bounds.bottom <= window.innerHeight
+  })
+  expect(fitsViewport, JSON.stringify(await panel.boundingBox())).toBe(true)
+})
+
 test('records a meal and workout from Today', async ({ page }) => {
   await page.getByRole('button', { name: 'Sí' }).first().click()
   await expect(
