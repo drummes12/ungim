@@ -18,13 +18,59 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
+# WARNING: `supabase config push` copies this to production. Set it to the app
+# domain before pushing or auth emails will point to localhost.
+site_url = "https://ungim.vercel.app"
 additional_redirect_urls = []
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = false
 
+[auth.rate_limit]
+email_sent = 30
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+max_frequency = "1m"
+otp_length = 8
+
+[auth.email.smtp]
+enabled = false
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+# Must be a verified sender domain in Resend.
+admin_email = "onboarding@resend.dev"
+sender_name = "Ahhh Un Gim"
+
+[auth.email.template.invite]
+subject = "Te invitaron a Ahhh, un gim!"
+content_path = "./supabase/email-templates/invite.html"
+
+[auth.email.template.confirmation]
+subject = "Confirma tu correo — Ahhh, un gim!"
+content_path = "./supabase/email-templates/confirm-signup.html"
+
+[auth.email.template.recovery]
+subject = "Recupera tu contraseña — Ahhh, un gim!"
+content_path = "./supabase/email-templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Tu pase al gim — Ahhh, un gim!"
+content_path = "./supabase/email-templates/magic-link.html"
+
+[auth.email.template.email_change]
+subject = "Confirma tu correo nuevo — Ahhh, un gim!"
+content_path = "./supabase/email-templates/email-change.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Tu contraseña cambió — Ahhh, un gim!"
+content_path = "./email-templates/password-changed.html"

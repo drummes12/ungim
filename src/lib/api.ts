@@ -1,8 +1,9 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { EmailOtpType, SupabaseClient } from '@supabase/supabase-js'
 import { addDays, isoWeekStart, monthEnd, todayInTimezone } from './dates'
 import { applyMutationLocally } from './mutations'
 import { computeMonthScore } from './scoring'
 import type {
+  AuthLinkInput,
   BackendApi,
   Dashboard,
   EntryMutation,
@@ -124,6 +125,32 @@ class SupabaseBackend implements BackendApi {
     const client = await this.client()
     const { error } = await client.auth.signInWithPassword({ email, password })
     if (error) throw error
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const client = await this.client()
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    })
+    if (error) throw error
+  }
+
+  async completeAuthLink(input: AuthLinkInput): Promise<string> {
+    const client = await this.client()
+    const { data, error } = await client.auth.verifyOtp({
+      token_hash: input.tokenHash,
+      type: input.type as EmailOtpType
+    })
+    if (error) throw error
+    const userId = data.user?.id ?? data.session?.user.id
+    if (!userId) throw new Error('El enlace no trajo una sesión válida.')
+    if (input.password) {
+      const { error: updateError } = await client.auth.updateUser({
+        password: input.password
+      })
+      if (updateError) throw updateError
+    }
+    return userId
   }
 
   async signOut(): Promise<void> {
@@ -404,6 +431,14 @@ class DemoBackend implements BackendApi {
       demoSessionKey,
       demoUsers.get(email.toLowerCase()) ?? ''
     )
+  }
+
+  async requestPasswordReset(): Promise<void> {
+    throw new Error('El demo no envía correos. Usa contraseña donuts.')
+  }
+
+  async completeAuthLink(): Promise<string> {
+    throw new Error('El demo no usa enlaces de acceso.')
   }
 
   async signOut(): Promise<void> {

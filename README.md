@@ -52,11 +52,39 @@ Las dos cuentas se configuran desde la app. La zona horaria del hogar se fija co
 
 1. Crear un proyecto Supabase.
 2. Aplicar `supabase/migrations/20261003150000_initial_schema.sql`.
-3. Desactivar registro público y crear exactamente dos usuarios con correo/contraseña. El trigger `handle_new_user` rechaza perfiles adicionales.
-4. Configurar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en Cloudflare Pages.
+3. Desactivar registro público. El trigger `handle_new_user` crea el perfil automáticamente por cada `auth.user` nuevo y rechaza un tercero.
+4. Configurar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en el hosting.
 5. Publicar `dist/` con el comando `pnpm build`.
 
 Supabase Free puede pausar un proyecto con poca actividad; los registros locales seguirán funcionando, pero no sincronizarán hasta reanudarlo.
+
+### Acceso de los dos jugadores
+
+Cada persona se autentica con su correo y su propia contraseña desde su dispositivo:
+
+1. En Dashboard → Authentication → Users → **Add user** → *Send invitation*, invita ambos correos (el tuyo y el de tu pareja).
+2. Cada correo lleva a la app con `?token_hash=…&type=invite`: allí cada uno crea su contraseña y queda dentro con sesión iniciada.
+3. Después basta el login normal. "Olvidé mi contraseña" envía un correo de recuperación al mismo flujo (`type=recovery`).
+
+Los enlaces de correo apuntan a `auth.site_url` (ver la sección de Resend abajo): debe quedar en el dominio de la app antes del `config push`, y el dominio va también en `auth.additional_redirect_urls`.
+
+### Correos con Resend
+
+Los correos de auth salen por Resend vía SMTP — todo versionado en `supabase/config.toml` (`[auth.email.smtp]` + `[auth.email.template.*]`):
+
+1. Verifica el dominio remitente en Resend y genera la API key.
+2. En `config.toml`: pon tu dominio en `auth.email.smtp.admin_email` y cambia `auth.site_url` al dominio de la app — **sin esto los correos apuntan a localhost**.
+3. Aplica la config al proyecto:
+
+```bash
+export RESEND_API_KEY="re_..."
+supabase link --project-ref <ref>
+supabase config push
+```
+
+Los links usan `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=…` y la app los verifica con `verifyOtp`. Templates cubiertos por config: `invite`, `confirmation`, `recovery`, `magic_link`, `email_change` y la notificación `password_changed`. El template de **Reauthentication** no se puede definir por config — pega `reauthentication.html` a mano en Dashboard → Authentication → Emails si lo necesitas.
+
+Si editas el diseño, regenera los HTML con `node supabase/email-templates/build.mjs` (el `.mjs` es la fuente de verdad).
 
 ## Verificación
 

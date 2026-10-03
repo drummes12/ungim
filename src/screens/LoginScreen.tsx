@@ -8,7 +8,7 @@ const GLAZE_H =
 const GLAZE_V =
   'M14 0 C4 14 30 22 26 36 C22 50 40 44 36 58 C32 72 14 66 18 80 C22 94 36 88 32 102 C28 116 10 112 14 126 C18 140 34 134 30 148 C26 162 8 156 12 170 C16 184 32 178 28 192 C24 206 40 200 36 214 C32 228 14 222 18 236 C22 250 36 244 32 258 C28 272 12 268 16 282 C20 296 34 290 30 304 C26 318 10 312 14 326 C18 340 28 346 24 360'
 
-function GlazeEdge() {
+export function GlazeEdge() {
   return (
     <>
       <svg
@@ -47,25 +47,37 @@ function GlazeEdge() {
 
 export function LoginScreen({
   onSignIn,
+  onResetPassword,
   configurationError
 }: {
   onSignIn: (email: string, password: string) => Promise<void>
+  onResetPassword: (email: string) => Promise<void>
   configurationError: string | null
 }) {
   const [email, setEmail] = useState(demoModeEnabled ? 'ana@ungim.test' : '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'signin' | 'reset' | 'sent'>('signin')
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setLoading(true)
     setError(null)
     try {
-      await onSignIn(email, password)
+      if (mode === 'reset') {
+        await onResetPassword(email)
+        setMode('sent')
+      } else {
+        await onSignIn(email, password)
+      }
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'No se pudo iniciar sesión.'
+        cause instanceof Error
+          ? cause.message
+          : mode === 'reset'
+            ? 'No se pudo enviar el correo.'
+            : 'No se pudo iniciar sesión.'
       )
     } finally {
       setLoading(false)
@@ -83,11 +95,30 @@ export function LoginScreen({
         <GlazeEdge />
       </section>
       <section className='login-card'>
-        <h2>Entra a tu cuenta</h2>
+        <h2>
+          {mode === 'signin' ? 'Entra a tu cuenta' : 'Recupera tu contraseña'}
+        </h2>
         {configurationError ? (
           <p className='form-error' role='alert'>
             {configurationError}
           </p>
+        ) : mode === 'sent' ? (
+          <>
+            <p className='field-note'>
+              Te enviamos un enlace a {email || 'tu correo'} para crear una
+              contraseña nueva. Revisa también spam.
+            </p>
+            <button
+              className='btn-link'
+              type='button'
+              onClick={() => {
+                setMode('signin')
+                setError(null)
+              }}
+            >
+              Volver al login
+            </button>
+          </>
         ) : (
           <form onSubmit={submit}>
             <label>
@@ -101,17 +132,19 @@ export function LoginScreen({
                 required
               />
             </label>
-            <label>
-              Contraseña
-              <input
-                type='password'
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete='current-password'
-                required
-              />
-            </label>
-            {demoModeEnabled && (
+            {mode === 'signin' && (
+              <label>
+                Contraseña
+                <input
+                  type='password'
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete='current-password'
+                  required
+                />
+              </label>
+            )}
+            {demoModeEnabled && mode === 'signin' && (
               <p className='field-note'>
                 Demo local: ana@ungim.test o leo@ungim.test · donuts
               </p>
@@ -126,8 +159,37 @@ export function LoginScreen({
               type='submit'
               disabled={loading}
             >
-              {loading ? 'Entrando…' : 'Entrar'}
+              {mode === 'reset'
+                ? loading
+                  ? 'Enviando…'
+                  : 'Enviar enlace'
+                : loading
+                  ? 'Entrando…'
+                  : 'Entrar'}
             </button>
+            {mode === 'signin' ? (
+              <button
+                className='btn-link'
+                type='button'
+                onClick={() => {
+                  setMode('reset')
+                  setError(null)
+                }}
+              >
+                Olvidé mi contraseña
+              </button>
+            ) : (
+              <button
+                className='btn-link'
+                type='button'
+                onClick={() => {
+                  setMode('signin')
+                  setError(null)
+                }}
+              >
+                Volver al login
+              </button>
+            )}
           </form>
         )}
       </section>

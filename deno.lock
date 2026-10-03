@@ -1,0 +1,45 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/collections@^1.1.3": "1.4.0",
+    "jsr:@std/toml@*": "1.0.11"
+  },
+  "jsr": {
+    "@std/collections@1.4.0": {
+      "integrity": "bd7f74966e11de11b1f0420b7e8cb7bb381d8af7872b738443b92050db28c9c0"
+    },
+    "@std/toml@1.0.11": {
+      "integrity": "e084988b872ca4bad6aedfb7350f6eeed0e8ba88e9ee5e1590621c5b5bb8f715",
+      "dependencies": [
+        "jsr:@std/collections"
+      ]
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@eslint/js@10.0.1",
+        "npm:@playwright/test@1.63.0",
+        "npm:@supabase/supabase-js@2.117.2",
+        "npm:@types/node@26.6.4",
+        "npm:@types/react-dom@19.3.0",
+        "npm:@types/react@19.3.0",
+        "npm:@vitejs/plugin-react@6.1.1",
+        "npm:eslint-plugin-react-hooks@7.1.1",
+        "npm:eslint@10.11.0",
+        "npm:globals@17.13.0",
+        "npm:idb@8.0.3",
+        "npm:react-dom@19.3.0",
+        "npm:react@19.3.0",
+        "npm:sharp@0.35.5",
+        "npm:supabase@2.119.0",
+        "npm:typescript-eslint@8.71.0",
+        "npm:typescript@5.9.3",
+        "npm:vite-plugin-pwa@1.3.0",
+        "npm:vite@8.3.2",
+        "npm:vitest@5.0.3",
+        "npm:workbox-window@7.4.1"
+      ]
+    }
+  }
+}

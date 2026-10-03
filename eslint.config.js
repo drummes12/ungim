@@ -32,7 +32,12 @@ export default tseslint.config(
     }
   },
   {
-    files: ['**/*.config.{js,ts}', 'tests/**/*.ts', 'scripts/**/*.mjs'],
+    files: [
+      '**/*.config.{js,ts}',
+      'tests/**/*.ts',
+      'scripts/**/*.mjs',
+      'supabase/email-templates/**/*.mjs'
+    ],
     languageOptions: {
       globals: { ...globals.node, ...globals.browser }
     }

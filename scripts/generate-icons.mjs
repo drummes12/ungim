@@ -2,10 +2,17 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import sharp from 'sharp'
 
 const svg = readFileSync('public/favicon.svg', 'utf8')
+// iOS and Android apply their own icon mask, so masked icons need the raw
+// mark without the rounded card — otherwise it renders as an icon inside an
+// icon and reads too small.
+const glyphSvg = svg.replace(
+  '<rect width="64" height="64" rx="16" fill="#faf1e7"/>',
+  ''
+)
 
-async function render(size, file, inset = 0) {
+async function render(size, file, inset = 0, source = svg) {
   const inner = Math.round(size * (1 - inset * 2))
-  const icon = await sharp(Buffer.from(svg), { density: 600 })
+  const icon = await sharp(Buffer.from(source), { density: 600 })
     .resize(inner, inner)
     .png()
     .toBuffer()
@@ -29,8 +36,8 @@ async function render(size, file, inset = 0) {
 
 await render(192, 'public/icons/icon-192.png')
 await render(512, 'public/icons/icon-512.png')
-await render(512, 'public/icons/icon-maskable.png', 0.1)
-await render(180, 'public/apple-touch-icon.png')
+await render(512, 'public/icons/icon-maskable.png', 0.1, glyphSvg)
+await render(180, 'public/apple-touch-icon.png', 0.1, glyphSvg)
 
 mkdirSync('public/splash', { recursive: true })
 for (const [width, height, ratio] of [

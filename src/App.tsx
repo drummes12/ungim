@@ -15,6 +15,7 @@ import {
   saveQueue
 } from './lib/storage'
 import type {
+  AuthLinkInput,
   BackendApi,
   Dashboard,
   EntryMutation,
@@ -41,6 +42,7 @@ import {
   HomeIcon,
   TrophyIcon
 } from './components/icons'
+import { AuthLinkScreen } from './screens/AuthLinkScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { PlanScreen } from './screens/PlanScreen'
@@ -48,6 +50,13 @@ import { ScoreboardScreen } from './screens/ScoreboardScreen'
 import { TodayScreen } from './screens/TodayScreen'
 
 type Route = 'today' | 'score' | 'history'
+
+function readAuthLink(): { tokenHash: string; type: string } | null {
+  const params = new URLSearchParams(window.location.search)
+  const tokenHash = params.get('token_hash')
+  const type = params.get('type')
+  return tokenHash && type ? { tokenHash, type } : null
+}
 
 function applyQueueToDashboard(
   dashboard: Dashboard,
@@ -101,6 +110,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   }, [])
   const backend = backendState.api
   const [profileId, setProfileId] = useState<string | null>(null)
+  const [authLink, setAuthLink] = useState(readAuthLink)
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [queue, setQueue] = useState<QueuedMutation[]>([])
   const [online, setOnline] = useState(navigator.onLine)
@@ -287,6 +297,23 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
     await backend.signIn(email, password)
     const userId = await backend.getSessionProfileId()
     if (!userId) throw new Error('No se pudo recuperar la sesión.')
+    await enterSession(userId)
+  }
+
+  async function requestPasswordReset(email: string) {
+    if (!backend) return
+    await backend.requestPasswordReset(email)
+  }
+
+  async function completeAuthLink(input: AuthLinkInput) {
+    if (!backend) return
+    const userId = await backend.completeAuthLink(input)
+    window.history.replaceState(null, '', window.location.pathname)
+    setAuthLink(null)
+    await enterSession(userId)
+  }
+
+  async function enterSession(userId: string) {
     setProfileId(userId)
     setLoading(true)
     try {
@@ -421,9 +448,27 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
     )
   }
 
-  if (backendState.error) {
+  if (backendState.error || !backend) {
     return (
-      <LoginScreen onSignIn={signIn} configurationError={backendState.error} />
+      <LoginScreen
+        onSignIn={signIn}
+        onResetPassword={requestPasswordReset}
+        configurationError={backendState.error ?? 'Configuración incompleta.'}
+      />
+    )
+  }
+
+  if (authLink) {
+    return (
+      <AuthLinkScreen
+        tokenHash={authLink.tokenHash}
+        type={authLink.type}
+        onComplete={completeAuthLink}
+        onCancel={() => {
+          window.history.replaceState(null, '', window.location.pathname)
+          setAuthLink(null)
+        }}
+      />
     )
   }
 
@@ -459,7 +504,13 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   }
 
   if (!profileId) {
-    return <LoginScreen onSignIn={signIn} configurationError={null} />
+    return (
+      <LoginScreen
+        onSignIn={signIn}
+        onResetPassword={requestPasswordReset}
+        configurationError={null}
+      />
+    )
   }
 
   if (!dashboard) {

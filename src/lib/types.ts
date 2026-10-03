@@ -140,8 +140,16 @@ export interface PlanInput {
   meals: Array<Pick<MealSlot, 'name' | 'rule'>>
 }
 
+export interface AuthLinkInput {
+  tokenHash: string
+  type: string
+  password?: string
+}
+
 export interface BackendApi {
   signIn(email: string, password: string): Promise<void>
+  requestPasswordReset(email: string): Promise<void>
+  completeAuthLink(input: AuthLinkInput): Promise<string>
   signOut(): Promise<void>
   getSessionProfileId(): Promise<string | null>
   loadDashboard(): Promise<Dashboard>
