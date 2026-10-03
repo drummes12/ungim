@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { formatMonth, monthEnd } from '../lib/dates'
+import { isStandaloneMode } from '../lib/pwa'
 import { computeMonthScore } from '../lib/scoring'
 import type { Dashboard, Profile, WorkoutEntry } from '../lib/types'
 import { Avatar } from './Avatar'
@@ -168,9 +169,11 @@ export function AccountPanel({
       <button className='btn btn-block' type='button' onClick={onEditPlan}>
         Ajustar mi plan
       </button>
-      <button className='btn btn-block' type='button' onClick={onInstall}>
-        Instalar la app
-      </button>
+      {!isStandaloneMode() && (
+        <button className='btn btn-block' type='button' onClick={onInstall}>
+          Instalar la app
+        </button>
+      )}
       <button className='btn btn-block' type='button' onClick={onSignOut}>
         Salir
       </button>
