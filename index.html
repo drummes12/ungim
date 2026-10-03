@@ -1,40 +1,268 @@
 <!doctype html>
-<html lang="es">
+<html lang='es'>
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-  <meta name="theme-color" content="#faf1e7" />
-  <meta name="color-scheme" content="light" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Un Gim" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-375x812.png"
-    media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-390x844.png"
-    media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-393x852.png"
-    media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-402x874.png"
-    media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-414x896.png"
-    media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-428x926.png"
-    media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-430x932.png"
-    media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" />
-  <link rel="apple-touch-startup-image" href="/splash/iphone-440x956.png"
-    media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3)" />
-  <title>Ahhh Un Gim!</title>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <meta name='description'
+    content='Ahhh Un Gim! — la competencia mensual de ejercicio y comida para dos. Solo por invitación.' />
+  <link rel='icon' href='/favicon.svg' type='image/svg+xml' />
+  <link rel='stylesheet' href='/src/landing/landing.css' />
+  <title>Ahhh Un Gim! — La competencia de dos</title>
 </head>
 
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <svg class='svg-defs' aria-hidden='true'>
+    <defs>
+      <symbol id='donut' viewBox='0 0 64 64'>
+        <mask id='donut-hole'>
+          <circle cx='32' cy='32' r='27' fill='#ffffff' />
+          <circle cx='32' cy='32' r='8' fill='#000000' />
+        </mask>
+        <g mask='url(#donut-hole)'>
+          <circle cx='32' cy='32' r='27' fill='#e8a961' />
+          <path
+            d='M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'
+            fill='#ffb3c9' />
+          <g class='donut-chips'>
+            <rect x='16.3' y='23.1' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(28 19.8 24.6)' />
+            <rect x='37.2' y='19.6' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(65 40.7 21.1)' />
+            <rect x='47.1' y='29.6' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(26 50.6 31.1)' />
+            <rect x='17.6' y='37.1' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(-14 21.1 38.6)' />
+            <rect x='35.7' y='41.9' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(-46 39.2 43.4)' />
+            <rect x='10.6' y='27.1' width='7' height='3' rx='1.5' fill='#ffe08f' transform='rotate(-46 14.1 28.6)' />
+            <rect x='45.4' y='42.7' width='7' height='3' rx='1.5' fill='#ffe08f' transform='rotate(51 48.9 44.2)' />
+          </g>
+        </g>
+        <circle cx='32' cy='32' r='27' fill='none' stroke='#14110f' stroke-width='3' />
+        <circle cx='32' cy='32' r='8' fill='none' stroke='#14110f' stroke-width='3' />
+      </symbol>
+    </defs>
+  </svg>
+  
+  <header class='topbar'>
+    <a class='wordmark' href='/' aria-label='Ahhh Un Gim'>
+      <svg class='wordmark-donut'>
+        <use href='#donut' />
+      </svg>
+      <span>AHHH UN GIM!</span>
+    </a>
+    <div class='topbar-right'>
+      <span class='invite-pill'>Solo por invitación</span>
+      <a class='enter-btn' href='/app'>Entrar</a>
+    </div>
+  </header>
+  
+  <main>
+    <section class='hero'>
+      <div class='sprinkles' aria-hidden='true'>
+        <i class='sprinkle' data-depth='0.9' style='--x:8%;--y:16%;--r:24deg;--c:var(--coral)'></i>
+        <i class='sprinkle' data-depth='0.5' style='--x:16%;--y:72%;--r:-40deg;--c:var(--blue)'></i>
+        <i class='sprinkle' data-depth='1.2' style='--x:26%;--y:34%;--r:70deg;--c:var(--mint)'></i>
+        <i class='sprinkle' data-depth='0.7' style='--x:38%;--y:12%;--r:-18deg;--c:var(--yellow)'></i>
+        <i class='sprinkle' data-depth='1.4' style='--x:52%;--y:80%;--r:50deg;--c:var(--pink)'></i>
+        <i class='sprinkle' data-depth='0.6' style='--x:64%;--y:20%;--r:-64deg;--c:var(--coral)'></i>
+        <i class='sprinkle' data-depth='1.0' style='--x:74%;--y:66%;--r:12deg;--c:var(--blue)'></i>
+        <i class='sprinkle' data-depth='0.4' style='--x:84%;--y:38%;--r:82deg;--c:var(--mint)'></i>
+        <i class='sprinkle' data-depth='1.3' style='--x:90%;--y:74%;--r:-30deg;--c:var(--yellow)'></i>
+        <i class='sprinkle' data-depth='0.8' style='--x:44%;--y:56%;--r:44deg;--c:var(--pink)'></i>
+      </div>
+  
+      <h1 class='hero-title'>
+        <span class='line'><span class='word'>¡AHHH,</span></span>
+        <span class='line'><span class='word echo'>UN&nbsp;GIM!</span></span>
+      </h1>
+  
+      <div class='hero-donut' aria-hidden='true'>
+        <svg>
+          <use href='#donut' />
+        </svg>
+      </div>
+  
+      <p class='hero-sub'>
+        La competencia mensual de ejercicio y comida
+        <strong>para dos</strong>.
+      </p>
+  
+      <a class='scroll-hint' href='#como' aria-label='Baja para ver cómo funciona'>
+        <span>cómo funciona</span>
+        <svg viewBox='0 0 16 16' aria-hidden='true'>
+          <path d='M8 2v10M3.5 8.5 8 13l4.5-4.5' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'
+            stroke-linejoin='round' />
+        </svg>
+      </a>
+    </section>
+  
+    <div class='marquee' aria-hidden='true'>
+      <div class='marquee-row'>
+        <span>ENTRENA · COME BIEN · ANOTA · GANA DONAS · RÍETE ·&nbsp;</span>
+        <span>ENTRENA · COME BIEN · ANOTA · GANA DONAS · RÍETE ·&nbsp;</span>
+      </div>
+    </div>
+  
+    <section class='how' id='como'>
+      <div class='h-wrap'>
+        <div class='h-track'>
+          <article class='h-panel panel-coral'>
+            <svg class='h-icon icon-dumbbell' viewBox='0 0 64 64' aria-hidden='true'>
+              <rect x='12' y='30' width='40' height='5' rx='2.5' fill='#14110f' />
+              <g class='plate plate-l'>
+                <rect x='5' y='17' width='10' height='30' rx='3' fill='#557fd8' stroke='#14110f' stroke-width='2.5' />
+                <rect x='17' y='23' width='7' height='18' rx='2.5' fill='#557fd8' stroke='#14110f' stroke-width='2.5' />
+              </g>
+              <g class='plate plate-r'>
+                <rect x='49' y='17' width='10' height='30' rx='3' fill='#557fd8' stroke='#14110f' stroke-width='2.5' />
+                <rect x='40' y='23' width='7' height='18' rx='2.5' fill='#557fd8' stroke='#14110f' stroke-width='2.5' />
+              </g>
+            </svg>
+            <span class='h-num'>01</span>
+            <h2>ENTRENA</h2>
+            <p>Una marca al día. Tu meta semanal es tuya: de 1 a 7 entrenos.</p>
+          </article>
+          <article class='h-panel panel-mint'>
+            <svg class='h-icon icon-bite' viewBox='0 0 64 64' aria-hidden='true'>
+              <mask id='mask-bite'>
+                <circle cx='32' cy='32' r='27' fill='#ffffff' />
+                <circle cx='32' cy='32' r='8' fill='#000000' />
+                <circle class='bite' cx='40' cy='5' r='11' fill='#000000' />
+                <circle class='bite' cx='56' cy='15' r='10.5' fill='#000000' />
+                <circle class='bite' cx='60' cy='30' r='10' fill='#000000' />
+              </mask>
+              <g mask='url(#mask-bite)'>
+                <circle cx='32' cy='32' r='27' fill='#e8a961' />
+                <path
+                  d='M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'
+                  fill='#ffb3c9' />
+                <g>
+                  <rect x='16.3' y='23.1' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(28 19.8 24.6)' />
+                  <rect x='37.2' y='19.6' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(65 40.7 21.1)' />
+                  <rect x='47.1' y='29.6' width='7' height='3' rx='1.5' fill='#fffdf9' transform='rotate(26 50.6 31.1)' />
+                  <rect x='17.6' y='37.1' width='7' height='3' rx='1.5' fill='#fffdf9'
+                    transform='rotate(-14 21.1 38.6)' />
+                  <rect x='35.7' y='41.9' width='7' height='3' rx='1.5' fill='#fffdf9'
+                    transform='rotate(-46 39.2 43.4)' />
+                  <rect x='10.6' y='27.1' width='7' height='3' rx='1.5' fill='#ffe08f'
+                    transform='rotate(-46 14.1 28.6)' />
+                  <rect x='45.4' y='42.7' width='7' height='3' rx='1.5' fill='#ffe08f' transform='rotate(51 48.9 44.2)' />
+                </g>
+                <circle class='bite-rim' cx='40' cy='5' r='11' fill='none' stroke='#14110f' stroke-width='3' />
+                <circle class='bite-rim' cx='56' cy='15' r='10.5' fill='none' stroke='#14110f' stroke-width='3' />
+                <circle class='bite-rim' cx='60' cy='30' r='10' fill='none' stroke='#14110f' stroke-width='3' />
+                <circle cx='32' cy='32' r='27' fill='none' stroke='#14110f' stroke-width='3' />
+                <circle cx='32' cy='32' r='8' fill='none' stroke='#14110f' stroke-width='3' />
+              </g>
+              <circle class='crumb' cx='46' cy='1' r='2.2' fill='#e8a961' />
+              <circle class='crumb' cx='55' cy='6' r='1.8' fill='#ffb3c9' />
+              <circle class='crumb' cx='61' cy='16' r='2' fill='#e8a961' />
+              <circle class='crumb' cx='57' cy='26' r='1.6' fill='#ffe08f' />
+            </svg>
+            <span class='h-num'>02</span>
+            <h2>COME</h2>
+            <p>Hasta 5 comidas con tus propias reglas. Cumple, falla o libera.</p>
+          </article>
+          <article class='h-panel panel-yellow'>
+            <svg class='h-icon icon-sync' viewBox='0 0 64 64' aria-hidden='true'>
+              <g class='a1'>
+                <path d='M14 22h22' fill='none' stroke='#14110f' stroke-width='4' stroke-linecap='round' />
+                <path d='M30 14l10 8-10 8' fill='none' stroke='#14110f' stroke-width='4' stroke-linecap='round'
+                  stroke-linejoin='round' />
+              </g>
+              <g class='a2'>
+                <path d='M50 42H28' fill='none' stroke='#14110f' stroke-width='4' stroke-linecap='round' />
+                <path d='M34 34l-10 8 10 8' fill='none' stroke='#14110f' stroke-width='4' stroke-linecap='round'
+                  stroke-linejoin='round' />
+              </g>
+            </svg>
+            <span class='h-num'>03</span>
+            <h2>ANOTA</h2>
+            <p>Funciona sin internet. Lo registras y se sincroniza solo.</p>
+          </article>
+          <article class='h-panel panel-pink'>
+            <svg class='h-icon icon-stack' viewBox='0 0 64 64' aria-hidden='true'>
+              <use href='#donut' x='1' y='27' width='34' height='34' />
+              <use href='#donut' x='29' y='27' width='34' height='34' />
+              <use href='#donut' x='15' y='6' width='34' height='34' />
+            </svg>
+            <span class='h-num'>04</span>
+            <h2>GANA</h2>
+            <p>Cada semana perfecta suma +2 donas. El mes decide al campeón.</p>
+          </article>
+          <div class='h-ground' aria-hidden='true'></div>
+        </div>
+        <div class='runner-donut' aria-hidden='true'>
+          <svg>
+            <use href='#donut' />
+          </svg>
+        </div>
+      </div>
+    </section>
+  
+    <section class='score'>
+      <h2 class='score-title'>
+        <span class='line'><span class='word'>EL MARCADOR</span></span>
+        <span class='line'><span class='word'>ES JUSTO</span></span>
+      </h2>
+      <div class='score-grid'>
+        <div class='score-card'>
+          <div class='score-num'>50<span>%</span></div>
+          <div class='score-bar'><i class='bar-fill bar-coral'></i></div>
+          <p>Moverse. Cada entreno cuenta contra tu meta semanal.</p>
+        </div>
+        <div class='score-card'>
+          <div class='score-num'>50<span>%</span></div>
+          <div class='score-bar'><i class='bar-fill bar-blue'></i></div>
+          <p>Comer. Cada comida cumplida contra tu plan del mes.</p>
+        </div>
+        <div class='score-card score-card-donut'>
+          <div class='score-donuts' aria-hidden='true'>
+            <svg>
+              <use href='#donut' />
+            </svg>
+            <svg>
+              <use href='#donut' />
+            </svg>
+          </div>
+          <div class='score-num'>+2</div>
+          <p>donas por cada semana perfecta. Hasta 10 al mes.</p>
+        </div>
+      </div>
+      <p class='score-note'>Planes distintos, porcentajes iguales. Nadie hace trampa.</p>
+    </section>
+  
+    <section class='invite'>
+      <h2 class='invite-title'>
+        <span class='line'><span class='word'>DOS</span></span>
+        <span class='line'><span class='word'>JUGADORES.</span></span>
+        <span class='line'><span class='word echo'>UNA&nbsp;CASA.</span></span>
+      </h2>
+      <div class='invite-card'>
+        <svg class='invite-donut' aria-hidden='true'>
+          <use href='#donut' />
+        </svg>
+        <p class='invite-text'>
+          No hay registro público. Hoy esta casa tiene dos sillas — mañana
+          habrá más casas, y la entrada seguirá siendo
+          <strong>por invitación</strong>.
+        </p>
+        <a class='enter-btn enter-btn-big' href='/app'>Ya tengo invitación →</a>
+      </div>
+      <p class='invite-note'>
+        ¿Quieres jugar? Pídele una invitación a una casa que ya esté dentro.
+      </p>
+    </section>
+  </main>
+  
+  <footer class='footer'>
+    <div class='marquee marquee-footer' aria-hidden='true'>
+      <div class='marquee-row'>
+        <span>¡AHHH, UN GIM! · ¡AHHH, UN GIM! · ¡AHHH, UN GIM! ·&nbsp;</span>
+        <span>¡AHHH, UN GIM! · ¡AHHH, UN GIM! · ¡AHHH, UN GIM! ·&nbsp;</span>
+      </div>
+    </div>
+    <p class='footer-note'>Hecho en casa, con donas.</p>
+  </footer>
+  
+  <script type='module' src='/src/landing/main.ts'></script>
 </body>
 
 </html>

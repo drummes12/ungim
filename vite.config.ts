@@ -1,10 +1,16 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   build: {
-    cssMinify: 'esbuild'
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, 'index.html'),
+        app: resolve(import.meta.dirname, 'app.html')
+      }
+    }
   },
   plugins: [
     react(),
@@ -15,7 +21,7 @@ export default defineConfig({
         name: 'Ahhh Un Gim!',
         short_name: 'Un Gim',
         description: 'Competencia mensual privada de ejercicio y alimentación',
-        start_url: '/?source=pwa',
+        start_url: '/app?source=pwa',
         scope: '/',
         display: 'standalone',
         orientation: 'portrait-primary',
@@ -35,7 +41,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
-        navigateFallback: '/index.html'
+        navigateFallback: '/app.html'
       }
     })
   ]

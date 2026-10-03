@@ -1,11 +1,27 @@
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app')
   await page.getByLabel('Correo').fill('ana@ungim.test')
   await page.getByLabel('Contraseña').fill('donuts')
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page.getByRole('heading', { name: /Hola, Ana/ })).toBeVisible()
+})
+
+test('brand logo returns to the landing page while signed in and out', async ({
+  page
+}) => {
+  await page.getByRole('link', { name: 'Ir a la página de inicio' }).click()
+  await expect(page).toHaveURL('/')
+
+  await page.goto('/app')
+  await page.locator('.account-button').click()
+  await page.getByRole('button', { name: 'Salir' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Entra a tu cuenta' })
+  ).toBeVisible()
+  await page.getByRole('link', { name: 'Ir al inicio' }).click()
+  await expect(page).toHaveURL('/')
 })
 
 test('keeps modal actions reachable in a short mobile viewport', async ({
@@ -83,7 +99,7 @@ test('shows iOS install instructions once', async ({ browser }) => {
     hasTouch: true
   })
   const page = await context.newPage()
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByText('Instala Un Gim')).toBeVisible()
   await expect(page.getByText('Añadir a pantalla de inicio')).toBeVisible()
 
