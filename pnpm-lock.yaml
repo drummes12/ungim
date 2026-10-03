@@ -178,6 +178,9 @@ importers:
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
+      workbox-window:
+        specifier: 7.4.1
+        version: 7.4.1
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1

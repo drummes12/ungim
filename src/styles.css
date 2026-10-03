@@ -1608,12 +1608,6 @@ button.cell:active {
   }
 }
 
-@keyframes dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
-  }
-}
 
 @keyframes toast-in {
   from {
@@ -2070,15 +2064,13 @@ button.cell:active {
     border-radius: var(--radius);
     padding-bottom: 0;
     box-shadow: 6px 6px 0 var(--ink);
-    animation: dialog-in 280ms var(--ease-out);
+    animation: fade-in 220ms ease-out;
   }
 
   .sheet[data-state='closing'] .sheet-panel {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
-    transition:
-      transform 220ms ease-out,
-      opacity 220ms ease-out;
+    transform: none;
+    transition: opacity 220ms ease-out;
   }
 
   .sheet-grab {

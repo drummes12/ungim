@@ -18,7 +18,8 @@
     "@supabase/supabase-js": "2.117.2",
     "idb": "8.0.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "workbox-window": "7.4.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
