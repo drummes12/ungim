@@ -291,6 +291,66 @@ function computeParticipantScore(
   }
 }
 
+export interface DayStatus {
+  planned: number
+  met: number
+  missed: number
+  workout: boolean
+  future: boolean
+  active: boolean
+}
+
+export function dayStatus(
+  dashboard: Dashboard,
+  profileId: string,
+  date: string,
+  today: string
+): DayStatus {
+  const start = dashboard.settings?.startsOn ?? null
+  const meals = mealsForDate(dashboard, profileId, date)
+  const entries = meals.map((meal) =>
+    mealEntryFor(dashboard, profileId, meal.id, date)
+  )
+  return {
+    planned: meals.length,
+    met: entries.filter((entry) => entry?.status === 'met').length,
+    missed: entries.filter((entry) => entry?.status === 'missed').length,
+    workout: Boolean(workoutForDate(dashboard, profileId, date)),
+    future: date > today,
+    active: Boolean(start && date >= start && date <= today)
+  }
+}
+
+export interface ScorePoint {
+  date: string
+  totals: Record<string, number | null>
+}
+
+export function scoreSeries(
+  dashboard: Dashboard,
+  monthKey: string,
+  today: string
+): ScorePoint[] {
+  const start = dashboard.settings?.startsOn
+  if (!start) return []
+  const first = maxDate(monthStart(monthKey), start)
+  const last = minDate(monthEnd(monthKey), today)
+  const points: ScorePoint[] = []
+  for (let date = first; date <= last; date = addDays(date, 1)) {
+    const result = computeMonthScore(dashboard, monthKey, date)
+    points.push({
+      date,
+      totals: Object.fromEntries(
+        result.participants.map((participant) => [
+          participant.profileId,
+          participant.noData ? null : participant.total
+        ])
+      )
+    })
+  }
+  return points
+}
+
 export function workoutProgressThisWeek(
   dashboard: Dashboard,
   profileId: string,

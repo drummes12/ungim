@@ -12,11 +12,15 @@ import type { Dashboard, PlanInput } from '../lib/types'
 export function PlanScreen({
   dashboard,
   onSave,
-  onCancel
+  onCancel,
+  onSaved,
+  embedded = false
 }: {
   dashboard: Dashboard
   onSave: (input: PlanInput) => Promise<void>
   onCancel?: () => void
+  onSaved?: () => void
+  embedded?: boolean
 }) {
   const profile = dashboard.profiles.find(
     (item) => item.id === dashboard.currentProfileId
@@ -75,6 +79,7 @@ export function PlanScreen({
           rule: meal.rule.trim()
         }))
       })
+      onSaved?.()
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'No se pudo guardar el plan.'
@@ -83,25 +88,25 @@ export function PlanScreen({
     }
   }
 
+  const intro = hasPlan
+    ? dashboard.settings?.startsOn
+      ? `Los cambios aplican desde la semana ${formatWeekRange(effectiveWeek)}.`
+      : 'Puedes corregir el plan antes de que arranque la competencia.'
+    : 'La competencia inicia cuando ambos terminen su configuración.'
+  const Wrapper = embedded ? 'div' : 'main'
+
   return (
-    <main className='screen plan-screen'>
-      <header className='section-heading'>
-        <h1>{hasPlan ? 'Ajustar plan' : 'Configura tu plan'}</h1>
-        <p className='section-label'>
-          {hasPlan
-            ? dashboard.settings?.startsOn
-              ? 'Próxima semana'
-              : 'Plan actual'
-            : 'Tu plan'}
-        </p>
-        <p>
-          {hasPlan
-            ? dashboard.settings?.startsOn
-              ? `Los cambios aplican desde la semana ${formatWeekRange(effectiveWeek)}.`
-              : 'Puedes corregir el plan antes de que arranque la competencia.'
-            : 'La competencia inicia cuando ambos terminen su configuración.'}
-        </p>
-      </header>
+    <Wrapper className={embedded ? 'plan-embedded' : 'screen plan-screen'}>
+      {embedded ? (
+        <p className='page-sub'>{intro}</p>
+      ) : (
+        <header className='page-head'>
+          <div>
+            <h1>{hasPlan ? 'Ajustar plan' : 'Configura tu plan'}</h1>
+            <p className='page-sub'>{intro}</p>
+          </div>
+        </header>
+      )}
 
       <form className='plan-form' onSubmit={submit}>
         <label>
@@ -204,7 +209,7 @@ export function PlanScreen({
           ))}
           <button
             type='button'
-            className='secondary-action'
+            className='btn'
             disabled={meals.length >= 5}
             onClick={() => setMeals([...meals, { name: '', rule: '' }])}
           >
@@ -220,18 +225,18 @@ export function PlanScreen({
         <div className='form-actions'>
           {onCancel && (
             <button
-              className='secondary-action'
+              className='btn'
               type='button'
               onClick={onCancel}
             >
               Cancelar
             </button>
           )}
-          <button className='primary-action' type='submit' disabled={saving}>
+          <button className='btn btn-primary' type='submit' disabled={saving}>
             {saving ? 'Guardando…' : 'Guardar plan'}
           </button>
         </div>
       </form>
-    </main>
+    </Wrapper>
   )
 }

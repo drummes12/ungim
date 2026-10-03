@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { addDays, isoWeekStart } from './dates'
-import { computeMonthScore, isPerfectWeek } from './scoring'
+import {
+  computeMonthScore,
+  dayStatus,
+  isPerfectWeek,
+  scoreSeries
+} from './scoring'
 import type { Dashboard, MealEntry, PlanVersion, WorkoutEntry } from './types'
 
 function dashboard(
@@ -197,6 +202,51 @@ describe('monthly competition scoring', () => {
     const result = computeMonthScore(data, '2026-01', '2026-01-31')
     expect(result.participants[0].workout.target).toBe(25)
     expect(result.participants[0].bonus).toBe(0)
+  })
+
+  it('reports per-day status for charts', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 2)
+    const entries = [
+      meal('ana', 'ana-meal-1', '2026-01-06', 'met'),
+      meal('ana', 'ana-meal-2', '2026-01-06', 'missed')
+    ]
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      [workout('ana', '2026-01-06')]
+    )
+    expect(dayStatus(data, 'ana', '2026-01-06', '2026-01-10')).toEqual({
+      planned: 2,
+      met: 1,
+      missed: 1,
+      workout: true,
+      future: false,
+      active: true
+    })
+    expect(dayStatus(data, 'ana', '2026-01-12', '2026-01-10')).toMatchObject({
+      future: true,
+      active: false
+    })
+    expect(dayStatus(data, 'ana', '2026-01-04', '2026-01-10').active).toBe(
+      false
+    )
+  })
+
+  it('builds one score point per eligible day', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1)
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      fillMeals('ana', anaPlan, '2026-01-05', '2026-01-06'),
+      [workout('ana', '2026-01-05')]
+    )
+    const series = scoreSeries(data, '2026-01', '2026-01-07')
+    expect(series.map((point) => point.date)).toEqual([
+      '2026-01-05',
+      '2026-01-06',
+      '2026-01-07'
+    ])
+    expect(series[0].totals.ana).toBeGreaterThan(series[0].totals.leo ?? 0)
+    expect(scoreSeries(data, '2025-11', '2026-01-07')).toEqual([])
   })
 
   it('uses exact base score for ties and can share a true tie', () => {

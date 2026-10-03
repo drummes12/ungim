@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createBackend } from './lib/api'
-import { todayInTimezone } from './lib/dates'
+import {
+  formatDay,
+  formatMonth,
+  monthKeyForDate,
+  todayInTimezone
+} from './lib/dates'
 import { applyMutationLocally } from './lib/mutations'
 import { mealEntryFor, workoutForDate } from './lib/scoring'
 import {
@@ -18,8 +23,23 @@ import type {
   PlanInput,
   QueuedMutation
 } from './lib/types'
+import { Avatar } from './components/Avatar'
+import { DayEditor } from './components/DayEditor'
+import { Sheet } from './components/Sheet'
 import { StatusPill } from './components/StatusPill'
-import { CalendarIcon, HomeIcon, TrophyIcon } from './components/icons'
+import { Celebration } from './components/Celebration'
+import {
+  AccountPanel,
+  ConfirmMonthForm,
+  WorkoutDetailsForm
+} from './components/sheets'
+import {
+  CalendarIcon,
+  BrandIcon,
+  DonutIcon,
+  HomeIcon,
+  TrophyIcon
+} from './components/icons'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { PlanScreen } from './screens/PlanScreen'
@@ -88,6 +108,10 @@ export function App() {
   const [planOpen, setPlanOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [celebrateKey, setCelebrateKey] = useState<string | null>(null)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [daySheet, setDaySheet] = useState<string | null>(null)
+  const [detailsDate, setDetailsDate] = useState<string | null>(null)
+  const [closeMonthKey, setCloseMonthKey] = useState<string | null>(null)
   const queueRef = useRef(queue)
   const queueWriteRef = useRef(Promise.resolve())
   const dashboardRef = useRef(dashboard)
@@ -346,7 +370,6 @@ export function App() {
     setDashboard(visible)
     if (profileId)
       await saveDashboardSnapshot(profileId, remote).catch(() => undefined)
-    setPlanOpen(false)
     setNotice('Plan guardado.')
   }
 
@@ -417,7 +440,7 @@ export function App() {
       <main className='loading-screen'>
         <p>No hay datos guardados en este dispositivo.</p>
         <button
-          className='primary-action'
+          className='btn btn-primary'
           type='button'
           onClick={() => void refreshDashboard(profileId)}
         >
@@ -433,103 +456,188 @@ export function App() {
   const queueError = failedItem?.error
     ? friendlySyncError(failedItem.error)
     : null
+  const partner = dashboard.profiles.find(
+    (item) => item.id !== dashboard.currentProfileId
+  )
   const pendingCount = queue.filter((item) => item.status === 'pending').length
+  const startsOn = dashboard.settings?.startsOn ?? null
+  const dayEditable = (date: string) =>
+    Boolean(
+      startsOn &&
+      date >= startsOn &&
+      date <= today &&
+      !dashboard.months[monthKeyForDate(date)]?.closedAt
+    )
+
+  const tabs: Array<{
+    id: Route
+    label: string
+    Icon: typeof HomeIcon
+    slot: number
+  }> = [
+    { id: 'today', label: 'Hoy', Icon: HomeIcon, slot: 0 },
+    { id: 'score', label: 'Marcador', Icon: TrophyIcon, slot: 1 },
+    { id: 'history', label: 'Historial', Icon: CalendarIcon, slot: 2 }
+  ]
+
+  function signOut() {
+    void backend?.signOut().then(() => {
+      setAccountOpen(false)
+      setProfileId(null)
+      setDashboard(null)
+    })
+  }
 
   return (
     <div className='app-shell'>
-      <div className='top-status'>
-        <StatusPill
-          online={online}
-          pending={
-            pendingCount +
-            queue.filter((item) => item.status === 'error').length
-          }
-          error={queueError}
-        />
-        <button
-          className='text-action'
-          type='button'
-          onClick={() =>
-            void backend?.signOut().then(() => {
-              setProfileId(null)
-              setDashboard(null)
-            })
-          }
-        >
-          Salir
-        </button>
+      <div className='chrome'>
+        <div className='brand'>
+          <BrandIcon className='brand-donut' />
+          <span>
+            Ahhh,
+            <br />
+            un gim!
+          </span>
+        </div>
+        {!needsSetup && (
+          <nav className='tabbar' aria-label='Navegación principal'>
+            <div className='tab-pill'>
+              <span
+                className='tab-glow'
+                style={{
+                  transform: `translateX(${(tabs.find((t) => t.id === route)?.slot ?? 0) * 100}%)`
+                }}
+                aria-hidden='true'
+              />
+              {tabs.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type='button'
+                  className={`tab ${route === id ? 'is-active' : ''}`}
+                  aria-current={route === id ? 'page' : undefined}
+                  onClick={() => setRoute(id)}
+                >
+                  <Icon filled={route === id} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type='button'
+              className='tab-donut'
+              aria-label='Registrar hoy'
+              onClick={() => setDaySheet(today)}
+            >
+              <DonutIcon />
+            </button>
+            <button
+              type='button'
+              className='btn quick-log'
+              onClick={() => setDaySheet(today)}
+            >
+              <DonutIcon className='quick-log-donut' />
+              Registrar hoy
+            </button>
+          </nav>
+        )}
+        <header className='topbar'>
+          <StatusPill
+            online={online}
+            pending={
+              pendingCount +
+              queue.filter((item) => item.status === 'error').length
+            }
+            error={queueError}
+          />
+          <button
+            className='account-button'
+            type='button'
+            aria-label={`Cuenta de ${profile?.displayName ?? 'usuario'}${partner ? `, en reto con ${partner.displayName}` : ''}`}
+            onClick={() => setAccountOpen(true)}
+          >
+            <span className='avatar-stack'>
+              {partner && (
+                <Avatar
+                  name={partner.displayName}
+                  color={partner.avatarColor}
+                  size='sm'
+                />
+              )}
+              <Avatar
+                name={profile?.displayName ?? '?'}
+                color={profile?.avatarColor ?? '#14110f'}
+                size='sm'
+              />
+            </span>
+            <span className='account-name'>{profile?.displayName}</span>
+          </button>
+        </header>
       </div>
 
-      {failedItem && (
-        <section className='sync-error-card' role='alert'>
-          <div>
-            <strong>Cambio pendiente de revisión</strong>
-            <p>
-              {describeMutation(failedItem.mutation)} · {queueError}
-            </p>
-          </div>
-          <div className='sync-error-actions'>
-            <button
-              className='secondary-action'
-              type='button'
-              onClick={() => void retryFailedMutation(failedItem.mutation.id)}
-            >
-              Reintentar
-            </button>
-            <button
-              className='text-action'
-              type='button'
-              onClick={() => void discardFailedMutation(failedItem.mutation.id)}
-            >
-              Descartar
-            </button>
-          </div>
-        </section>
-      )}
+      <div className='stage'>
+        {failedItem && (
+          <section className='sync-error' role='alert'>
+            <div>
+              <strong>Cambio pendiente de revisión</strong>
+              <p>
+                {describeMutation(failedItem.mutation)} · {queueError}
+              </p>
+            </div>
+            <div className='sync-error-actions'>
+              <button
+                className='btn'
+                type='button'
+                onClick={() => void retryFailedMutation(failedItem.mutation.id)}
+              >
+                Reintentar
+              </button>
+              <button
+                className='btn-link'
+                type='button'
+                onClick={() =>
+                  void discardFailedMutation(failedItem.mutation.id)
+                }
+              >
+                Descartar
+              </button>
+            </div>
+          </section>
+        )}
 
-      {needsSetup || planOpen ? (
-        <PlanScreen
-          dashboard={dashboard}
-          onSave={savePlan}
-          onCancel={needsSetup ? undefined : () => setPlanOpen(false)}
-        />
-      ) : (
-        <>
-          {route === 'today' && (
-            <TodayScreen
-              dashboard={dashboard}
-              today={today}
-              celebrateKey={celebrateKey}
-              onMeal={setMeal}
-              onWorkout={(date, done) => void setWorkout(date, done)}
-              onWorkoutDetails={(date, workoutType, note) =>
-                void setWorkout(date, true, { workoutType, note })
-              }
-              onEditPlan={() => setPlanOpen(true)}
-            />
-          )}
-          {route === 'score' && (
-            <ScoreboardScreen
-              dashboard={dashboard}
-              today={today}
-              online={online}
-              pendingCount={queue.length}
-              onConfirmMonth={(monthKey) => void confirmMonth(monthKey)}
-            />
-          )}
-          {route === 'history' && (
-            <HistoryScreen
-              dashboard={dashboard}
-              today={today}
-              onMeal={setMeal}
-              onWorkout={(date, done) => void setWorkout(date, done)}
-              onWorkoutDetails={(date, workoutType, note) =>
-                void setWorkout(date, true, { workoutType, note })
-              }
-            />
-          )}
-        </>
-      )}
+        {needsSetup ? (
+          <PlanScreen dashboard={dashboard} onSave={savePlan} />
+        ) : (
+          <>
+            {route === 'today' && (
+              <TodayScreen
+                dashboard={dashboard}
+                today={today}
+                celebrateKey={celebrateKey}
+                onMeal={setMeal}
+                onWorkout={(date, done) => void setWorkout(date, done)}
+                onOpenDetails={setDetailsDate}
+                onEditPlan={() => setPlanOpen(true)}
+              />
+            )}
+            {route === 'score' && (
+              <ScoreboardScreen
+                dashboard={dashboard}
+                today={today}
+                online={online}
+                pendingCount={queue.length}
+                onRequestClose={setCloseMonthKey}
+              />
+            )}
+            {route === 'history' && (
+              <HistoryScreen
+                dashboard={dashboard}
+                today={today}
+                onOpenDay={setDaySheet}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       {notice && (
         <div className='toast' role='status'>
@@ -537,33 +645,94 @@ export function App() {
         </div>
       )}
 
-      {!needsSetup && !planOpen && (
-        <nav className='bottom-nav' aria-label='Navegación principal'>
-          <button
-            type='button'
-            className={route === 'today' ? 'active' : ''}
-            aria-current={route === 'today' ? 'page' : undefined}
-            onClick={() => setRoute('today')}
-          >
-            <HomeIcon /> Hoy
-          </button>
-          <button
-            type='button'
-            className={route === 'score' ? 'active' : ''}
-            aria-current={route === 'score' ? 'page' : undefined}
-            onClick={() => setRoute('score')}
-          >
-            <TrophyIcon /> Marcador
-          </button>
-          <button
-            type='button'
-            className={route === 'history' ? 'active' : ''}
-            aria-current={route === 'history' ? 'page' : undefined}
-            onClick={() => setRoute('history')}
-          >
-            <CalendarIcon /> Historial
-          </button>
-        </nav>
+      {celebrateKey && <Celebration key={celebrateKey} />}
+
+      {accountOpen && (
+        <Sheet title='Cuenta' onClose={() => setAccountOpen(false)}>
+          {(close) => (
+            <AccountPanel
+              profile={profile}
+              partner={partner}
+              onEditPlan={
+                needsSetup
+                  ? close
+                  : () => {
+                      setAccountOpen(false)
+                      setPlanOpen(true)
+                    }
+              }
+              onSignOut={signOut}
+            />
+          )}
+        </Sheet>
+      )}
+
+      {planOpen && !needsSetup && (
+        <Sheet title='Ajustar plan' wide onClose={() => setPlanOpen(false)}>
+          {(close) => (
+            <PlanScreen
+              embedded
+              dashboard={dashboard}
+              onSave={savePlan}
+              onCancel={close}
+              onSaved={close}
+            />
+          )}
+        </Sheet>
+      )}
+
+      {daySheet && (
+        <Sheet
+          title={formatDay(daySheet)}
+          wide
+          onClose={() => setDaySheet(null)}
+        >
+          <DayEditor
+            dashboard={dashboard}
+            profileId={dashboard.currentProfileId}
+            date={daySheet}
+            editable={dayEditable(daySheet)}
+            celebrateKey={celebrateKey ?? undefined}
+            onMeal={setMeal}
+            onWorkout={(date, done) => void setWorkout(date, done)}
+            onOpenDetails={setDetailsDate}
+          />
+        </Sheet>
+      )}
+
+      {detailsDate && (
+        <Sheet
+          title='Detalle del entrenamiento'
+          onClose={() => setDetailsDate(null)}
+        >
+          {(close) => (
+            <WorkoutDetailsForm
+              workout={workoutForDate(dashboard, profileId, detailsDate)}
+              onSubmit={(workoutType, note) => {
+                void setWorkout(detailsDate, true, { workoutType, note })
+                close()
+              }}
+            />
+          )}
+        </Sheet>
+      )}
+
+      {closeMonthKey && (
+        <Sheet
+          title={`Cerrar ${formatMonth(closeMonthKey)}`}
+          onClose={() => setCloseMonthKey(null)}
+        >
+          {(close) => (
+            <ConfirmMonthForm
+              dashboard={dashboard}
+              monthKey={closeMonthKey}
+              online={online}
+              pendingCount={queue.length}
+              onConfirm={confirmMonth}
+              onDone={close}
+            />
+          )}
+        </Sheet>
       )}
     </div>
   )

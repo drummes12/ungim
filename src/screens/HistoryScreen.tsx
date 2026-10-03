@@ -1,36 +1,21 @@
 import { useMemo, useState } from 'react'
-import {
-  addDays,
-  formatDay,
-  formatMonth,
-  listDates,
-  maxDate,
-  minDate,
-  monthEnd,
-  monthKeyForDate,
-  monthStart
-} from '../lib/dates'
+import { formatMonth, monthKeyForDate, previousMonthKey } from '../lib/dates'
 import { computeMonthScore } from '../lib/scoring'
-import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
+import type { Dashboard } from '../lib/types'
 import { Avatar } from '../components/Avatar'
-import { DayEditor } from '../components/DayEditor'
+import { ChartLegend, DuelBar, MonthGrid } from '../components/charts'
 
 export function HistoryScreen({
   dashboard,
   today,
-  onMeal,
-  onWorkout,
-  onWorkoutDetails
+  onOpenDay
 }: {
   dashboard: Dashboard
   today: string
-  onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
-  onWorkout: (date: string, done: boolean) => void
-  onWorkoutDetails: (date: string, workoutType: string, note: string) => void
+  onOpenDay: (date: string) => void
 }) {
   const currentMonth = monthKeyForDate(today)
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
-  const [selectedDate, setSelectedDate] = useState(today)
   const competitionStart = dashboard.settings?.startsOn ?? null
 
   const months = useMemo(() => {
@@ -39,7 +24,7 @@ export function HistoryScreen({
     for (
       let month = currentMonth;
       month >= monthKeyForDate(competitionStart);
-      month = previousMonth(month)
+      month = previousMonthKey(month)
     ) {
       result.push(month)
     }
@@ -49,27 +34,26 @@ export function HistoryScreen({
   const selectedRecord = dashboard.months[selectedMonth]
   const score =
     selectedRecord?.result ?? computeMonthScore(dashboard, selectedMonth, today)
-  const firstDate = maxDate(
-    monthStart(selectedMonth),
-    competitionStart ?? monthStart(selectedMonth)
-  )
-  const lastDate = minDate(monthEnd(selectedMonth), today)
-  const dates = listDates(firstDate, lastDate).reverse()
   const closed = Boolean(selectedRecord?.closedAt)
-
-  function previousMonth(month: string) {
-    const date = monthStart(month)
-    return addDays(date, -1).slice(0, 7)
-  }
+  const me = dashboard.profiles.find(
+    (profile) => profile.id === dashboard.currentProfileId
+  )
+  const others = dashboard.profiles.filter(
+    (profile) => profile.id !== dashboard.currentProfileId
+  )
 
   return (
     <main className='screen history-screen'>
-      <header className='section-heading'>
-        <h1>Historial</h1>
-        <p>Meses abiertos se pueden corregir hasta el cierre.</p>
+      <header className='page-head'>
+        <div>
+          <h1>Historial</h1>
+          <p className='page-sub'>
+            Toca un día para corregirlo mientras el mes siga abierto.
+          </p>
+        </div>
       </header>
 
-      <div className='month-list' aria-label='Meses'>
+      <div className='month-tabs' role='tablist' aria-label='Meses'>
         {months.map((month) => {
           const record = dashboard.months[month]
           const monthScore =
@@ -81,13 +65,12 @@ export function HistoryScreen({
             .filter(Boolean)
           return (
             <button
-              className={`month-item ${selectedMonth === month ? 'is-selected' : ''}`}
+              className={`month-tab ${selectedMonth === month ? 'is-selected' : ''}`}
               type='button'
+              role='tab'
+              aria-selected={selectedMonth === month}
               key={month}
-              onClick={() => {
-                setSelectedMonth(month)
-                setSelectedDate(minDate(monthEnd(month), today))
-              }}
+              onClick={() => setSelectedMonth(month)}
             >
               <span>{formatMonth(month)}</span>
               <strong>
@@ -104,68 +87,69 @@ export function HistoryScreen({
         })}
       </div>
 
-      <section className='month-summary-card'>
-        <h2 className='card-title'>{formatMonth(selectedMonth)}</h2>
-        <div className='summary-participants'>
-          {score.participants.map((participant) => (
-            <div key={participant.profileId}>
-              <Avatar
-                name={participant.name}
-                color={participant.color}
-                size='sm'
-              />
-              <span>{participant.name}</span>
-              <strong>
-                {participant.noData ? '—' : participant.total.toFixed(1)}
-              </strong>
-            </div>
-          ))}
+      <div className='split split-even'>
+        <div className='split-main'>
+          <section className='block' aria-label='Resumen del mes'>
+            <h2 className='block-title'>{formatMonth(selectedMonth)}</h2>
+            <DuelBar
+              participants={score.participants}
+              winnerIds={score.winnerIds}
+            />
+            <p className='field-note'>
+              {closed
+                ? 'Mes cerrado e inmutable.'
+                : 'Este mes sigue abierto a correcciones.'}
+            </p>
+          </section>
         </div>
-        <p>
-          {closed
-            ? 'Mes cerrado e inmutable.'
-            : 'Este mes sigue abierto a correcciones.'}
-        </p>
-      </section>
 
-      <section className='calendar-list'>
-        <h2 className='card-title'>Días</h2>
-        {dates.map((date) => {
-          const selected = date === selectedDate
-          const editable =
-            !closed &&
-            date <= today &&
-            (!competitionStart || date >= competitionStart)
-          return (
-            <article
-              className={`calendar-day ${selected ? 'is-selected' : ''}`}
-              key={date}
-            >
-              <button type='button' onClick={() => setSelectedDate(date)}>
-                <span>{formatDay(date)}</span>
-                <strong>
-                  {editable ? 'Editable' : closed ? 'Cerrado' : 'Solo lectura'}
-                </strong>
-              </button>
-              {selected && (
-                <DayEditor
-                  key={date}
-                  dashboard={dashboard}
-                  profileId={dashboard.currentProfileId}
-                  date={date}
-                  editable={editable}
-                  onMeal={onMeal}
-                  onWorkout={onWorkout}
-                  onWorkoutDetails={onWorkoutDetails}
+        <div className='split-side'>
+          {me && (
+            <section className='block' aria-label='Tu mes'>
+              <h2 className='block-title with-avatar'>
+                <Avatar
+                  name={me.displayName}
+                  color={me.avatarColor}
+                  size='sm'
                 />
-              )}
-            </article>
-          )
-        })}
-        {dates.length === 0 && (
-          <p className='empty-copy'>No hay días elegibles en este mes.</p>
-        )}
-      </section>
+                {me.displayName}
+              </h2>
+              <MonthGrid
+                dashboard={dashboard}
+                profileId={me.id}
+                monthKey={selectedMonth}
+                today={today}
+                color={me.avatarColor}
+                onSelect={onOpenDay}
+              />
+            </section>
+          )}
+          {others.map((profile) => (
+            <section
+              className='block'
+              key={profile.id}
+              aria-label={`Mes de ${profile.displayName}`}
+            >
+              <h2 className='block-title with-avatar'>
+                <Avatar
+                  name={profile.displayName}
+                  color={profile.avatarColor}
+                  size='sm'
+                />
+                {profile.displayName}
+              </h2>
+              <MonthGrid
+                dashboard={dashboard}
+                profileId={profile.id}
+                monthKey={selectedMonth}
+                today={today}
+                color={profile.avatarColor}
+              />
+            </section>
+          ))}
+          <ChartLegend />
+        </div>
+      </div>
     </main>
   )
 }

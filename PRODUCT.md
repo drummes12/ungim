@@ -39,7 +39,7 @@ Mobile-first PWA intended to be installed on iPhones, used daily in short sessio
 
 ## Brand Commitments
 
-Name: “Ahhh Un Gim!”. Personality is playful, energetic, and game-like, with donuts as the reward metaphor and “¡Ahhh, un gim!” as the workout-completion easter egg. No copyrighted Simpsons characters or imagery. Visual references supplied by the user: jjettas.com, miralife.app, butter.video, and subscrr.app. Desired feel: premium iOS-native, not a generic tracker.
+Name: “Ahhh Un Gim!”. Personality is playful, energetic, and game-like, with donuts as the reward metaphor and “¡Ahhh, un gim!” as the workout-completion easter egg. No copyrighted Simpsons characters or imagery. Visual references supplied by the user: jjettas.com, miralife.app, butter.video, and subscrr.app. Desired feel: premium iOS-native, not a generic tracker. The household asked for brutalist minimalism on iOS structure, real charts for a visually driven partner, desktop parity, and bottom-sheet modals.
 
 ## Evidence on Hand
 

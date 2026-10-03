@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { demoModeEnabled } from '../lib/api'
-import { DonutIcon } from '../components/icons'
+import { BrandIcon } from '../components/icons'
 
 export function LoginScreen({
   onSignIn,
@@ -31,12 +31,15 @@ export function LoginScreen({
 
   return (
     <main className='login-screen'>
-      <section className='login-card'>
-        <DonutIcon className='login-donut' />
+      <section className='login-brand'>
+        <BrandIcon className='login-donut' />
         <h1>Ahhh, un gim!</h1>
-        <p className='section-label'>Competencia privada</p>
-        <p>Ejercicio, comidas y rosquillas. Solo para dos.</p>
-
+        <p className='page-sub'>
+          Ejercicio, comidas y rosquillas. Una competencia privada para dos.
+        </p>
+      </section>
+      <section className='login-card'>
+        <h2>Entra a tu cuenta</h2>
         {configurationError ? (
           <p className='form-error' role='alert'>
             {configurationError}
@@ -74,7 +77,11 @@ export function LoginScreen({
                 {error}
               </p>
             )}
-            <button className='primary-action' type='submit' disabled={loading}>
+            <button
+              className='btn btn-primary'
+              type='submit'
+              disabled={loading}
+            >
               {loading ? 'Entrando…' : 'Entrar'}
             </button>
           </form>

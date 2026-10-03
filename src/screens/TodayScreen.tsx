@@ -1,7 +1,8 @@
-import { formatDay, isoWeekStart } from '../lib/dates'
+import { formatDay } from '../lib/dates'
 import { computeMonthScore, workoutProgressThisWeek } from '../lib/scoring'
 import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
 import { DayEditor } from '../components/DayEditor'
+import { DuelBar, WeekStrip } from '../components/charts'
 import { DonutIcon } from '../components/icons'
 
 export function TodayScreen({
@@ -10,7 +11,7 @@ export function TodayScreen({
   celebrateKey,
   onMeal,
   onWorkout,
-  onWorkoutDetails,
+  onOpenDetails,
   onEditPlan
 }: {
   dashboard: Dashboard
@@ -18,19 +19,13 @@ export function TodayScreen({
   celebrateKey: string | null
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
-  onWorkoutDetails: (date: string, workoutType: string, note: string) => void
+  onOpenDetails: (date: string) => void
   onEditPlan: () => void
 }) {
   const profile = dashboard.profiles.find(
     (item) => item.id === dashboard.currentProfileId
   )
-  const score = computeMonthScore(
-    dashboard,
-    today.slice(0, 7),
-    today
-  ).participants.find(
-    (participant) => participant.profileId === dashboard.currentProfileId
-  )
+  const result = computeMonthScore(dashboard, today.slice(0, 7), today)
   const progress = workoutProgressThisWeek(
     dashboard,
     dashboard.currentProfileId,
@@ -42,23 +37,23 @@ export function TodayScreen({
 
   return (
     <main className='screen today-screen'>
-      <header className='hero-header'>
+      <header className='page-head'>
         <div>
           <h1>Hola, {profile?.displayName ?? 'crack'}.</h1>
-          <p className='section-label'>{formatDay(today)}</p>
-          <p className='hero-copy'>
+          <p className='page-sub'>
+            <span className='num'>{formatDay(today)}</span>
             {progress.target
-              ? `Van ${progress.done} de ${progress.target} entrenamientos esta semana.`
-              : 'Configura tu plan para empezar la competencia.'}
+              ? ` · Van ${progress.done} de ${progress.target} entrenamientos esta semana.`
+              : ' · Configura tu plan para empezar la competencia.'}
           </p>
         </div>
-        <button className='plan-button' type='button' onClick={onEditPlan}>
+        <button className='btn' type='button' onClick={onEditPlan}>
           Plan
         </button>
       </header>
 
       {!dashboard.settings?.startsOn && (
-        <section className='notice-card'>
+        <section className='notice'>
           <DonutIcon className='notice-donut' />
           <div>
             <strong>La competencia aún no arranca</strong>
@@ -67,52 +62,59 @@ export function TodayScreen({
         </section>
       )}
 
-      <section className='quick-score-card'>
-        <div>
-          <span>Total del mes</span>
-          <strong>{score?.noData ? '—' : score?.total.toFixed(1)}</strong>
-        </div>
-        <div>
-          <span>Racha</span>
-          <strong>{score?.streak ?? 0}</strong>
-        </div>
-        <div>
-          <span>Rosquillas</span>
-          <strong>{score?.bonus ?? 0}</strong>
-        </div>
-      </section>
-
-      <DayEditor
-        dashboard={dashboard}
-        profileId={dashboard.currentProfileId}
-        date={today}
-        editable={editable}
-        celebrateKey={celebrateKey ?? undefined}
-        onMeal={onMeal}
-        onWorkout={onWorkout}
-        onWorkoutDetails={onWorkoutDetails}
-      />
-
-      <section className='week-card'>
-        <h2 className='card-title'>Semana {isoWeekStart(today)}</h2>
-        <div
-          className='progress-track'
-          aria-label={`${progress.done} de ${progress.target} entrenamientos`}
-        >
-          <span
-            style={{
-              transform: `scaleX(${progress.target ? Math.min(1, progress.done / progress.target) : 0})`
-            }}
+      <div className='split'>
+        <div className='split-main'>
+          <DayEditor
+            dashboard={dashboard}
+            profileId={dashboard.currentProfileId}
+            date={today}
+            editable={editable}
+            celebrateKey={celebrateKey ?? undefined}
+            onMeal={onMeal}
+            onWorkout={onWorkout}
+            onOpenDetails={onOpenDetails}
           />
         </div>
-        <p>
-          {progress.target
-            ? progress.done >= progress.target
-              ? 'Objetivo de ejercicio cumplido.'
-              : `Faltan ${progress.target - progress.done} para el objetivo.`
-            : 'Sin objetivo activo esta semana.'}
-        </p>
-      </section>
+
+        <div className='split-side'>
+          <section className='block' aria-label='Tu semana'>
+            <h2 className='block-title'>Tu semana</h2>
+            <WeekStrip
+              dashboard={dashboard}
+              profileId={dashboard.currentProfileId}
+              today={today}
+              color={profile?.avatarColor ?? '#ff9078'}
+            />
+            <div
+              className='pips'
+              role='img'
+              aria-label={`${progress.done} de ${progress.target} entrenamientos`}
+            >
+              {Array.from({ length: progress.target }).map((_, index) => (
+                <i
+                  key={index}
+                  className={index < progress.done ? 'pip is-on' : 'pip'}
+                />
+              ))}
+              <span>
+                {progress.target
+                  ? progress.done >= progress.target
+                    ? 'Objetivo de ejercicio cumplido.'
+                    : `Faltan ${progress.target - progress.done} para el objetivo.`
+                  : 'Sin objetivo activo esta semana.'}
+              </span>
+            </div>
+          </section>
+
+          <section className='block' aria-label='La carrera'>
+            <h2 className='block-title'>La carrera del mes</h2>
+            <DuelBar
+              participants={result.participants}
+              winnerIds={result.winnerIds}
+            />
+          </section>
+        </div>
+      </div>
     </main>
   )
 }

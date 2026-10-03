@@ -1,8 +1,7 @@
-import { useState } from 'react'
 import { formatDay } from '../lib/dates'
 import { mealEntryFor, mealsForDate, workoutForDate } from '../lib/scoring'
 import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
-import { DumbbellIcon } from './icons'
+import { CheckIcon, CloseIcon, DumbbellIcon } from './icons'
 
 export function DayEditor({
   dashboard,
@@ -12,7 +11,7 @@ export function DayEditor({
   celebrateKey,
   onMeal,
   onWorkout,
-  onWorkoutDetails
+  onOpenDetails
 }: {
   dashboard: Dashboard
   profileId: string
@@ -21,31 +20,28 @@ export function DayEditor({
   celebrateKey?: string
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
-  onWorkoutDetails: (date: string, workoutType: string, note: string) => void
+  onOpenDetails: (date: string) => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
   const workout = workoutForDate(dashboard, profileId, date)
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [workoutType, setWorkoutType] = useState(workout?.workoutType ?? '')
-  const [note, setNote] = useState(workout?.note ?? '')
+  const celebrating = Boolean(workout && celebrateKey === workout.id)
 
   return (
     <section
       className='day-editor'
       aria-label={`Registro de ${formatDay(date)}`}
     >
-      <div className='section-heading compact'>
-        <h2>
-          Comidas <span>{formatDay(date)}</span>
-        </h2>
-      </div>
-
-      <div className='meal-list'>
-        {meals.map((meal) => {
+      <h2 className='block-title'>Comidas</h2>
+      <ul className='meal-list'>
+        {meals.map((meal, index) => {
           const entry = mealEntryFor(dashboard, profileId, meal.id, date)
           return (
-            <article className='meal-row' key={meal.id}>
-              <div>
+            <li
+              className={`meal-row ${entry ? `is-${entry.status}` : ''}`}
+              key={meal.id}
+              style={{ ['--i' as string]: index }}
+            >
+              <div className='meal-copy'>
                 <strong>{meal.name}</strong>
                 <p>{meal.rule}</p>
               </div>
@@ -56,18 +52,19 @@ export function DayEditor({
               >
                 <button
                   type='button'
-                  className={`choice ${entry?.status === 'met' ? 'choice-met' : ''}`}
+                  className='choice choice-met'
                   aria-pressed={entry?.status === 'met'}
                   disabled={!editable}
                   onClick={() =>
                     onMeal(date, meal, entry?.status === 'met' ? null : 'met')
                   }
                 >
+                  <CheckIcon />
                   Sí
                 </button>
                 <button
                   type='button'
-                  className={`choice ${entry?.status === 'missed' ? 'choice-missed' : ''}`}
+                  className='choice choice-missed'
                   aria-pressed={entry?.status === 'missed'}
                   disabled={!editable}
                   onClick={() =>
@@ -78,86 +75,58 @@ export function DayEditor({
                     )
                   }
                 >
+                  <CloseIcon />
                   No
                 </button>
               </div>
-            </article>
+            </li>
           )
         })}
         {meals.length === 0 && (
-          <p className='empty-copy'>
+          <li className='empty-copy'>
             Este día todavía no tiene plan de comidas.
-          </p>
+          </li>
         )}
-      </div>
+      </ul>
 
-      <article className={`workout-card ${workout ? 'is-done' : ''}`}>
-        <div className='workout-icon'>
+      <h2 className='block-title'>Entrenamiento</h2>
+      <div className={`workout-card ${workout ? 'is-done' : ''}`}>
+        <span
+          className={`workout-icon${celebrating ? ' is-celebrating' : ''}`}
+          aria-hidden='true'
+        >
           <DumbbellIcon />
-        </div>
+        </span>
         <div className='workout-copy'>
-          <strong>{workout ? '¡Ahhh, un gim!' : 'Entrenamiento'}</strong>
+          <strong>{workout ? '¡Ahhh, un gim!' : 'Sin registrar'}</strong>
           <p>
             {workout
-              ? workout.workoutType || 'Registrado'
+              ? [workout.workoutType, workout.note]
+                  .filter(Boolean)
+                  .join(' · ') || 'Registrado'
               : 'Un toque y queda marcado.'}
           </p>
-          {workout && celebrateKey === workout.id && (
-            <span className='celebration-text'>Rosquilla ganada</span>
-          )}
         </div>
-        <button
-          type='button'
-          className={workout ? 'secondary-action' : 'primary-action'}
-          disabled={!editable}
-          onClick={() => onWorkout(date, !workout)}
-        >
-          {workout ? 'Deshacer' : 'Entrené'}
-        </button>
-      </article>
-
-      {editable && (
-        <div className='details-block'>
+        <div className='workout-actions'>
           <button
             type='button'
-            className='text-action'
-            onClick={() => setDetailsOpen((open) => !open)}
+            className={workout ? 'btn' : 'btn btn-primary'}
+            disabled={!editable}
+            onClick={() => onWorkout(date, !workout)}
           >
-            {detailsOpen ? 'Ocultar detalles' : 'Tipo y nota opcional'}
+            {workout ? 'Deshacer' : 'Entrené'}
           </button>
-          {detailsOpen && (
-            <form
-              className='details-form'
-              onSubmit={(event) => {
-                event.preventDefault()
-                onWorkoutDetails(date, workoutType, note)
-              }}
+          {editable && (
+            <button
+              type='button'
+              className='btn-link'
+              onClick={() => onOpenDetails(date)}
             >
-              <label>
-                Tipo
-                <input
-                  value={workoutType}
-                  onChange={(event) => setWorkoutType(event.target.value)}
-                  maxLength={40}
-                  placeholder='Pierna, corrida…'
-                />
-              </label>
-              <label>
-                Nota
-                <input
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  maxLength={240}
-                  placeholder='Cómo se sintió'
-                />
-              </label>
-              <button className='secondary-action' type='submit'>
-                Guardar detalle
-              </button>
-            </form>
+              {workout ? 'Editar detalle' : 'Tipo y nota'}
+            </button>
           )}
         </div>
-      )}
+      </div>
     </section>
   )
 }

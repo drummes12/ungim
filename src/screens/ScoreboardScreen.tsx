@@ -1,24 +1,30 @@
 import { formatMonth, monthKeyForDate, previousMonthKey } from '../lib/dates'
-import { computeMonthScore } from '../lib/scoring'
+import { computeMonthScore, scoreSeries } from '../lib/scoring'
 import type { Dashboard } from '../lib/types'
 import { Avatar } from '../components/Avatar'
-import { DonutIcon, TrophyIcon } from '../components/icons'
+import {
+  ChartLegend,
+  DuelBar,
+  MonthGrid,
+  TrendChart
+} from '../components/charts'
 
 export function ScoreboardScreen({
   dashboard,
   today,
   online,
   pendingCount,
-  onConfirmMonth
+  onRequestClose
 }: {
   dashboard: Dashboard
   today: string
   online: boolean
   pendingCount: number
-  onConfirmMonth: (monthKey: string) => void
+  onRequestClose: (monthKey: string) => void
 }) {
   const currentMonth = monthKeyForDate(today)
   const score = computeMonthScore(dashboard, currentMonth, today)
+  const series = scoreSeries(dashboard, currentMonth, today)
   const closableMonths: string[] = []
   if (dashboard.settings?.startsOn) {
     for (
@@ -29,112 +35,112 @@ export function ScoreboardScreen({
       if (!dashboard.months[month]?.closedAt) closableMonths.unshift(month)
     }
   }
-  const leaders = score.winnerIds
-  const competitionStarted = Boolean(dashboard.settings?.startsOn)
 
   return (
     <main className='screen scoreboard-screen'>
-      <header className='section-heading'>
-        <h1>Marcador</h1>
-        <p className='section-label'>{formatMonth(currentMonth)}</p>
-        <p>Base 50/50 + rosquillas por semanas perfectas.</p>
+      <header className='page-head'>
+        <div>
+          <h1>Marcador</h1>
+          <p className='page-sub'>
+            {formatMonth(currentMonth)}. Base 50/50 + rosquillas por semanas
+            perfectas.
+          </p>
+        </div>
       </header>
 
-      <section className='versus-card'>
-        {score.participants.map((participant) => {
-          const winning =
-            leaders.includes(participant.profileId) && !participant.noData
-          return (
-            <article
-              className={`participant-score ${winning ? 'is-winning' : ''}`}
-              key={participant.profileId}
-            >
-              <Avatar name={participant.name} color={participant.color} />
-              <div className='participant-name'>
-                <span>{participant.name}</span>
-                {winning && (
-                  <small>
-                    <TrophyIcon /> {leaders.length === 1 ? 'Líder' : 'Empate'}
-                  </small>
-                )}
-              </div>
-              <strong>
-                {participant.noData ? '—' : participant.total.toFixed(1)}
-              </strong>
-              <div className='score-breakdown'>
-                <span>
-                  Base {participant.noData ? '—' : participant.base.toFixed(1)}
-                </span>
-                <span>Bonus +{participant.bonus}</span>
-                <span>Racha {participant.streak}</span>
-              </div>
-              <div
-                className='donut-row'
-                aria-label={`${participant.bonus / 2} semanas perfectas`}
-              >
-                {Array.from({ length: participant.bonus / 2 }).map(
-                  (_, index) => (
-                    <DonutIcon key={index} />
-                  )
-                )}
-                {participant.bonus === 0 && <span>Sin bonus todavía</span>}
-              </div>
-            </article>
-          )
-        })}
-      </section>
-
-      <section className='detail-card'>
-        <h2 className='card-title'>Detalle base</h2>
-        {score.participants.map((participant) => (
-          <div className='metric-row' key={participant.profileId}>
-            <span>{participant.name}</span>
-            <strong>
-              {participant.workout.earned}/{participant.workout.target}{' '}
-              ejercicio · {participant.meals.met}/{participant.meals.planned}{' '}
-              comidas
-            </strong>
-          </div>
-        ))}
-      </section>
-
-      {competitionStarted &&
-        closableMonths.map((monthToClose) => (
-          <section className='close-card' key={monthToClose}>
+      {closableMonths.map((monthKey) => {
+        const confirmed = dashboard.months[monthKey]?.confirmedBy ?? []
+        const mine = confirmed.includes(dashboard.currentProfileId)
+        return (
+          <section className='close-banner' key={monthKey}>
             <div>
-              <h2>{formatMonth(monthToClose)} ya terminó</h2>
-              <p className='section-label'>Cierre mensual</p>
+              <strong>{formatMonth(monthKey)} ya terminó</strong>
               <p>
-                {dashboard.months[monthToClose]?.confirmedBy?.length
-                  ? `Confirmado por ${dashboard.months[monthToClose].confirmedBy.length} de ${dashboard.profiles.length}.`
+                {confirmed.length
+                  ? `Confirmado por ${confirmed.length} de ${dashboard.profiles.length}.`
                   : 'Ambos deben confirmar el resultado.'}
               </p>
+              {(!online || pendingCount > 0) && (
+                <small>
+                  Sincroniza los registros pendientes antes de cerrar.
+                </small>
+              )}
             </div>
             <button
-              className='primary-action'
+              className='btn btn-primary'
               type='button'
-              disabled={
-                !online ||
-                pendingCount > 0 ||
-                dashboard.months[monthToClose]?.confirmedBy.includes(
-                  dashboard.currentProfileId
-                )
-              }
-              onClick={() => onConfirmMonth(monthToClose)}
+              disabled={mine}
+              onClick={() => onRequestClose(monthKey)}
             >
-              {dashboard.months[monthToClose]?.confirmedBy.includes(
-                dashboard.currentProfileId
-              )
-                ? 'Confirmado'
-                : 'Confirmar cierre'}
+              {mine ? 'Confirmado' : 'Confirmar cierre'}
             </button>
-            {(!online || pendingCount > 0) && (
-              <small>
-                Sincroniza los registros pendientes antes de cerrar.
-              </small>
-            )}
           </section>
-        ))}
+        )
+      })}
+
+      <div className='split split-even'>
+        <div className='split-main'>
+          <section className='block' aria-label='Carrera'>
+            <h2 className='block-title'>La carrera</h2>
+            <DuelBar
+              participants={score.participants}
+              winnerIds={score.winnerIds}
+            />
+          </section>
+
+          <section className='block' aria-label='Evolución'>
+            <h2 className='block-title'>Día a día</h2>
+            <TrendChart
+              series={series}
+              participants={score.participants}
+              monthKey={currentMonth}
+            />
+          </section>
+
+          <section className='block' aria-label='Detalle base'>
+            <h2 className='block-title'>Detalle base</h2>
+            <ul className='rule-list'>
+              {score.participants.map((participant) => (
+                <li key={participant.profileId}>
+                  <span>{participant.name}</span>
+                  <strong className='num'>
+                    {participant.workout.earned}/{participant.workout.target}{' '}
+                    ejercicio · {participant.meals.met}/
+                    {participant.meals.planned} comidas
+                  </strong>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <div className='split-side'>
+          {score.participants.map((participant) => (
+            <section
+              className='block'
+              key={participant.profileId}
+              aria-label={`Mes de ${participant.name}`}
+            >
+              <h2 className='block-title with-avatar'>
+                <Avatar
+                  name={participant.name}
+                  color={participant.color}
+                  size='sm'
+                />
+                {participant.name}
+              </h2>
+              <MonthGrid
+                dashboard={dashboard}
+                profileId={participant.profileId}
+                monthKey={currentMonth}
+                today={today}
+                color={participant.color}
+              />
+            </section>
+          ))}
+          <ChartLegend />
+        </div>
+      </div>
     </main>
   )
 }

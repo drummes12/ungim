@@ -9,7 +9,8 @@ import type {
   MealEntry,
   MonthRecord,
   PlanInput,
-  Profile
+  Profile,
+  WorkoutEntry
 } from './types'
 
 function text(value: unknown): string {
@@ -250,6 +251,55 @@ const demoUsers = new Map([
   ['leo@ungim.test', 'demo-leo']
 ])
 
+function demoEntries(
+  firstWeek: string,
+  today: string
+): Pick<Dashboard, 'mealEntries' | 'workoutEntries'> {
+  const slots: Record<string, string[]> = {
+    'demo-ana': ['meal-ana-1', 'meal-ana-2', 'meal-ana-3'],
+    'demo-leo': ['meal-leo-1', 'meal-leo-2']
+  }
+  const workoutDays: Record<string, number[]> = {
+    'demo-ana': [0, 2, 3, 5],
+    'demo-leo': [1, 3, 5]
+  }
+  const stamp = new Date().toISOString()
+  const mealEntries: MealEntry[] = []
+  const workoutEntries: WorkoutEntry[] = []
+  let day = 0
+  for (let date = firstWeek; date < today; date = addDays(date, 1), day += 1) {
+    for (const [profileId, ids] of Object.entries(slots)) {
+      const strong = profileId === 'demo-ana'
+      ids.forEach((mealSlotId, index) => {
+        const roll = (day * 7 + index * 3 + (strong ? 1 : 4)) % 10
+        if (roll >= (strong ? 9 : 8)) return
+        mealEntries.push({
+          id: `demo-${profileId}-${mealSlotId}-${date}`,
+          profileId,
+          mealSlotId,
+          entryDate: date,
+          status: roll < (strong ? 8 : 6) ? 'met' : 'missed',
+          version: 1,
+          createdAt: stamp,
+          updatedAt: stamp
+        })
+      })
+      if (workoutDays[profileId].includes(day % 7))
+        workoutEntries.push({
+          id: `demo-${profileId}-workout-${date}`,
+          profileId,
+          entryDate: date,
+          workoutType: null,
+          note: null,
+          version: 1,
+          createdAt: stamp,
+          updatedAt: stamp
+        })
+    }
+  }
+  return { mealEntries, workoutEntries }
+}
+
 class DemoBackend implements BackendApi {
   private load(): Dashboard {
     const stored = localStorage.getItem(demoStorageKey)
@@ -273,14 +323,14 @@ class DemoBackend implements BackendApi {
       {
         id: 'demo-ana',
         displayName: 'Ana',
-        avatarColor: '#f05a43',
+        avatarColor: '#ff9078',
         configuredAt: new Date().toISOString(),
         createdAt: new Date().toISOString()
       },
       {
         id: 'demo-leo',
         displayName: 'Leo',
-        avatarColor: '#2f6fdd',
+        avatarColor: '#557fd8',
         configuredAt: new Date().toISOString(),
         createdAt: new Date(Date.now() + 1).toISOString()
       }
@@ -339,8 +389,7 @@ class DemoBackend implements BackendApi {
           ]
         }
       ],
-      mealEntries: [],
-      workoutEntries: [],
+      ...demoEntries(firstWeek, today),
       months: {}
     }
   }
