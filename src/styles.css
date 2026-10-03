@@ -276,26 +276,42 @@ fieldset {
   background: var(--paper);
 }
 
+.topbar-side {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
 .status-pill {
   display: inline-flex;
+  width: 38px;
   min-height: 34px;
   align-items: center;
-  gap: 7px;
-  padding: 3px 12px 3px 6px;
+  justify-content: center;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
-  font-size: 0.8rem;
-  font-weight: 800;
+}
+
+.status-pill svg {
+  width: 20px;
+  height: 20px;
 }
 
 .status-warn {
   background: var(--amber);
 }
 
-.status-donut {
-  width: 22px;
-  height: 22px;
+.status-spin {
+  display: inline-flex;
+  animation: spin 900ms linear infinite;
 }
 
 .account-button {
@@ -722,21 +738,45 @@ fieldset {
 }
 
 .workout-icon {
+  position: relative;
   display: grid;
-  width: 88px;
+  width: 58px;
   height: 58px;
+  flex: none;
   place-items: center;
   border: 2px solid var(--ink);
   border-radius: var(--radius-sm);
   background: var(--paper);
 }
 
-.workout-icon svg {
-  width: 76px;
-  height: 58px;
+.workout-icon > svg {
+  width: 50px;
+  height: 50px;
 }
 
-.workout-icon.is-celebrating svg {
+.workout-check {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--mint);
+}
+
+.workout-check svg {
+  width: 13px;
+  height: 13px;
+}
+
+.workout-icon.is-celebrating .workout-check {
+  animation: tab-pop 320ms var(--ease-out) both;
+}
+
+.workout-icon.is-celebrating > svg {
   animation: workout-rep 280ms var(--ease-out) both;
 }
 
@@ -1484,7 +1524,21 @@ button.cell:active {
 .sheet-body {
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 20px 24px;
+  padding: 8px 20px 0;
+}
+
+.sheet-body > :last-child:not(.form-actions):not(.sheet-actions) {
+  margin-bottom: 24px;
+}
+
+.sheet-body .form-actions,
+.sheet-body .sheet-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 18px -20px 0;
+  padding: 14px 20px 24px;
+  border-top: 2px solid var(--ink);
+  background: var(--surface);
 }
 
 /* ---------- Motion ---------- */
@@ -1842,7 +1896,7 @@ button.cell:active {
     height: auto;
     flex: 1;
     flex-direction: column;
-    align-content: start;
+    align-items: stretch;
     justify-content: flex-start;
     gap: 8px;
     padding: 0;
@@ -1872,6 +1926,7 @@ button.cell:active {
   }
 
   .tab {
+    width: 100%;
     min-height: 48px;
     flex: none;
     flex-direction: row;
@@ -1915,6 +1970,10 @@ button.cell:active {
     border-top: 2px solid var(--ink);
     border-bottom: 0;
     background: none;
+  }
+
+  .topbar-mark {
+    display: none;
   }
 
   .status-pill {

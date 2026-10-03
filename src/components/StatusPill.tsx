@@ -1,4 +1,4 @@
-import { DonutIcon } from './icons'
+import { CloudCheckIcon, CloudOffIcon, SyncIcon } from './icons'
 
 export function StatusPill({
   online,
@@ -19,9 +19,21 @@ export function StatusPill({
   return (
     <span
       className={`status-pill ${error || !online || pending ? 'status-warn' : 'status-ok'}`}
+      role='status'
+      aria-label={label}
+      title={label}
     >
-      <DonutIcon className='status-donut' />
-      {label}
+      {error ? (
+        <CloudOffIcon />
+      ) : pending ? (
+        <span className='status-spin'>
+          <SyncIcon />
+        </span>
+      ) : !online ? (
+        <CloudOffIcon />
+      ) : (
+        <CloudCheckIcon />
+      )}
     </span>
   )
 }

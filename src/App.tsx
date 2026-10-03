@@ -541,14 +541,17 @@ export function App() {
           </nav>
         )}
         <header className='topbar'>
-          <StatusPill
-            online={online}
-            pending={
-              pendingCount +
-              queue.filter((item) => item.status === 'error').length
-            }
-            error={queueError}
-          />
+          <div className='topbar-side'>
+            <BrandIcon className='topbar-mark' />
+            <StatusPill
+              online={online}
+              pending={
+                pendingCount +
+                queue.filter((item) => item.status === 'error').length
+              }
+              error={queueError}
+            />
+          </div>
           <button
             className='account-button'
             type='button'

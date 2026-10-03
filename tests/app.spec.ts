@@ -14,7 +14,7 @@ test('records a meal and workout from Today', async ({ page }) => {
     page.getByRole('button', { name: 'Sí' }).first()
   ).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Entrené' }).click()
-  await expect(page.getByRole('status')).toHaveText('¡Ahhh, un gim!')
+  await expect(page.locator('.toast')).toHaveText('¡Ahhh, un gim!')
   await page.getByRole('button', { name: 'Marcador' }).click()
   await expect(page.getByRole('heading', { name: 'Marcador' })).toBeVisible()
   await expect(page.getByText('Rosquillas por semanas perfectas')).toBeVisible()
@@ -26,14 +26,18 @@ test('queues an entry offline, persists across reopen, and synchronizes', async 
 }) => {
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true))
   await context.setOffline(true)
-  await expect(page.getByText('Sin conexión')).toBeVisible()
+  await expect(page.getByRole('status', { name: 'Sin conexión' })).toBeVisible()
   await page.getByRole('button', { name: 'No' }).first().click()
   await page.getByRole('button', { name: 'No' }).nth(1).click()
-  await expect(page.getByText('2 por sincronizar')).toBeVisible()
+  await expect(
+    page.getByRole('status', { name: '2 por sincronizar' })
+  ).toBeVisible()
 
   await page.reload()
   await expect(page.getByRole('heading', { name: /Hola, Ana/ })).toBeVisible()
-  await expect(page.getByText(/por sincronizar/)).toBeVisible()
+  await expect(
+    page.getByRole('status', { name: /por sincronizar/ })
+  ).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'No' }).first()
   ).toHaveAttribute('aria-pressed', 'true')
@@ -43,7 +47,7 @@ test('queues an entry offline, persists across reopen, and synchronizes', async 
   )
 
   await context.setOffline(false)
-  await expect(page.getByText('Al día')).toBeVisible()
+  await expect(page.getByRole('status', { name: 'Al día' })).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'No' }).first()
   ).toHaveAttribute('aria-pressed', 'true')
@@ -63,5 +67,5 @@ test('installed production build can reopen its shell offline', async ({
   await context.setOffline(true)
   await page.reload()
   await expect(page.getByRole('heading', { name: /Hola, Ana/ })).toBeVisible()
-  await expect(page.getByText('Sin conexión')).toBeVisible()
+  await expect(page.getByRole('status', { name: 'Sin conexión' })).toBeVisible()
 })

@@ -96,6 +96,11 @@ export function DayEditor({
           aria-hidden='true'
         >
           <DumbbellIcon />
+          {workout && (
+            <span className='workout-check'>
+              <CheckIcon />
+            </span>
+          )}
         </span>
         <div className='workout-copy'>
           <strong>{workout ? '¡Ahhh, un gim!' : 'Sin registrar'}</strong>

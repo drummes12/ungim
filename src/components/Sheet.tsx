@@ -69,7 +69,7 @@ export function Sheet({
     const state = drag.current
     if (!state || !panelRef.current) return
     const raw = event.clientY - state.startY
-    const offset = raw > 0 ? raw : raw * 0.12
+    const offset = Math.max(0, raw)
     panelRef.current.style.transform = `translateY(${offset}px)`
     state.samples.push({ t: event.timeStamp, y: event.clientY })
     if (state.samples.length > 6) state.samples.shift()

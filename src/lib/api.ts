@@ -506,11 +506,11 @@ class DemoBackend implements BackendApi {
 export function createBackend(): BackendApi {
   if (import.meta.env.VITE_DEMO_MODE === 'true') return new DemoBackend()
   const url = import.meta.env.VITE_SUPABASE_URL
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-  if (!url || !anonKey) {
-    throw new Error('Faltan VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.')
+  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  if (!url || !publishableKey) {
+    throw new Error('Faltan VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY.')
   }
-  return new SupabaseBackend(url, anonKey)
+  return new SupabaseBackend(url, publishableKey)
 }
 
 export const demoModeEnabled = import.meta.env.VITE_DEMO_MODE === 'true'

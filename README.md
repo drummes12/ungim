@@ -42,7 +42,7 @@ pnpm supabase db reset
 
 ```env
 VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=local-publishable-key
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local-key
 VITE_DEMO_MODE=false
 ```
 
@@ -53,7 +53,7 @@ Las dos cuentas se configuran desde la app. La zona horaria del hogar se fija co
 1. Crear un proyecto Supabase.
 2. Aplicar `supabase/migrations/20261003150000_initial_schema.sql`.
 3. Desactivar registro público y crear exactamente dos usuarios con correo/contraseña. El trigger `handle_new_user` rechaza perfiles adicionales.
-4. Configurar `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en Cloudflare Pages.
+4. Configurar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` en Cloudflare Pages.
 5. Publicar `dist/` con el comando `pnpm build`.
 
 Supabase Free puede pausar un proyecto con poca actividad; los registros locales seguirán funcionando, pero no sincronizarán hasta reanudarlo.

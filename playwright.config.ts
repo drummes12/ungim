@@ -21,7 +21,7 @@ export default defineConfig({
       ...process.env,
       VITE_DEMO_MODE: 'true',
       VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
-      VITE_SUPABASE_ANON_KEY: 'demo-key'
+      VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_demo-key'
     }
   }
 })

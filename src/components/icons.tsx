@@ -39,14 +39,15 @@ export function TrophyIcon({ filled = false }: IconProps) {
 export function CalendarIcon({ filled = false }: IconProps) {
   return (
     <svg {...base} fill='none' stroke='currentColor'>
-      <rect
-        x='3.6'
-        y='5'
-        width='16.8'
-        height='15.4'
-        rx='2.6'
-        fill={filled ? 'currentColor' : 'none'}
-      />
+      {filled ? (
+        <path
+          d='M3.6 9.3V7.6a2.6 2.6 0 0 1 2.6-2.6h11.6a2.6 2.6 0 0 1 2.6 2.6v1.7ZM3.6 11.2h16.8v6.6a2.6 2.6 0 0 1-2.6 2.6H6.2a2.6 2.6 0 0 1-2.6-2.6Z'
+          fill='currentColor'
+          stroke='none'
+        />
+      ) : (
+        <rect x='3.6' y='5' width='16.8' height='15.4' rx='2.6' />
+      )}
       <path d='M8 3v4M16 3v4' />
       {!filled && <path d='M3.6 10h16.8' />}
     </svg>
@@ -56,13 +57,13 @@ export function CalendarIcon({ filled = false }: IconProps) {
 export function DumbbellIcon() {
   return (
     <svg viewBox='0 0 64 64' aria-hidden='true'>
-      <rect x='6' y='27.8' width='4' height='12.4' rx='2' fill='#14110f' />
-      <rect x='11.5' y='24' width='4' height='20' rx='2' fill='#14110f' />
-      <rect x='17' y='20.2' width='4' height='27.6' rx='2' fill='#14110f' />
-      <rect x='18' y='32' width='27' height='4' rx='2' fill='#14110f' />
-      <rect x='43' y='20.2' width='4' height='27.6' rx='2' fill='#14110f' />
-      <rect x='48.5' y='24' width='4' height='20' rx='2' fill='#14110f' />
-      <rect x='54' y='27.8' width='4' height='12.4' rx='2' fill='#14110f' />
+      <rect x='6' y='25.8' width='4' height='12.4' rx='2' fill='#14110f' />
+      <rect x='11.5' y='22' width='4' height='20' rx='2' fill='#14110f' />
+      <rect x='17' y='18.2' width='4' height='27.6' rx='2' fill='#14110f' />
+      <rect x='18' y='30' width='27' height='4' rx='2' fill='#14110f' />
+      <rect x='43' y='18.2' width='4' height='27.6' rx='2' fill='#14110f' />
+      <rect x='48.5' y='22' width='4' height='20' rx='2' fill='#14110f' />
+      <rect x='54' y='25.8' width='4' height='12.4' rx='2' fill='#14110f' />
     </svg>
   )
 }
@@ -87,6 +88,49 @@ export function ChevronIcon() {
   return (
     <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
       <path d='m9 5 7 7-7 7' />
+    </svg>
+  )
+}
+
+export function CloudCheckIcon() {
+  return (
+    <svg
+      {...base}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth={2}
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      <path d='M0 0h24v24H0z' stroke='none' />
+      <path d='M11 18.004H6.657C4.085 18 2 15.993 2 13.517s2.085-4.482 4.657-4.482c.393-1.762 1.794-3.2 3.675-3.773 1.88-.572 3.956-.193 5.444 1 1.488 1.19 2.162 3.007 1.77 4.769h.99c1.388 0 2.585.82 3.138 2.007M15 19l2 2 4-4' />
+    </svg>
+  )
+}
+
+export function CloudOffIcon() {
+  return (
+    <svg
+      {...base}
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth={2}
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      <path d='M0 0h24v24H0z' stroke='none' />
+      <path d='M13 18.004H6.657C4.085 18 2 15.993 2 13.517s2.085-4.482 4.657-4.482c.393-1.762 1.794-3.2 3.675-3.773 1.88-.572 3.956-.193 5.444 1 1.488 1.19 2.162 3.007 1.77 4.769h.99c1.37 0 2.556.8 3.117 1.964M22 22l-5-5M17 22l5-5' />
+    </svg>
+  )
+}
+
+export function SyncIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2}>
+      <path d='M19 9.5A7.6 7.6 0 0 0 6 7.2M5 14.5A7.6 7.6 0 0 0 18 16.8' />
+      <path d='M19 4.5v5h-5M5 19.5v-5h5' />
     </svg>
   )
 }
