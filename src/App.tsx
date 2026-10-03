@@ -26,6 +26,7 @@ import type {
 } from './lib/types'
 import { Avatar } from './components/Avatar'
 import { DayEditor } from './components/DayEditor'
+import { InstallHelp } from './components/PwaNotices'
 import { Sheet } from './components/Sheet'
 import { StatusPill } from './components/StatusPill'
 import { Celebration } from './components/Celebration'
@@ -120,6 +121,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const [notice, setNotice] = useState<string | null>(null)
   const [celebrateKey, setCelebrateKey] = useState<string | null>(null)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [installOpen, setInstallOpen] = useState(false)
   const [daySheet, setDaySheet] = useState<string | null>(null)
   const [detailsDate, setDetailsDate] = useState<string | null>(null)
   const [closeMonthKey, setCloseMonthKey] = useState<string | null>(null)
@@ -742,6 +744,10 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                       setPlanOpen(true)
                     }
               }
+              onInstall={() => {
+                setAccountOpen(false)
+                setInstallOpen(true)
+              }}
               onSignOut={signOut}
             />
           )}
@@ -795,6 +801,12 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
               }}
             />
           )}
+        </Sheet>
+      )}
+
+      {installOpen && (
+        <Sheet title='Instalar la app' onClose={() => setInstallOpen(false)}>
+          <InstallHelp />
         </Sheet>
       )}
 

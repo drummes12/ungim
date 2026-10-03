@@ -1537,6 +1537,34 @@ button.cell:active {
   animation: toast-in 260ms var(--ease-out);
 }
 
+.toast-panel {
+  display: grid;
+  width: min(400px, calc(100% - 32px));
+  gap: 10px;
+  padding: 16px 18px;
+  text-align: left;
+}
+
+.toast-panel > p {
+  margin: 0;
+  color: rgba(250, 241, 231, 0.78);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.toast-actions .btn {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
 /* ---------- Sheets ---------- */
 
 .sheet {
@@ -2172,6 +2200,10 @@ button.cell:active {
   .toast {
     bottom: 28px;
     left: calc(50% + var(--sidebar) / 2);
+  }
+
+  .toast-panel {
+    width: min(420px, calc(100% - var(--sidebar) - 96px));
   }
 
   .plan-screen .plan-form .meal-edit {

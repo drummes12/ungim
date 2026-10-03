@@ -33,6 +33,67 @@ test('keeps modal actions reachable in a short mobile viewport', async ({
   expect(fitsViewport, JSON.stringify(await panel.boundingBox())).toBe(true)
 })
 
+test('offers the update and reloads on demand', async ({ page }) => {
+  await page.evaluate(() => window.dispatchEvent(new Event('ungim:sw-update')))
+  const updateButton = page.getByRole('button', { name: 'Actualizar' })
+  await expect(page.getByText('Hay versión nueva')).toBeVisible()
+  await expect(updateButton).toBeVisible()
+
+  await page.getByRole('button', { name: 'Después' }).click()
+  await expect(updateButton).toHaveCount(0)
+
+  await page.evaluate(() => window.dispatchEvent(new Event('ungim:sw-update')))
+  await Promise.all([page.waitForEvent('load'), updateButton.click()])
+  await expect(page.getByRole('heading', { name: /Hola, Ana/ })).toBeVisible()
+})
+
+test('offers install when the browser fires beforeinstallprompt', async ({
+  page
+}) => {
+  await page.evaluate(() => {
+    const event = new Event('beforeinstallprompt')
+    Object.assign(event, {
+      prompt: () => {
+        const target = window as unknown as { __installPrompted: boolean }
+        target.__installPrompted = true
+        return Promise.resolve()
+      },
+      userChoice: Promise.resolve({ outcome: 'accepted', platform: 'web' })
+    })
+    window.dispatchEvent(event)
+  })
+
+  await expect(page.getByText('Instala Un Gim')).toBeVisible()
+  await page.getByRole('button', { name: 'Instalar' }).click()
+  await expect(page.getByText('Instala Un Gim')).toHaveCount(0)
+  await expect(
+    page.evaluate(
+      () =>
+        (window as unknown as { __installPrompted?: boolean }).__installPrompted
+    )
+  ).resolves.toBe(true)
+})
+
+test('shows iOS install instructions once', async ({ browser }) => {
+  const context = await browser.newContext({
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true
+  })
+  const page = await context.newPage()
+  await page.goto('/')
+  await expect(page.getByText('Instala Un Gim')).toBeVisible()
+  await expect(page.getByText('Añadir a pantalla de inicio')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Entendido' }).click()
+  await expect(page.getByText('Instala Un Gim')).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByText('Instala Un Gim')).toHaveCount(0)
+  await context.close()
+})
+
 test('records a meal and workout from Today', async ({ page }) => {
   await page.getByRole('button', { name: 'Sí' }).first().click()
   await expect(

@@ -126,11 +126,13 @@ export function AccountPanel({
   profile,
   partner,
   onEditPlan,
+  onInstall,
   onSignOut
 }: {
   profile: Profile | undefined
   partner: Profile | undefined
   onEditPlan: () => void
+  onInstall: () => void
   onSignOut: () => void
 }) {
   return (
@@ -165,6 +167,9 @@ export function AccountPanel({
       )}
       <button className='btn btn-block' type='button' onClick={onEditPlan}>
         Ajustar mi plan
+      </button>
+      <button className='btn btn-block' type='button' onClick={onInstall}>
+        Instalar la app
       </button>
       <button className='btn btn-block' type='button' onClick={onSignOut}>
         Salir

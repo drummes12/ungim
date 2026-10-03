@@ -10,9 +10,11 @@ import {
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
+import { PwaNotices } from './components/PwaNotices'
+import { notifySwUpdate } from './lib/pwa'
 import './styles.css'
 
-registerSW({ immediate: true })
+registerSW({ immediate: true, onNeedReload: notifySwUpdate })
 
 const FROSTING =
   'M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'
@@ -54,6 +56,7 @@ function Launch() {
   return (
     <>
       <App onReady={onReady} />
+      <PwaNotices />
       {visible && <LaunchScreen zooming={zooming} />}
     </>
   )
