@@ -489,6 +489,110 @@ fieldset {
   font-weight: 700;
 }
 
+.launch-screen {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.launch-surface {
+  position: absolute;
+  inset: 0;
+  background: var(--amber);
+}
+
+.launch-donut {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  transform-origin: center;
+}
+
+.launch-frost {
+  clip-path: inset(0 0 100% 0);
+  animation: frost-pour 560ms 240ms var(--ease-out) forwards;
+}
+
+.launch-chip {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sprinkle-rain 560ms var(--ease-out) both;
+  animation-delay: var(--d);
+}
+
+.launch-screen.is-zooming .launch-surface {
+  animation: launch-fade 900ms var(--ease-out) both;
+}
+
+.launch-screen.is-zooming .launch-donut {
+  animation: launch-zoom 900ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+.offline-screen {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px calc(48px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.offline-mark {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 28px;
+  border: 2px solid var(--ink);
+  border-radius: 28px;
+  background: var(--yellow);
+  box-shadow: var(--shadow);
+}
+
+.offline-mark > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.offline-cloud {
+  position: absolute;
+  right: -12px;
+  bottom: -10px;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.offline-cloud svg {
+  width: 28px;
+  height: 28px;
+}
+
+.offline-screen h1 {
+  max-width: 14ch;
+  margin-bottom: 16px;
+}
+
+.offline-screen p {
+  max-width: 38ch;
+  margin-bottom: 24px;
+  color: var(--muted);
+}
+
+.offline-hint {
+  border-top: 2px solid var(--ink);
+  padding-top: 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .loader {
   width: 36px;
   height: 36px;
@@ -1608,6 +1712,20 @@ button.cell:active {
   }
 }
 
+@keyframes launch-zoom {
+  to {
+    transform: scale(64);
+  }
+}
+
+@keyframes launch-fade {
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 
 @keyframes toast-in {
   from {
@@ -1803,6 +1921,12 @@ button.cell:active {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
+  }
+
+  .launch-screen.is-zooming .launch-surface,
+  .launch-screen.is-zooming .launch-donut {
+    animation: none !important;
+    opacity: 0;
   }
 
   .sheet-panel {

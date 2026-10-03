@@ -36,6 +36,7 @@ import {
 import {
   CalendarIcon,
   BrandIcon,
+  CloudOffIcon,
   DonutIcon,
   HomeIcon,
   TrophyIcon
@@ -83,7 +84,7 @@ function friendlySyncError(message: string): string {
   return message
 }
 
-export function App() {
+export function App({ onReady }: { onReady?: () => void } = {}) {
   const backendState = useMemo<{
     api: BackendApi | null
     error: string | null
@@ -116,6 +117,10 @@ export function App() {
   const queueWriteRef = useRef(Promise.resolve())
   const dashboardRef = useRef(dashboard)
   const syncingRef = useRef(false)
+
+  useEffect(() => {
+    if (!loading) onReady?.()
+  }, [loading, onReady])
 
   useEffect(() => {
     queueRef.current = queue
@@ -427,6 +432,28 @@ export function App() {
       <main className='loading-screen'>
         <span className='loader' />
         Cargando tu gim…
+      </main>
+    )
+  }
+
+  if (!online && !dashboard) {
+    return (
+      <main className='offline-screen'>
+        <div className='offline-mark' aria-hidden='true'>
+          <BrandIcon />
+          <span className='offline-cloud'>
+            <CloudOffIcon />
+          </span>
+        </div>
+        <h1>Nos vemos en línea.</h1>
+        <p>
+          {profileId
+            ? 'Este dispositivo aún no tiene datos guardados. Conéctate para descargarlos y luego podrás registrar tu día sin internet.'
+            : 'Conéctate para iniciar sesión una vez. Después podrás registrar tu día incluso sin internet.'}
+        </p>
+        <span className='offline-hint'>
+          La primera descarga necesita conexión.
+        </span>
       </main>
     )
   }
