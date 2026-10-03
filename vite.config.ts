@@ -5,7 +5,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   build: {
-    cssMinify: 'esbuild',
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
