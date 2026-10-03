@@ -5,15 +5,13 @@ const FROSTING_PATH =
   'M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'
 
 const RAIN = [
-  { x: 74, y: 92, rot: 30, d: 480, fill: '#fffdf9' },
-  { x: 92, y: 78, rot: -20, d: 540, fill: '#ffe08f' },
-  { x: 118, y: 84, rot: 65, d: 600, fill: '#fffdf9' },
-  { x: 136, y: 104, rot: 15, d: 660, fill: '#ffe08f' },
-  { x: 66, y: 116, rot: -35, d: 700, fill: '#fffdf9' },
-  { x: 96, y: 128, rot: 50, d: 760, fill: '#ffe08f' },
-  { x: 120, y: 126, rot: -15, d: 820, fill: '#fffdf9' },
-  { x: 142, y: 92, rot: 45, d: 880, fill: '#fffdf9' },
-  { x: 82, y: 108, rot: -60, d: 940, fill: '#ffe08f' }
+  { x: 73, y: 87.5, rot: 27, d: 480, fill: '#fffdf9' },
+  { x: 119, y: 80, rot: 64, d: 540, fill: '#fffdf9' },
+  { x: 141, y: 102, rot: 27, d: 600, fill: '#fffdf9' },
+  { x: 76, y: 118.5, rot: -15, d: 660, fill: '#fffdf9' },
+  { x: 116, y: 129, rot: -44, d: 700, fill: '#fffdf9' },
+  { x: 60, y: 96.5, rot: -46, d: 760, fill: '#ffe08f' },
+  { x: 138, y: 131, rot: 52, d: 820, fill: '#ffe08f' }
 ]
 
 const BURST = [

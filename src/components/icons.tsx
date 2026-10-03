@@ -239,13 +239,13 @@ export function DonutIcon({ className = '' }: { className?: string }) {
         strokeWidth='3'
       />
       <path
-        d='m20 24 4 2M39 20l2 4M48 31l4 2M21 39l4-1M36 45l3-3'
+        d='m17.9 23.6 3.8 2M39.7 19.1l1.9 4M48.7 30.1l3.9 1.9M19.1 39.1l3.9-1M37.8 44.9l2.8-3'
         stroke='#fffdf8'
         strokeWidth='3'
         strokeLinecap='round'
       />
       <path
-        d='m15 31 3-3M45 42l3 4'
+        d='m12.7 30.1 2.9-3M47.4 42.3l3 3.8'
         stroke='#ffe08f'
         strokeWidth='3'
         strokeLinecap='round'

@@ -18,12 +18,13 @@ const FROSTING =
   'M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'
 
 const CHIPS = [
-  { x: 18, y: 22, rot: 30, d: 620, fill: '#fffdf9' },
-  { x: 36, y: 17, rot: -20, d: 660, fill: '#ffe08f' },
-  { x: 45, y: 28, rot: 65, d: 700, fill: '#fffdf9' },
-  { x: 22, y: 38, rot: -35, d: 740, fill: '#ffe08f' },
-  { x: 33, y: 44, rot: 50, d: 780, fill: '#fffdf9' },
-  { x: 43, y: 40, rot: -15, d: 820, fill: '#ffe08f' }
+  { x: 19.8, y: 24.6, rot: 28, d: 620, fill: '#fffdf9' },
+  { x: 40.7, y: 21.1, rot: 65, d: 660, fill: '#fffdf9' },
+  { x: 50.6, y: 31.1, rot: 26, d: 700, fill: '#fffdf9' },
+  { x: 21.1, y: 38.6, rot: -14, d: 740, fill: '#fffdf9' },
+  { x: 39.2, y: 43.4, rot: -46, d: 780, fill: '#fffdf9' },
+  { x: 14.1, y: 28.6, rot: -46, d: 820, fill: '#ffe08f' },
+  { x: 48.9, y: 44.2, rot: 51, d: 860, fill: '#ffe08f' }
 ]
 
 function Launch() {
