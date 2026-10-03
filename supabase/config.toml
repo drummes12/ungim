@@ -41,7 +41,7 @@ max_frequency = "1m"
 otp_length = 8
 
 [auth.email.smtp]
-enabled = false
+enabled = true
 host = "smtp.resend.com"
 port = 465
 user = "resend"
