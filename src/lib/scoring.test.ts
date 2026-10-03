@@ -1,0 +1,220 @@
+import { describe, expect, it } from 'vitest'
+import { addDays, isoWeekStart } from './dates'
+import { computeMonthScore, isPerfectWeek } from './scoring'
+import type { Dashboard, MealEntry, PlanVersion, WorkoutEntry } from './types'
+
+function dashboard(
+  plans: PlanVersion[],
+  mealEntries: MealEntry[],
+  workoutEntries: WorkoutEntry[],
+  startsOn = '2026-01-05'
+): Dashboard {
+  return {
+    currentProfileId: 'ana',
+    profiles: [
+      {
+        id: 'ana',
+        displayName: 'Ana',
+        avatarColor: '#f05a43',
+        configuredAt: '',
+        createdAt: ''
+      },
+      {
+        id: 'leo',
+        displayName: 'Leo',
+        avatarColor: '#2f6fdd',
+        configuredAt: '',
+        createdAt: ''
+      }
+    ],
+    settings: { homeTimezone: 'UTC', startsOn },
+    planVersions: plans,
+    mealEntries,
+    workoutEntries,
+    months: {}
+  }
+}
+
+function plan(
+  profileId: string,
+  week: string,
+  target: number,
+  meals: number
+): PlanVersion {
+  return {
+    id: `plan-${profileId}-${week}`,
+    profileId,
+    effectiveWeekStart: week,
+    workoutTarget: target,
+    createdAt: '',
+    meals: Array.from({ length: meals }, (_, index) => ({
+      id: `${profileId}-meal-${index + 1}`,
+      name: `Comida ${index + 1}`,
+      rule: 'Plan',
+      position: index + 1
+    }))
+  }
+}
+
+function meal(
+  profileId: string,
+  slotId: string,
+  date: string,
+  status: 'met' | 'missed'
+): MealEntry {
+  return {
+    id: `${profileId}-${slotId}-${date}`,
+    profileId,
+    mealSlotId: slotId,
+    entryDate: date,
+    status,
+    version: 1,
+    createdAt: '',
+    updatedAt: ''
+  }
+}
+
+function workout(profileId: string, date: string): WorkoutEntry {
+  return {
+    id: `${profileId}-${date}`,
+    profileId,
+    entryDate: date,
+    workoutType: null,
+    note: null,
+    version: 1,
+    createdAt: '',
+    updatedAt: ''
+  }
+}
+
+function fillMeals(
+  profileId: string,
+  planVersion: PlanVersion,
+  start: string,
+  end: string,
+  met = true
+): MealEntry[] {
+  const entries: MealEntry[] = []
+  for (let date = start; date <= end; date = addDays(date, 1)) {
+    for (const slot of planVersion.meals)
+      entries.push(meal(profileId, slot.id, date, met ? 'met' : 'missed'))
+  }
+  return entries
+}
+
+describe('monthly competition scoring', () => {
+  it('compares separate plans by percentage and caps extra workouts', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 3)
+    const leoPlan = plan('leo', '2026-01-05', 4, 2)
+    const entries = [
+      ...fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11').slice(0, 14),
+      ...fillMeals('leo', leoPlan, '2026-01-05', '2026-01-11')
+    ]
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('ana', '2026-01-06'),
+      workout('ana', '2026-01-07'),
+      ...['2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08'].map((date) =>
+        workout('leo', date)
+      )
+    ]
+    const result = computeMonthScore(
+      dashboard([anaPlan, leoPlan], entries, workouts),
+      '2026-01',
+      '2026-01-31'
+    )
+    const ana = result.participants.find((item) => item.profileId === 'ana')!
+    const leo = result.participants.find((item) => item.profileId === 'leo')!
+    expect(ana.workout).toEqual({ earned: 2, target: 8 })
+    expect(ana.meals).toEqual({ met: 14, planned: 81 })
+    expect(ana.total).toBeCloseTo(21.14, 2)
+    expect(leo.total).toBeGreaterThan(ana.total)
+  })
+
+  it('adds two donuts for a completed perfect ISO week', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11')
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('ana', '2026-01-08')
+    ]
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      workouts
+    )
+    const week = isoWeekStart('2026-01-08')
+    expect(isPerfectWeek(data, 'ana', week, '2026-01-05')).toBe(true)
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    expect(result.participants[0].bonus).toBe(2)
+    expect(result.participants[0].streak).toBe(1)
+  })
+
+  it('prorates the split week objective and assigns its bonus to Sunday month', () => {
+    const anaPlan = plan('ana', '2026-01-26', 7, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-26', '2026-02-01')
+    const workouts = [
+      ...[
+        '2026-01-26',
+        '2026-01-27',
+        '2026-01-28',
+        '2026-01-29',
+        '2026-01-30',
+        '2026-01-31'
+      ].map((date) => workout('ana', date)),
+      workout('ana', '2026-02-01')
+    ]
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      workouts,
+      '2026-01-26'
+    )
+    const january = computeMonthScore(data, '2026-01', '2026-01-31')
+    const february = computeMonthScore(data, '2026-02', '2026-02-28')
+    expect(january.participants[0].workout).toEqual({ earned: 6, target: 6 })
+    expect(january.participants[0].bonus).toBe(0)
+    expect(february.participants[0].workout).toEqual({ earned: 1, target: 28 })
+    expect(february.participants[0].bonus).toBe(2)
+  })
+
+  it('does not award a bonus for the partial first competition week', () => {
+    const anaPlan = plan('ana', '2026-01-05', 7, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-07', '2026-01-11')
+    const workouts = [
+      '2026-01-07',
+      '2026-01-08',
+      '2026-01-09',
+      '2026-01-10',
+      '2026-01-11'
+    ].map((date) => workout('ana', date))
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      workouts,
+      '2026-01-07'
+    )
+    const result = computeMonthScore(data, '2026-01', '2026-01-31')
+    expect(result.participants[0].workout.target).toBe(25)
+    expect(result.participants[0].bonus).toBe(0)
+  })
+
+  it('uses exact base score for ties and can share a true tie', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1)
+    const leoPlan = plan('leo', '2026-01-05', 1, 1)
+    const entries = [
+      ...fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11'),
+      ...fillMeals('leo', leoPlan, '2026-01-05', '2026-01-11')
+    ]
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('leo', '2026-01-05')
+    ]
+    const result = computeMonthScore(
+      dashboard([anaPlan, leoPlan], entries, workouts),
+      '2026-01',
+      '2026-01-12'
+    )
+    expect(result.winnerIds.sort()).toEqual(['ana', 'leo'])
+  })
+})
