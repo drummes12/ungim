@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { BrandIcon } from '../components/icons'
 import type { AuthLinkInput } from '../lib/types'
-import { GlazeEdge } from './LoginScreen'
+import { GlazeEdge, SprinkleField } from './LoginScreen'
 
 const PASSWORD_TYPES = new Set(['invite', 'recovery'])
 
@@ -73,7 +73,10 @@ export function AuthLinkScreen({
   return (
     <main className='login-screen'>
       <section className='login-brand'>
-        <BrandIcon className='login-donut' />
+        <a className='login-logo-link' href='/' aria-label='Ir al inicio'>
+          <BrandIcon className='login-donut' />
+        </a>
+        <SprinkleField />
         <h1>Ahhh, un gim!</h1>
         <p className='page-sub'>
           Ejercicio, comidas y rosquillas. Una competencia privada para dos.
@@ -82,9 +85,7 @@ export function AuthLinkScreen({
       </section>
       <section className='login-card'>
         <h2>{copy.title}</h2>
-        {needsPassword && !error && (
-          <p className='field-note'>{copy.note}</p>
-        )}
+        {needsPassword && !error && <p className='field-note'>{copy.note}</p>}
         {needsPassword && !error && (
           <form onSubmit={submit}>
             <label>

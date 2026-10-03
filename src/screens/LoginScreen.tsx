@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type CSSProperties, type FormEvent } from 'react'
 import { demoModeEnabled } from '../lib/api'
 import { BrandIcon } from '../components/icons'
 
@@ -45,6 +45,42 @@ export function GlazeEdge() {
   )
 }
 
+const SPRINKLES: { x: string; y: string; r: string; c: string; d: string }[] = [
+  { x: '7%', y: '12%', r: '-24deg', c: 'var(--pink)', d: '0s' },
+  { x: '18%', y: '38%', r: '42deg', c: 'var(--yellow)', d: '1.1s' },
+  { x: '12%', y: '66%', r: '18deg', c: 'var(--mint)', d: '2.3s' },
+  { x: '26%', y: '18%', r: '64deg', c: 'var(--surface)', d: '0.7s' },
+  { x: '34%', y: '82%', r: '-38deg', c: 'var(--pink)', d: '1.8s' },
+  { x: '48%', y: '10%', r: '26deg', c: 'var(--blue)', d: '2.9s' },
+  { x: '58%', y: '30%', r: '-58deg', c: 'var(--yellow)', d: '0.4s' },
+  { x: '64%', y: '58%', r: '12deg', c: 'var(--surface)', d: '1.5s' },
+  { x: '76%', y: '16%', r: '48deg', c: 'var(--mint)', d: '2.1s' },
+  { x: '84%', y: '44%', r: '-16deg', c: 'var(--pink)', d: '0.9s' },
+  { x: '90%', y: '74%', r: '38deg', c: 'var(--blue)', d: '2.6s' },
+  { x: '70%', y: '86%', r: '-44deg', c: 'var(--yellow)', d: '1.3s' }
+]
+
+export function SprinkleField() {
+  return (
+    <span className='login-sprinkles' aria-hidden='true'>
+      {SPRINKLES.map((s, i) => (
+        <i
+          key={i}
+          style={
+            {
+              '--x': s.x,
+              '--y': s.y,
+              '--r': s.r,
+              '--c': s.c,
+              '--d': s.d
+            } as CSSProperties
+          }
+        />
+      ))}
+    </span>
+  )
+}
+
 export function LoginScreen({
   onSignIn,
   onResetPassword,
@@ -87,7 +123,10 @@ export function LoginScreen({
   return (
     <main className='login-screen'>
       <section className='login-brand'>
-        <BrandIcon className='login-donut' />
+        <a className='login-logo-link' href='/' aria-label='Ir al inicio'>
+          <BrandIcon className='login-donut' />
+        </a>
+        <SprinkleField />
         <h1>Ahhh, un gim!</h1>
         <p className='page-sub'>
           Ejercicio, comidas y rosquillas. Una competencia privada para dos.

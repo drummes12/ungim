@@ -259,6 +259,16 @@ fieldset {
 
 .brand {
   display: none;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand:focus-visible,
+.topbar-logo-link:focus-visible,
+.offline-mark:focus-visible,
+.login-logo-link:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
 }
 
 .topbar {
@@ -281,6 +291,16 @@ fieldset {
   min-width: 0;
   align-items: center;
   gap: 10px;
+}
+
+.topbar-logo-link {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .topbar-mark {
@@ -543,6 +563,10 @@ fieldset {
 
 .offline-mark {
   position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  text-decoration: none;
   width: 140px;
   height: 140px;
   margin-bottom: 28px;
@@ -1486,10 +1510,38 @@ button.cell:active {
 
 .login-brand h1 {
   margin: 0;
+  animation: auth-rise 480ms var(--ease-out) 120ms backwards;
 }
 
 .login-brand .page-sub {
   color: var(--ink);
+  animation: auth-rise 480ms var(--ease-out) 190ms backwards;
+}
+
+.login-sprinkles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.login-sprinkles i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 16px;
+  height: 6px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--c);
+  transform: rotate(var(--r));
+  animation: sprinkle-drift 7s ease-in-out var(--d) infinite alternate;
+}
+
+@keyframes sprinkle-drift {
+  to {
+    transform: translate(6px, -8px) rotate(calc(var(--r) + 16deg));
+  }
 }
 
 .login-donut {
@@ -1503,6 +1555,7 @@ button.cell:active {
   display: grid;
   align-content: start;
   gap: 16px;
+  animation: auth-rise 560ms var(--ease-out) 160ms backwards;
   width: 100%;
   max-width: 440px;
   padding: 48px 24px calc(32px + env(safe-area-inset-bottom));
@@ -1740,6 +1793,13 @@ button.cell:active {
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
   }
 }
 

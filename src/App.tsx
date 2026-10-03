@@ -486,12 +486,16 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   if (!online && !dashboard) {
     return (
       <main className='offline-screen'>
-        <div className='offline-mark' aria-hidden='true'>
+        <a
+          className='offline-mark'
+          href='/'
+          aria-label='Ir a la página de inicio de Ahhh Un Gim'
+        >
           <BrandIcon />
-          <span className='offline-cloud'>
+          <span className='offline-cloud' aria-hidden='true'>
             <CloudOffIcon />
           </span>
-        </div>
+        </a>
         <h1>Nos vemos en línea.</h1>
         <p>
           {profileId
@@ -571,14 +575,14 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   return (
     <div className='app-shell'>
       <div className='chrome'>
-        <div className='brand'>
+        <a className='brand' href='/' aria-label='Ir a la página de inicio'>
           <BrandIcon className='brand-donut' />
           <span>
             Ahhh,
             <br />
             un gim!
           </span>
-        </div>
+        </a>
         {!needsSetup && (
           <nav className='tabbar' aria-label='Navegación principal'>
             <div className='tab-pill'>
@@ -622,7 +626,13 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
         )}
         <header className='topbar'>
           <div className='topbar-side'>
-            <BrandIcon className='topbar-mark' />
+            <a
+              className='topbar-logo-link'
+              href='/'
+              aria-label='Ir a la página de inicio'
+            >
+              <BrandIcon className='topbar-mark' />
+            </a>
             <StatusPill
               online={online}
               pending={
