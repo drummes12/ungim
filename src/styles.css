@@ -692,6 +692,12 @@ fieldset {
   flex: none;
 }
 
+.notice > svg {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
 .sync-error,
 .close-banner {
   display: flex;

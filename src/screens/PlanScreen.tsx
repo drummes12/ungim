@@ -8,6 +8,7 @@ import {
 } from '../lib/dates'
 import { activePlanForDate } from '../lib/scoring'
 import type { Dashboard, PlanInput } from '../lib/types'
+import { CalendarIcon } from '../components/icons'
 
 export function PlanScreen({
   dashboard,
@@ -32,15 +33,19 @@ export function PlanScreen({
   const hasPlan = dashboard.planVersions.some(
     (plan) => plan.profileId === dashboard.currentProfileId
   )
-  const effectiveWeek = addDays(
-    isoWeekStart(today),
-    hasPlan && dashboard.settings?.startsOn ? 7 : 0
+  const appliesNextWeek = Boolean(
+    hasPlan &&
+      dashboard.settings?.startsOn &&
+      today >= dashboard.settings.startsOn
   )
+  const effectiveWeek = addDays(isoWeekStart(today), appliesNextWeek ? 7 : 0)
   const currentPlan = activePlanForDate(
     dashboard,
     dashboard.currentProfileId,
-    today
+    effectiveWeek
   )
+  const pendingPlan =
+    currentPlan && currentPlan.effectiveWeekStart > isoWeekStart(today)
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '')
   const [selectedTimezone, setSelectedTimezone] = useState(timezone)
   const [workoutTarget, setWorkoutTarget] = useState(
@@ -113,6 +118,23 @@ export function PlanScreen({
       )}
 
       <form className='plan-form' onSubmit={submit}>
+        {appliesNextWeek && (
+          <section className='notice' role='status'>
+            <CalendarIcon />
+            <div>
+              <strong>
+                {pendingPlan
+                  ? 'Tienes cambios programados'
+                  : 'Los cambios no aplican de inmediato'}
+              </strong>
+              <p>
+                {pendingPlan
+                  ? `Estás editando la versión que entra en vigor la semana ${formatWeekRange(currentPlan.effectiveWeekStart)}.`
+                  : `Lo que guardes aplicará desde la semana ${formatWeekRange(effectiveWeek)}.`}
+              </p>
+            </div>
+          </section>
+        )}
         <label>
           Nombre visible
           <input
