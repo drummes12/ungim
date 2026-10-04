@@ -3,7 +3,7 @@ import { formatMonth, monthKeyForDate, previousMonthKey } from '../lib/dates'
 import { computeMonthScore } from '../lib/scoring'
 import type { Dashboard } from '../lib/types'
 import { Avatar } from '../components/Avatar'
-import { ChartLegend, DuelBar, MonthGrid } from '../components/charts'
+import { ChartLegend, MonthGrid } from '../components/charts'
 
 export function HistoryScreen({
   dashboard,
@@ -35,6 +35,16 @@ export function HistoryScreen({
   const score =
     selectedRecord?.result ?? computeMonthScore(dashboard, selectedMonth, today)
   const closed = Boolean(selectedRecord?.closedAt)
+  const winnerNames = score.winnerIds
+    .map((id) => dashboard.profiles.find((p) => p.id === id)?.displayName)
+    .filter(Boolean)
+  const verdict = closed
+    ? winnerNames.length === 2
+      ? 'Empate.'
+      : `Ganó ${winnerNames[0] ?? 'nadie'}.`
+    : winnerNames.length === 1
+      ? `Va ganando ${winnerNames[0]}.`
+      : 'Empatados por ahora.'
   const me = dashboard.profiles.find(
     (profile) => profile.id === dashboard.currentProfileId
   )
@@ -91,11 +101,18 @@ export function HistoryScreen({
         <div className='split-main'>
           <section className='block' aria-label='Resumen del mes'>
             <h2 className='block-title'>{formatMonth(selectedMonth)}</h2>
-            <DuelBar
-              participants={score.participants}
-              winnerIds={score.winnerIds}
-            />
+            <ul className='rule-list'>
+              {score.participants.map((participant) => (
+                <li key={participant.profileId}>
+                  <span>{participant.name}</span>
+                  <strong className='num'>
+                    {participant.noData ? '—' : participant.total.toFixed(1)}
+                  </strong>
+                </li>
+              ))}
+            </ul>
             <p className='field-note'>
+              {verdict}{' '}
               {closed
                 ? 'Mes cerrado e inmutable.'
                 : 'Este mes sigue abierto a correcciones.'}

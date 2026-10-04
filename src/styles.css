@@ -734,11 +734,21 @@ fieldset {
 .rule-list li {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 4px 12px;
   padding: 10px 0;
   border-top: 1px solid var(--hair);
   font-size: 0.9rem;
+}
+
+.rule-list li > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-list li > strong {
+  flex: none;
 }
 
 .rule-list li:first-child {
@@ -986,11 +996,16 @@ fieldset {
 }
 
 .duel-name {
+  min-width: 0;
+  overflow: hidden;
   font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lead-tag {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 4px;
   padding: 1px 9px 1px 6px;
@@ -1007,6 +1022,7 @@ fieldset {
 }
 
 .duel-total {
+  flex: none;
   margin-left: auto;
   font-size: 1.9rem;
   font-weight: 800;
