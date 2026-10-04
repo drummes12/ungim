@@ -47,6 +47,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -284,6 +286,7 @@ fieldset {
   padding: env(safe-area-inset-top) 16px 0;
   border-bottom: 1px solid var(--hair);
   background: var(--paper);
+  --stack-ring: var(--paper);
 }
 
 .topbar-side {
@@ -1429,7 +1432,7 @@ button.cell:active {
 
 .avatar-stack .avatar + .avatar {
   margin-left: -20px;
-  box-shadow: 0 0 0 2px var(--surface);
+  box-shadow: 0 0 0 2px var(--stack-ring, var(--surface));
 }
 
 .rival-card {
@@ -2237,6 +2240,23 @@ button.cell:active {
     justify-items: end;
     gap: 2px;
   }
+
+  .free-card .workout-actions {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .week-strip .cell {
+    height: 112px;
+    aspect-ratio: auto;
+  }
+
+  .tabbar {
+    justify-content: center;
+  }
 }
 
 /* ---------- Desktop ---------- */
@@ -2352,6 +2372,7 @@ button.cell:active {
     border-top: 2px solid var(--ink);
     border-bottom: 0;
     background: none;
+    --stack-ring: var(--surface);
   }
 
   .topbar-mark {
