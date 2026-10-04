@@ -870,19 +870,19 @@ fieldset {
   background: color-mix(in srgb, var(--pink) 40%, var(--surface));
 }
 
-.free-stepper {
+.free-card .stepper {
   margin-top: 0;
   gap: 8px;
 }
 
-.free-stepper button {
+.free-card .stepper button {
   width: 40px;
   height: 40px;
   min-height: 40px;
   font-size: 1.1rem;
 }
 
-.free-stepper strong {
+.free-card .stepper strong {
   min-width: 20px;
   font-size: 1.1rem;
 }

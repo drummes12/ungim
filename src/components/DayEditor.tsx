@@ -129,7 +129,7 @@ export function DayEditor({
               </p>
             </div>
             <div className='workout-actions'>
-              <div className='stepper free-stepper'>
+              <div className='stepper'>
                 <button
                   type='button'
                   aria-label='Quitar comida libre'
