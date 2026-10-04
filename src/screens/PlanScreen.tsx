@@ -185,8 +185,9 @@ export function PlanScreen({
             </button>
           </div>
           <p className='field-note'>
-            Postres, helados y antojos fuera del plan. Las que pasen del cupo
-            cuentan como comida fallida. Pon 0 para desactivarlas.
+            Postres, helados y antojos fuera del plan. El cupo son las que
+            salen gratis al mes; las que lo pasen cuentan como comida
+            fallida. Con 0, cada libre cuenta como fallo.
           </p>
         </fieldset>
 

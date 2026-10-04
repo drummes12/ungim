@@ -322,6 +322,22 @@ describe('monthly competition scoring', () => {
     expect(ana.meals).toEqual({ met: 8, planned: 10 })
   })
 
+  it('counts every free meal as a miss when the quota is zero', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1, 0)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-12')
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      [],
+      '2026-01-05',
+      [freeMeal('ana', '2026-01-06', 2)]
+    )
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.freeMeals).toEqual({ used: 2, quota: 0 })
+    expect(ana.meals).toEqual({ met: 8, planned: 10 })
+  })
+
   it('uses exact base score for ties and can share a true tie', () => {
     const anaPlan = plan('ana', '2026-01-05', 1, 1)
     const leoPlan = plan('leo', '2026-01-05', 1, 1)

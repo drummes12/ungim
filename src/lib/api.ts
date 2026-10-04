@@ -498,8 +498,7 @@ class DemoBackend implements BackendApi {
     return localStorage.getItem(demoSessionKey)
   }
 
-  async loadDashboard(): Promise<Dashboard> {
-    const dashboard = this.load()
+  private withSession(dashboard: Dashboard): Dashboard {
     const profileId = localStorage.getItem(demoSessionKey)
     return {
       ...dashboard,
@@ -507,8 +506,14 @@ class DemoBackend implements BackendApi {
     }
   }
 
+  async loadDashboard(): Promise<Dashboard> {
+    return this.withSession(this.load())
+  }
+
   async applyMutation(mutation: EntryMutation): Promise<Dashboard> {
-    return this.save(applyMutationLocally(this.load(), mutation))
+    return this.withSession(
+      this.save(applyMutationLocally(this.load(), mutation))
+    )
   }
 
   async savePlan(mutationId: string, input: PlanInput): Promise<Dashboard> {
@@ -535,7 +540,7 @@ class DemoBackend implements BackendApi {
         position: index + 1
       }))
     }
-    return this.save({
+    const saved = this.save({
       ...dashboard,
       profiles: dashboard.profiles.map((profile) =>
         profile.id === profileId
@@ -559,6 +564,7 @@ class DemoBackend implements BackendApi {
           dashboard.settings?.startsOn ?? todayInTimezone(input.timezone)
       }
     })
+    return this.withSession(saved)
   }
 
   async confirmMonth(monthKey: string): Promise<MonthRecord> {

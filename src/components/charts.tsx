@@ -89,10 +89,13 @@ export function DuelBar({
             </div>
             <div className='duel-meta'>
               <span className='chip'>Racha {participant.streak}</span>
-              {participant.freeMeals.quota > 0 && (
+              {(participant.freeMeals.quota > 0 ||
+                participant.freeMeals.used > 0) && (
                 <span className='chip'>
-                  Libres {participant.freeMeals.used}/
-                  {participant.freeMeals.quota}
+                  Libres {participant.freeMeals.used}
+                  {participant.freeMeals.quota > 0
+                    ? `/${participant.freeMeals.quota}`
+                    : ''}
                 </span>
               )}
               <span

@@ -109,68 +109,65 @@ export function DayEditor({
         )}
       </ul>
 
-      {freeQuota > 0 && (
-        <>
-          <h2 className='block-title'>Comidas libres</h2>
-          <div className={`workout-card free-card ${free ? 'is-done' : ''}`}>
-            <span className='workout-icon' aria-hidden='true'>
-              <TreatIcon />
-            </span>
-            <div className='workout-copy'>
-              <strong>
-                {free
-                  ? `${free.count} libre${free.count === 1 ? '' : 's'} hoy`
-                  : 'Sin libres hoy'}
-              </strong>
-              <p>
-                {free?.note ? `${free.note} · ` : ''}
-                {freeUsed} de {freeQuota} usadas este mes
-                {freeExcess > 0 ? ` · ${freeExcess} cuenta como fallo` : ''}
-              </p>
-            </div>
-            <div className='workout-actions'>
-              <div className='stepper'>
-                <button
-                  type='button'
-                  aria-label='Quitar comida libre'
-                  disabled={!editable || !free}
-                  onClick={() =>
-                    onFree(date, (free?.count ?? 0) - 1, free?.note ?? null)
-                  }
-                >
-                  −
-                </button>
-                <strong>{free?.count ?? 0}</strong>
-                <button
-                  type='button'
-                  aria-label='Añadir comida libre'
-                  disabled={!editable || (free?.count ?? 0) >= 9}
-                  onClick={() =>
-                    onFree(date, (free?.count ?? 0) + 1, free?.note ?? null)
-                  }
-                >
-                  +
-                </button>
-              </div>
-              {editable && (
-                <input
-                  className='free-note'
-                  key={`${date}-${free?.version ?? 0}`}
-                  defaultValue={free?.note ?? ''}
-                  placeholder='¿Qué fue? (opcional)'
-                  maxLength={240}
-                  disabled={!free}
-                  onBlur={(event) => {
-                    const value = event.target.value.trim() || null
-                    if (free && value !== (free.note ?? null))
-                      onFree(date, free.count, value)
-                  }}
-                />
-              )}
-            </div>
+      <h2 className='block-title'>Comidas libres</h2>
+      <div className={`workout-card free-card ${free ? 'is-done' : ''}`}>
+        <span className='workout-icon' aria-hidden='true'>
+          <TreatIcon />
+        </span>
+        <div className='workout-copy'>
+          <strong>
+            {free
+              ? `${free.count} libre${free.count === 1 ? '' : 's'} hoy`
+              : 'Sin libres hoy'}
+          </strong>
+          <p>
+            {free?.note ? `${free.note} · ` : ''}
+            {freeQuota > 0
+              ? `${freeUsed} de ${freeQuota} usadas este mes${freeExcess > 0 ? ` · ${freeExcess} ${freeExcess === 1 ? 'cuenta' : 'cuentan'} como fallo` : ''}`
+              : `${freeUsed} usadas este mes · cada una cuenta como fallo`}
+          </p>
+        </div>
+        <div className='workout-actions'>
+          <div className='stepper'>
+            <button
+              type='button'
+              aria-label='Quitar comida libre'
+              disabled={!editable || !free}
+              onClick={() =>
+                onFree(date, (free?.count ?? 0) - 1, free?.note ?? null)
+              }
+            >
+              −
+            </button>
+            <strong>{free?.count ?? 0}</strong>
+            <button
+              type='button'
+              aria-label='Añadir comida libre'
+              disabled={!editable || (free?.count ?? 0) >= 9}
+              onClick={() =>
+                onFree(date, (free?.count ?? 0) + 1, free?.note ?? null)
+              }
+            >
+              +
+            </button>
           </div>
-        </>
-      )}
+          {editable && (
+            <input
+              className='free-note'
+              key={`${date}-${free?.version ?? 0}`}
+              defaultValue={free?.note ?? ''}
+              placeholder='¿Qué fue? (opcional)'
+              maxLength={240}
+              disabled={!free}
+              onBlur={(event) => {
+                const value = event.target.value.trim() || null
+                if (free && value !== (free.note ?? null))
+                  onFree(date, free.count, value)
+              }}
+            />
+          )}
+        </div>
+      </div>
 
       <h2 className='block-title'>Entrenamiento</h2>
       <div className={`workout-card ${workout ? 'is-done' : ''}`}>
