@@ -1441,6 +1441,7 @@ button.cell:active {
 
 .rival-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 12px 14px;
   border: 2px solid var(--ink);
