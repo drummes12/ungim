@@ -1,10 +1,22 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type ComponentType, type FormEvent } from 'react'
 import { formatMonth, monthEnd } from '../lib/dates'
 import { isStandaloneMode } from '../lib/pwa'
 import { computeMonthScore } from '../lib/scoring'
 import type { Dashboard, Profile, WorkoutEntry } from '../lib/types'
 import { Avatar } from './Avatar'
 import { DuelBar } from './charts'
+import {
+  CalendarIcon,
+  CheckIcon,
+  ChevronIcon,
+  CloudCheckIcon,
+  CloudOffIcon,
+  DonutIcon,
+  DumbbellIcon,
+  HomeIcon,
+  TreatIcon,
+  TrophyIcon
+} from './icons'
 
 export function WorkoutDetailsForm({
   workout,
@@ -123,17 +135,91 @@ export function ConfirmMonthForm({
   )
 }
 
+const helpTopics: Array<{
+  title: string
+  Icon: ComponentType<{ filled?: boolean; className?: string }>
+  body: string
+}> = [
+  {
+    title: 'El día',
+    Icon: HomeIcon,
+    body: 'En Hoy registras comidas, entrenamiento y libres. Desde Historial puedes abrir y corregir cualquier día mientras su mes siga abierto.'
+  },
+  {
+    title: 'Comidas',
+    Icon: CheckIcon,
+    body: 'Cada comida del plan se marca Sí o No. Las cumplidas suman y las que fallan restan en la mitad de comidas del puntaje.'
+  },
+  {
+    title: 'Comidas libres',
+    Icon: TreatIcon,
+    body: 'Antojos fuera de la dieta (postre, helado, picada); no reemplazan una comida, así que si una libre te hace saltar una comida del plan, márcala en No también. Tu plan define cuántas salen gratis al mes: cada una que pasa del cupo cuenta como comida fallida, y con cupo 0 todas cuentan.'
+  },
+  {
+    title: 'Entrenamientos',
+    Icon: DumbbellIcon,
+    body: 'Tu plan marca cuántos días por semana toca entrenar; el objetivo del mes se prorratea. «Detalle» guarda el tipo de sesión y una nota.'
+  },
+  {
+    title: 'Semana perfecta',
+    Icon: DonutIcon,
+    body: 'De lunes a domingo: todas las comidas cumplidas, el objetivo de entrenos y cero libres. Cada semana perfecta suma +2 de bonus (máximo +10) y una rosquilla.'
+  },
+  {
+    title: 'El puntaje',
+    Icon: TrophyIcon,
+    body: 'Hasta 50 puntos por ejercicio (hechos ÷ objetivo del mes) más hasta 50 por comidas (cumplidas ÷ planificadas) más el bonus de rosquillas. La barra de La carrera muestra las tres partes.'
+  },
+  {
+    title: 'El calendario',
+    Icon: CalendarIcon,
+    body: 'El relleno del día sube con las comidas cumplidas, el punto marca entrenamiento y el punto rosa marca libres. Un día glaseado es un día perfecto.'
+  },
+  {
+    title: 'Cierre de mes',
+    Icon: CloudCheckIcon,
+    body: 'Cuando termina el mes ambos confirman el resultado; al confirmar los dos, el mes se congela y ya no admite cambios.'
+  },
+  {
+    title: 'Sin internet',
+    Icon: CloudOffIcon,
+    body: 'Puedes registrar igual: los cambios quedan guardados en el dispositivo y se sincronizan solos cuando vuelve la conexión.'
+  }
+]
+
+export function HelpPanel() {
+  return (
+    <div className='stack'>
+      <p className='page-sub'>
+        Todo lo que puedes registrar y cómo se calcula el marcador.
+      </p>
+      {helpTopics.map((topic, index) => (
+        <details className='help-topic' key={topic.title} open={index === 0}>
+          <summary>
+            <topic.Icon />
+            <span>{topic.title}</span>
+            <ChevronIcon />
+          </summary>
+          <p>{topic.body}</p>
+        </details>
+      ))}
+    </div>
+  )
+}
+
 export function AccountPanel({
   profile,
   partner,
   onEditPlan,
   onInstall,
+  onHelp,
   onSignOut
 }: {
   profile: Profile | undefined
   partner: Profile | undefined
   onEditPlan: () => void
   onInstall: () => void
+  onHelp: () => void
   onSignOut: () => void
 }) {
   return (
@@ -168,6 +254,9 @@ export function AccountPanel({
       )}
       <button className='btn btn-block' type='button' onClick={onEditPlan}>
         Ajustar mi plan
+      </button>
+      <button className='btn btn-block' type='button' onClick={onHelp}>
+        ¿Cómo funciona?
       </button>
       {!isStandaloneMode() && (
         <button className='btn btn-block' type='button' onClick={onInstall}>

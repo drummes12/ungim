@@ -2076,6 +2076,91 @@ button.cell:active {
   }
 }
 
+/* ---------- Help ---------- */
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.help-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out;
+}
+
+.help-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.help-button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.help-topic {
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.help-topic summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.help-topic summary::-webkit-details-marker {
+  display: none;
+}
+
+.help-topic summary > svg:first-child {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.help-topic summary > span {
+  flex: 1;
+}
+
+.help-topic summary > svg:last-child {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform 160ms var(--ease-drawer);
+}
+
+.help-topic[open] summary > svg:last-child {
+  transform: rotate(90deg);
+}
+
+.help-topic > p {
+  margin: 0;
+  padding: 0 14px 14px 52px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
