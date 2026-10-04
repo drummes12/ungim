@@ -46,6 +46,9 @@ export function PlanScreen({
   const [workoutTarget, setWorkoutTarget] = useState(
     currentPlan?.workoutTarget ?? 3
   )
+  const [freeMealsPerMonth, setFreeMealsPerMonth] = useState(
+    currentPlan?.freeMealsPerMonth ?? 0
+  )
   const [meals, setMeals] = useState(
     currentPlan?.meals.map(({ name, rule }) => ({ name, rule })) ?? [
       { name: 'Desayuno', rule: '' },
@@ -74,6 +77,7 @@ export function PlanScreen({
         displayName: displayName.trim(),
         timezone: selectedTimezone,
         workoutTarget,
+        freeMealsPerMonth,
         meals: meals.map((meal) => ({
           name: meal.name.trim(),
           rule: meal.rule.trim()
@@ -157,6 +161,34 @@ export function PlanScreen({
               +
             </button>
           </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Comidas libres por mes</legend>
+          <div className='stepper'>
+            <button
+              type='button'
+              onClick={() =>
+                setFreeMealsPerMonth(Math.max(0, freeMealsPerMonth - 1))
+              }
+            >
+              −
+            </button>
+            <strong>{freeMealsPerMonth}</strong>
+            <button
+              type='button'
+              onClick={() =>
+                setFreeMealsPerMonth(Math.min(15, freeMealsPerMonth + 1))
+              }
+            >
+              +
+            </button>
+          </div>
+          <p className='field-note'>
+            Postres, helados y antojos fuera del plan. El cupo son las que
+            salen gratis al mes; las que lo pasen cuentan como comida
+            fallida. Con 0, cada libre cuenta como fallo.
+          </p>
         </fieldset>
 
         <fieldset>

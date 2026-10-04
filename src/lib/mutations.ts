@@ -67,9 +67,45 @@ export function applyMutationLocally(dashboard: Dashboard, mutation: EntryMutati
     return { ...dashboard, workoutEntries: entries }
   }
 
+  if (mutation.type === 'clear-workout') {
+    return {
+      ...dashboard,
+      workoutEntries: dashboard.workoutEntries.filter(
+        (entry) => !(entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate),
+      ),
+    }
+  }
+
+  if (mutation.type === 'upsert-free') {
+    const index = dashboard.freeMealEntries.findIndex(
+      (entry) => entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate,
+    )
+    const entries = dashboard.freeMealEntries.slice()
+    if (index >= 0) {
+      entries[index] = {
+        ...entries[index],
+        count: mutation.count,
+        note: mutation.note,
+        version: entries[index].version + 1,
+      }
+    } else {
+      entries.push({
+        id: `local-${mutation.id}`,
+        profileId: mutation.profileId,
+        entryDate: mutation.entryDate,
+        count: mutation.count,
+        note: mutation.note,
+        version: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    }
+    return { ...dashboard, freeMealEntries: entries }
+  }
+
   return {
     ...dashboard,
-    workoutEntries: dashboard.workoutEntries.filter(
+    freeMealEntries: dashboard.freeMealEntries.filter(
       (entry) => !(entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate),
     ),
   }

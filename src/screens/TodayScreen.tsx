@@ -11,6 +11,7 @@ export function TodayScreen({
   celebrateKey,
   onMeal,
   onWorkout,
+  onFree,
   onOpenDetails,
   onEditPlan
 }: {
@@ -19,6 +20,7 @@ export function TodayScreen({
   celebrateKey: string | null
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
+  onFree: (date: string, count: number, note: string | null) => void
   onOpenDetails: (date: string) => void
   onEditPlan: () => void
 }) {
@@ -72,6 +74,7 @@ export function TodayScreen({
             celebrateKey={celebrateKey ?? undefined}
             onMeal={onMeal}
             onWorkout={onWorkout}
+            onFree={onFree}
             onOpenDetails={onOpenDetails}
           />
         </div>

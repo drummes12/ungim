@@ -25,7 +25,10 @@ function describeDay(
   const meals = status.planned
     ? `${status.met} de ${status.planned} comidas`
     : 'sin comidas'
-  return `${formatDay(date)}: ${meals}${status.workout ? ', entrenó' : ''}`
+  const free = status.free
+    ? `, ${status.free} libre${status.free === 1 ? '' : 's'}`
+    : ''
+  return `${formatDay(date)}: ${meals}${status.workout ? ', entrenó' : ''}${free}`
 }
 
 export function DuelBar({
@@ -86,6 +89,15 @@ export function DuelBar({
             </div>
             <div className='duel-meta'>
               <span className='chip'>Racha {participant.streak}</span>
+              {(participant.freeMeals.quota > 0 ||
+                participant.freeMeals.used > 0) && (
+                <span className='chip'>
+                  Libres {participant.freeMeals.used}
+                  {participant.freeMeals.quota > 0
+                    ? `/${participant.freeMeals.quota}`
+                    : ''}
+                </span>
+              )}
               <span
                 className='donut-row'
                 role='img'
@@ -313,6 +325,7 @@ function DayCell({
       )}
       <span className='cell-day num'>{Number(date.slice(8, 10))}</span>
       {status.workout && !complete && <span className='cell-dot' />}
+      {status.free > 0 && <span className='cell-free' />}
     </>
   )
   const label = describeDay(date, status)
@@ -344,6 +357,9 @@ export function ChartLegend() {
       </li>
       <li>
         <i className='key key-dot' /> Entrenamiento
+      </li>
+      <li>
+        <i className='key key-free' /> Comida libre
       </li>
       <li>
         <i className='key key-future' /> Pendiente

@@ -6,13 +6,20 @@ import {
   isPerfectWeek,
   scoreSeries
 } from './scoring'
-import type { Dashboard, MealEntry, PlanVersion, WorkoutEntry } from './types'
+import type {
+  Dashboard,
+  FreeMealEntry,
+  MealEntry,
+  PlanVersion,
+  WorkoutEntry
+} from './types'
 
 function dashboard(
   plans: PlanVersion[],
   mealEntries: MealEntry[],
   workoutEntries: WorkoutEntry[],
-  startsOn = '2026-01-05'
+  startsOn = '2026-01-05',
+  freeMealEntries: FreeMealEntry[] = []
 ): Dashboard {
   return {
     currentProfileId: 'ana',
@@ -36,6 +43,7 @@ function dashboard(
     planVersions: plans,
     mealEntries,
     workoutEntries,
+    freeMealEntries,
     months: {}
   }
 }
@@ -44,13 +52,15 @@ function plan(
   profileId: string,
   week: string,
   target: number,
-  meals: number
+  meals: number,
+  freeMealsPerMonth = 0
 ): PlanVersion {
   return {
     id: `plan-${profileId}-${week}`,
     profileId,
     effectiveWeekStart: week,
     workoutTarget: target,
+    freeMealsPerMonth,
     createdAt: '',
     meals: Array.from({ length: meals }, (_, index) => ({
       id: `${profileId}-meal-${index + 1}`,
@@ -85,6 +95,23 @@ function workout(profileId: string, date: string): WorkoutEntry {
     profileId,
     entryDate: date,
     workoutType: null,
+    note: null,
+    version: 1,
+    createdAt: '',
+    updatedAt: ''
+  }
+}
+
+function freeMeal(
+  profileId: string,
+  date: string,
+  count = 1
+): FreeMealEntry {
+  return {
+    id: `${profileId}-free-${date}`,
+    profileId,
+    entryDate: date,
+    count,
     note: null,
     version: 1,
     createdAt: '',
@@ -213,12 +240,15 @@ describe('monthly competition scoring', () => {
     const data = dashboard(
       [anaPlan, plan('leo', '2026-01-05', 1, 1)],
       entries,
-      [workout('ana', '2026-01-06')]
+      [workout('ana', '2026-01-06')],
+      '2026-01-05',
+      [freeMeal('ana', '2026-01-06', 2)]
     )
     expect(dayStatus(data, 'ana', '2026-01-06', '2026-01-10')).toEqual({
       planned: 2,
       met: 1,
       missed: 1,
+      free: 2,
       workout: true,
       future: false,
       active: true
@@ -247,6 +277,65 @@ describe('monthly competition scoring', () => {
     ])
     expect(series[0].totals.ana).toBeGreaterThan(series[0].totals.leo ?? 0)
     expect(scoreSeries(data, '2025-11', '2026-01-07')).toEqual([])
+  })
+
+  it('keeps free meals within quota neutral but breaks the perfect week', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 1, 4)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11')
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('ana', '2026-01-08')
+    ]
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      workouts,
+      '2026-01-05',
+      [freeMeal('ana', '2026-01-07')]
+    )
+    const week = isoWeekStart('2026-01-08')
+    expect(isPerfectWeek(data, 'ana', week, '2026-01-05')).toBe(false)
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.freeMeals).toEqual({ used: 1, quota: 4 })
+    expect(ana.meals).toEqual({ met: 7, planned: 8 })
+    expect(ana.bonus).toBe(0)
+  })
+
+  it('counts free meals beyond the monthly quota as missed meals', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1, 2)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-12')
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      [],
+      '2026-01-05',
+      [
+        freeMeal('ana', '2026-01-06'),
+        freeMeal('ana', '2026-01-07'),
+        freeMeal('ana', '2026-01-08', 2)
+      ]
+    )
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.freeMeals).toEqual({ used: 4, quota: 2 })
+    expect(ana.meals).toEqual({ met: 8, planned: 10 })
+  })
+
+  it('counts every free meal as a miss when the quota is zero', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1, 0)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-12')
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      [],
+      '2026-01-05',
+      [freeMeal('ana', '2026-01-06', 2)]
+    )
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.freeMeals).toEqual({ used: 2, quota: 0 })
+    expect(ana.meals).toEqual({ met: 8, planned: 10 })
   })
 
   it('uses exact base score for ties and can share a true tie', () => {

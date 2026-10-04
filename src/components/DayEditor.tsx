@@ -1,7 +1,14 @@
-import { formatDay } from '../lib/dates'
-import { mealEntryFor, mealsForDate, workoutForDate } from '../lib/scoring'
+import { formatDay, monthEnd, monthStart } from '../lib/dates'
+import {
+  activePlanForDate,
+  countFreeMeals,
+  freeMealEntryFor,
+  mealEntryFor,
+  mealsForDate,
+  workoutForDate
+} from '../lib/scoring'
 import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
-import { CheckIcon, CloseIcon, DumbbellIcon } from './icons'
+import { CheckIcon, CloseIcon, DumbbellIcon, TreatIcon } from './icons'
 
 export function DayEditor({
   dashboard,
@@ -11,6 +18,7 @@ export function DayEditor({
   celebrateKey,
   onMeal,
   onWorkout,
+  onFree,
   onOpenDetails
 }: {
   dashboard: Dashboard
@@ -20,11 +28,23 @@ export function DayEditor({
   celebrateKey?: string
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
+  onFree: (date: string, count: number, note: string | null) => void
   onOpenDetails: (date: string) => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
   const workout = workoutForDate(dashboard, profileId, date)
   const celebrating = Boolean(workout && celebrateKey === workout.id)
+  const freeQuota =
+    activePlanForDate(dashboard, profileId, date)?.freeMealsPerMonth ?? 0
+  const free = freeMealEntryFor(dashboard, profileId, date)
+  const monthKey = date.slice(0, 7)
+  const freeUsed = countFreeMeals(
+    dashboard,
+    profileId,
+    monthStart(monthKey),
+    monthEnd(monthKey)
+  )
+  const freeExcess = Math.max(0, freeUsed - freeQuota)
 
   return (
     <section
@@ -88,6 +108,66 @@ export function DayEditor({
           </li>
         )}
       </ul>
+
+      <h2 className='block-title'>Comidas libres</h2>
+      <div className={`workout-card free-card ${free ? 'is-done' : ''}`}>
+        <span className='workout-icon' aria-hidden='true'>
+          <TreatIcon />
+        </span>
+        <div className='workout-copy'>
+          <strong>
+            {free
+              ? `${free.count} libre${free.count === 1 ? '' : 's'} hoy`
+              : 'Sin libres hoy'}
+          </strong>
+          <p>
+            {free?.note ? `${free.note} · ` : ''}
+            {freeQuota > 0
+              ? `${freeUsed} de ${freeQuota} usadas este mes${freeExcess > 0 ? ` · ${freeExcess} ${freeExcess === 1 ? 'cuenta' : 'cuentan'} como fallo` : ''}`
+              : `${freeUsed} usadas este mes · cada una cuenta como fallo`}
+          </p>
+        </div>
+        <div className='workout-actions'>
+          <div className='stepper'>
+            <button
+              type='button'
+              aria-label='Quitar comida libre'
+              disabled={!editable || !free}
+              onClick={() =>
+                onFree(date, (free?.count ?? 0) - 1, free?.note ?? null)
+              }
+            >
+              −
+            </button>
+            <strong>{free?.count ?? 0}</strong>
+            <button
+              type='button'
+              aria-label='Añadir comida libre'
+              disabled={!editable || (free?.count ?? 0) >= 9}
+              onClick={() =>
+                onFree(date, (free?.count ?? 0) + 1, free?.note ?? null)
+              }
+            >
+              +
+            </button>
+          </div>
+          {editable && (
+            <input
+              className='free-note'
+              key={`${date}-${free?.version ?? 0}`}
+              defaultValue={free?.note ?? ''}
+              placeholder='¿Qué fue? (opcional)'
+              maxLength={240}
+              disabled={!free}
+              onBlur={(event) => {
+                const value = event.target.value.trim() || null
+                if (free && value !== (free.note ?? null))
+                  onFree(date, free.count, value)
+              }}
+            />
+          )}
+        </div>
+      </div>
 
       <h2 className='block-title'>Entrenamiento</h2>
       <div className={`workout-card ${workout ? 'is-done' : ''}`}>
