@@ -25,6 +25,7 @@ export interface PlanVersion {
   profileId: string
   effectiveWeekStart: string
   workoutTarget: number
+  freeMealsPerMonth: number
   createdAt: string
   meals: MealSlot[]
 }
@@ -51,6 +52,17 @@ export interface WorkoutEntry {
   updatedAt: string
 }
 
+export interface FreeMealEntry {
+  id: string
+  profileId: string
+  entryDate: string
+  count: number
+  note: string | null
+  version: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface MonthRecord {
   monthKey: string
   confirmedBy: string[]
@@ -67,6 +79,7 @@ export interface Dashboard {
   planVersions: PlanVersion[]
   mealEntries: MealEntry[]
   workoutEntries: WorkoutEntry[]
+  freeMealEntries: FreeMealEntry[]
   months: Record<string, MonthRecord>
 }
 
@@ -81,6 +94,7 @@ export interface ParticipantScore {
   streak: number
   workout: { earned: number; target: number }
   meals: { met: number; planned: number }
+  freeMeals: { used: number; quota: number }
 }
 
 export interface MonthResult {
@@ -125,6 +139,22 @@ export type EntryMutation =
       entryDate: string
       expectedVersion: number | null
     }
+  | {
+      id: string
+      type: 'upsert-free'
+      profileId: string
+      entryDate: string
+      count: number
+      note: string | null
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'clear-free'
+      profileId: string
+      entryDate: string
+      expectedVersion: number | null
+    }
 
 export interface QueuedMutation {
   mutation: EntryMutation
@@ -137,6 +167,7 @@ export interface PlanInput {
   displayName: string
   timezone: string
   workoutTarget: number
+  freeMealsPerMonth: number
   meals: Array<Pick<MealSlot, 'name' | 'rule'>>
 }
 

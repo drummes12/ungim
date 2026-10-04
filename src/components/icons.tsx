@@ -207,6 +207,36 @@ export function BrandIcon({ className = '' }: { className?: string }) {
   )
 }
 
+export function TreatIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox='0 0 64 64' aria-hidden='true'>
+      <circle
+        cx='32'
+        cy='23'
+        r='14'
+        fill='#ffb3c9'
+        stroke='#14110f'
+        strokeWidth='3'
+      />
+      <circle cx='32' cy='8' r='3.6' fill='#f05a43' stroke='#14110f' strokeWidth='2.4' />
+      <path
+        d='M21 34h22L32 57Z'
+        fill='#e8a961'
+        stroke='#14110f'
+        strokeWidth='3'
+        strokeLinejoin='round'
+      />
+      <path
+        d='m25 18 3.4 1.7M36 14.5l1.8 3.4M40 24.5l3 1.6M23 27.5l3-1'
+        stroke='#fffdf9'
+        strokeWidth='2.6'
+        strokeLinecap='round'
+      />
+      <path d='m27.5 45 3.4 3M34 40l2.6 3.4' stroke='#fffdf9' strokeWidth='2.4' strokeLinecap='round' />
+    </svg>
+  )
+}
+
 export function DonutIcon({ className = '' }: { className?: string }) {
   const maskId = useId().replace(/:/g, '')
   return (

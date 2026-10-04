@@ -7,6 +7,7 @@ import type {
   BackendApi,
   Dashboard,
   EntryMutation,
+  FreeMealEntry,
   MealEntry,
   MonthRecord,
   PlanInput,
@@ -49,6 +50,9 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
         plan.effectiveWeekStart ?? plan.effective_week_start
       ),
       workoutTarget: Number(plan.workoutTarget ?? plan.workout_target),
+      freeMealsPerMonth: Number(
+        plan.freeMealsPerMonth ?? plan.free_meals_per_month ?? 0
+      ),
       createdAt: text(plan.createdAt ?? plan.created_at),
       meals: ((plan.meals as Record<string, unknown>[]) ?? []).map((meal) => ({
         id: text(meal.id),
@@ -80,6 +84,21 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
       entryDate: text(entry.entryDate ?? entry.entry_date),
       workoutType: (entry.workoutType ?? entry.workout_type) as string | null,
       note: entry.note as string | null,
+      version: Number(entry.version),
+      createdAt: text(entry.createdAt ?? entry.created_at),
+      updatedAt: text(entry.updatedAt ?? entry.updated_at)
+    })),
+    freeMealEntries: (
+      ((raw.freeMealEntries ?? raw.free_meal_entries) as Record<
+        string,
+        unknown
+      >[]) ?? []
+    ).map((entry) => ({
+      id: text(entry.id),
+      profileId: text(entry.profileId ?? entry.profile_id),
+      entryDate: text(entry.entryDate ?? entry.entry_date),
+      count: Number(entry.count),
+      note: (entry.note as string | null) ?? null,
       version: Number(entry.version),
       createdAt: text(entry.createdAt ?? entry.created_at),
       updatedAt: text(entry.updatedAt ?? entry.updated_at)
@@ -199,11 +218,25 @@ class SupabaseBackend implements BackendApi {
                 p_note: mutation.note,
                 p_expected_version: mutation.expectedVersion
               })
-            : client.rpc('clear_workout_entry', {
-                ...common,
-                p_entry_date: mutation.entryDate,
-                p_expected_version: mutation.expectedVersion
-              })
+            : mutation.type === 'clear-workout'
+              ? client.rpc('clear_workout_entry', {
+                  ...common,
+                  p_entry_date: mutation.entryDate,
+                  p_expected_version: mutation.expectedVersion
+                })
+              : mutation.type === 'upsert-free'
+                ? client.rpc('upsert_free_meal_entry', {
+                    ...common,
+                    p_entry_date: mutation.entryDate,
+                    p_count: mutation.count,
+                    p_note: mutation.note,
+                    p_expected_version: mutation.expectedVersion
+                  })
+                : client.rpc('clear_free_meal_entry', {
+                    ...common,
+                    p_entry_date: mutation.entryDate,
+                    p_expected_version: mutation.expectedVersion
+                  })
     const { data, error } = await rpc
     if (error) throw error
     return normalizeDashboard(data as Record<string, unknown>)
@@ -216,6 +249,7 @@ class SupabaseBackend implements BackendApi {
       p_display_name: input.displayName,
       p_timezone: input.timezone,
       p_workout_target: input.workoutTarget,
+      p_free_meals_per_month: input.freeMealsPerMonth,
       p_meals: input.meals
     })
     if (error) throw error
@@ -253,6 +287,7 @@ class SupabaseBackend implements BackendApi {
         'meal_slots',
         'meal_entries',
         'workout_entries',
+        'free_meal_entries',
         'months'
       ]) {
         channel.on(
@@ -281,7 +316,7 @@ const demoUsers = new Map([
 function demoEntries(
   firstWeek: string,
   today: string
-): Pick<Dashboard, 'mealEntries' | 'workoutEntries'> {
+): Pick<Dashboard, 'mealEntries' | 'workoutEntries' | 'freeMealEntries'> {
   const slots: Record<string, string[]> = {
     'demo-ana': ['meal-ana-1', 'meal-ana-2', 'meal-ana-3'],
     'demo-leo': ['meal-leo-1', 'meal-leo-2']
@@ -293,6 +328,7 @@ function demoEntries(
   const stamp = new Date().toISOString()
   const mealEntries: MealEntry[] = []
   const workoutEntries: WorkoutEntry[] = []
+  const freeMealEntries: FreeMealEntry[] = []
   let day = 0
   for (let date = firstWeek; date < today; date = addDays(date, 1), day += 1) {
     for (const [profileId, ids] of Object.entries(slots)) {
@@ -322,9 +358,20 @@ function demoEntries(
           createdAt: stamp,
           updatedAt: stamp
         })
+      if (profileId === 'demo-ana' && day % 10 === 4)
+        freeMealEntries.push({
+          id: `demo-${profileId}-free-${date}`,
+          profileId,
+          entryDate: date,
+          count: 1,
+          note: day % 20 === 4 ? 'Helado' : null,
+          version: 1,
+          createdAt: stamp,
+          updatedAt: stamp
+        })
     }
   }
-  return { mealEntries, workoutEntries }
+  return { mealEntries, workoutEntries, freeMealEntries }
 }
 
 class DemoBackend implements BackendApi {
@@ -372,6 +419,7 @@ class DemoBackend implements BackendApi {
           profileId: 'demo-ana',
           effectiveWeekStart: firstWeek,
           workoutTarget: 4,
+          freeMealsPerMonth: 4,
           createdAt: new Date().toISOString(),
           meals: [
             {
@@ -399,6 +447,7 @@ class DemoBackend implements BackendApi {
           profileId: 'demo-leo',
           effectiveWeekStart: firstWeek,
           workoutTarget: 3,
+          freeMealsPerMonth: 0,
           createdAt: new Date().toISOString(),
           meals: [
             {
@@ -478,6 +527,7 @@ class DemoBackend implements BackendApi {
       profileId,
       effectiveWeekStart: week,
       workoutTarget: input.workoutTarget,
+      freeMealsPerMonth: input.freeMealsPerMonth,
       createdAt: new Date().toISOString(),
       meals: input.meals.map((meal, index) => ({
         ...meal,

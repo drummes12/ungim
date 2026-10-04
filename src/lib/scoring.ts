@@ -80,6 +80,35 @@ export function workoutForDate(
   )
 }
 
+export function freeMealEntryFor(
+  dashboard: Dashboard,
+  profileId: string,
+  date: string
+) {
+  return (
+    dashboard.freeMealEntries.find(
+      (entry) => entry.profileId === profileId && entry.entryDate === date
+    ) ?? null
+  )
+}
+
+export function countFreeMeals(
+  dashboard: Dashboard,
+  profileId: string,
+  start: string,
+  end: string
+): number {
+  return dashboard.freeMealEntries.reduce(
+    (total, entry) =>
+      entry.profileId === profileId &&
+      entry.entryDate >= start &&
+      entry.entryDate <= end
+        ? total + entry.count
+        : total,
+    0
+  )
+}
+
 function countWorkouts(
   dashboard: Dashboard,
   profileId: string,
@@ -132,7 +161,8 @@ export function isPerfectWeek(
   return (
     mealsMet === plan.meals.length * 7 &&
     countWorkouts(dashboard, profileId, weekStart, weekEnd) >=
-      plan.workoutTarget
+      plan.workoutTarget &&
+    countFreeMeals(dashboard, profileId, weekStart, weekEnd) === 0
   )
 }
 
@@ -200,7 +230,8 @@ function computeParticipantScore(
     total: 0,
     streak: 0,
     workout: { earned: 0, target: 0 },
-    meals: { met: 0, planned: 0 }
+    meals: { met: 0, planned: 0 },
+    freeMeals: { used: 0, quota: 0 }
   }
   if (!competitionStart || cutoff < competitionStart) return empty
 
@@ -246,6 +277,17 @@ function computeParticipantScore(
     )
   }).length
 
+  const freeQuota =
+    activePlanForDate(dashboard, profile.id, eligibleEnd)
+      ?.freeMealsPerMonth ?? 0
+  const freeUsed = countFreeMeals(
+    dashboard,
+    profile.id,
+    eligibleStart,
+    eligibleEnd
+  )
+  mealsPlanned += Math.max(0, freeUsed - freeQuota)
+
   let bonus = 0
   for (
     let week = isoWeekStart(eligibleStart);
@@ -287,7 +329,8 @@ function computeParticipantScore(
     total: Math.round((roundedBase + bonus) * 1000) / 1000,
     streak,
     workout: { earned: workoutEarned, target: workoutTarget },
-    meals: { met: mealsMet, planned: mealsPlanned }
+    meals: { met: mealsMet, planned: mealsPlanned },
+    freeMeals: { used: freeUsed, quota: freeQuota }
   }
 }
 
@@ -295,6 +338,7 @@ export interface DayStatus {
   planned: number
   met: number
   missed: number
+  free: number
   workout: boolean
   future: boolean
   active: boolean
@@ -315,6 +359,7 @@ export function dayStatus(
     planned: meals.length,
     met: entries.filter((entry) => entry?.status === 'met').length,
     missed: entries.filter((entry) => entry?.status === 'missed').length,
+    free: freeMealEntryFor(dashboard, profileId, date)?.count ?? 0,
     workout: Boolean(workoutForDate(dashboard, profileId, date)),
     future: date > today,
     active: Boolean(start && date >= start && date <= today)

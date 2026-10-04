@@ -7,7 +7,7 @@ import {
   todayInTimezone
 } from './lib/dates'
 import { applyMutationLocally } from './lib/mutations'
-import { mealEntryFor, workoutForDate } from './lib/scoring'
+import { freeMealEntryFor, mealEntryFor, workoutForDate } from './lib/scoring'
 import {
   loadDashboardSnapshot,
   loadQueue,
@@ -72,13 +72,17 @@ function applyQueueToDashboard(
 }
 
 function describeMutation(mutation: EntryMutation): string {
-  const action = mutation.type.includes('workout')
-    ? mutation.type === 'clear-workout'
-      ? 'Entrenamiento deshecho'
-      : 'Entrenamiento'
-    : mutation.type === 'clear-meal'
-      ? 'Comida desmarcada'
-      : 'Comida'
+  const action = mutation.type.includes('free')
+    ? mutation.type === 'clear-free'
+      ? 'Comida libre deshecha'
+      : 'Comida libre'
+    : mutation.type.includes('workout')
+      ? mutation.type === 'clear-workout'
+        ? 'Entrenamiento deshecho'
+        : 'Entrenamiento'
+      : mutation.type === 'clear-meal'
+        ? 'Comida desmarcada'
+        : 'Comida'
   return `${action} · ${mutation.entryDate}`
 }
 
@@ -395,6 +399,21 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
     }
   }
 
+  async function setFree(date: string, count: number, note: string | null) {
+    const entry = freeMealEntryFor(dashboardRef.current!, profileId!, date)
+    const base = {
+      id: crypto.randomUUID(),
+      profileId: profileId!,
+      entryDate: date,
+      expectedVersion: entry?.version ?? 0
+    }
+    await enqueue(
+      count > 0
+        ? { ...base, type: 'upsert-free', count, note }
+        : { ...base, type: 'clear-free' }
+    )
+  }
+
   async function savePlan(input: PlanInput) {
     if (!backend || !navigator.onLine)
       throw new Error('El plan necesita conexión para guardarse.')
@@ -708,6 +727,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 celebrateKey={celebrateKey}
                 onMeal={setMeal}
                 onWorkout={(date, done) => void setWorkout(date, done)}
+                onFree={(date, count, note) => void setFree(date, count, note)}
                 onOpenDetails={setDetailsDate}
                 onEditPlan={() => setPlanOpen(true)}
               />
@@ -792,6 +812,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
             celebrateKey={celebrateKey ?? undefined}
             onMeal={setMeal}
             onWorkout={(date, done) => void setWorkout(date, done)}
+            onFree={(date, count, note) => void setFree(date, count, note)}
             onOpenDetails={setDetailsDate}
           />
         </Sheet>
