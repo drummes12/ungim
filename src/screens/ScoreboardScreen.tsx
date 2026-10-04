@@ -1,13 +1,7 @@
 import { formatMonth, monthKeyForDate, previousMonthKey } from '../lib/dates'
 import { computeMonthScore, scoreSeries } from '../lib/scoring'
 import type { Dashboard } from '../lib/types'
-import { Avatar } from '../components/Avatar'
-import {
-  ChartLegend,
-  DuelBar,
-  MonthGrid,
-  TrendChart
-} from '../components/charts'
+import { DuelBar, TrendChart } from '../components/charts'
 
 export function ScoreboardScreen({
   dashboard,
@@ -78,68 +72,39 @@ export function ScoreboardScreen({
         )
       })}
 
-      <div className='split split-even'>
-        <div className='split-main'>
-          <section className='block' aria-label='Carrera'>
-            <h2 className='block-title'>La carrera</h2>
-            <DuelBar
-              participants={score.participants}
-              winnerIds={score.winnerIds}
-            />
-          </section>
+      <div className='split-main'>
+        <section className='block' aria-label='Carrera'>
+          <h2 className='block-title'>La carrera</h2>
+          <DuelBar
+            participants={score.participants}
+            winnerIds={score.winnerIds}
+          />
+        </section>
 
-          <section className='block' aria-label='Evolución'>
-            <h2 className='block-title'>Día a día</h2>
-            <TrendChart
-              series={series}
-              participants={score.participants}
-              monthKey={currentMonth}
-            />
-          </section>
+        <section className='block' aria-label='Evolución'>
+          <h2 className='block-title'>Día a día</h2>
+          <TrendChart
+            series={series}
+            participants={score.participants}
+            monthKey={currentMonth}
+          />
+        </section>
 
-          <section className='block' aria-label='Detalle base'>
-            <h2 className='block-title'>Detalle base</h2>
-            <ul className='rule-list'>
-              {score.participants.map((participant) => (
-                <li key={participant.profileId}>
-                  <span>{participant.name}</span>
-                  <strong className='num'>
-                    {participant.workout.earned}/{participant.workout.target}{' '}
-                    ejercicio · {participant.meals.met}/
-                    {participant.meals.planned} comidas
-                  </strong>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-
-        <div className='split-side'>
-          {score.participants.map((participant) => (
-            <section
-              className='block'
-              key={participant.profileId}
-              aria-label={`Mes de ${participant.name}`}
-            >
-              <h2 className='block-title with-avatar'>
-                <Avatar
-                  name={participant.name}
-                  color={participant.color}
-                  size='sm'
-                />
-                {participant.name}
-              </h2>
-              <MonthGrid
-                dashboard={dashboard}
-                profileId={participant.profileId}
-                monthKey={currentMonth}
-                today={today}
-                color={participant.color}
-              />
-            </section>
-          ))}
-          <ChartLegend />
-        </div>
+        <section className='block' aria-label='Detalle base'>
+          <h2 className='block-title'>Detalle base</h2>
+          <ul className='rule-list'>
+            {score.participants.map((participant) => (
+              <li key={participant.profileId}>
+                <span>{participant.name}</span>
+                <strong className='num'>
+                  {participant.workout.earned}/{participant.workout.target}{' '}
+                  ejercicio · {participant.meals.met}/
+                  {participant.meals.planned} comidas
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </main>
   )
