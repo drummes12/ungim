@@ -1,8 +1,8 @@
 import { formatDay } from '../lib/dates'
-import { computeMonthScore, workoutProgressThisWeek } from '../lib/scoring'
+import { workoutProgressThisWeek } from '../lib/scoring'
 import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
 import { DayEditor } from '../components/DayEditor'
-import { DuelBar, WeekStrip } from '../components/charts'
+import { WeekStrip } from '../components/charts'
 import { DonutIcon } from '../components/icons'
 
 export function TodayScreen({
@@ -27,7 +27,6 @@ export function TodayScreen({
   const profile = dashboard.profiles.find(
     (item) => item.id === dashboard.currentProfileId
   )
-  const result = computeMonthScore(dashboard, today.slice(0, 7), today)
   const progress = workoutProgressThisWeek(
     dashboard,
     dashboard.currentProfileId,
@@ -109,13 +108,6 @@ export function TodayScreen({
             </div>
           </section>
 
-          <section className='block' aria-label='La carrera'>
-            <h2 className='block-title'>La carrera del mes</h2>
-            <DuelBar
-              participants={result.participants}
-              winnerIds={result.winnerIds}
-            />
-          </section>
         </div>
       </div>
     </main>
