@@ -14,7 +14,25 @@ import { PwaNotices } from './components/PwaNotices'
 import { notifySwUpdate } from './lib/pwa'
 import './styles.css'
 
-registerSW({ immediate: true, onNeedReload: notifySwUpdate })
+registerSW({
+  immediate: true,
+  onNeedReload: notifySwUpdate,
+  onRegisteredSW(swUrl, registration) {
+    if (!registration) return
+    const checkForUpdate = async () => {
+      if (registration.installing || !navigator.onLine) return
+      const resp = await fetch(swUrl, {
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-cache' }
+      })
+      if (resp?.status === 200) await registration.update()
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void checkForUpdate()
+    })
+    window.setInterval(() => void checkForUpdate(), 60 * 60 * 1000)
+  }
+})
 
 const FROSTING =
   'M6 32c0-6.5 5-9.6 10.4-8.9 4.3.6 5.6 5.2 10.2 4.7 5-.5 4.6-6.4 10.8-6.4 5.2 0 7 4.3 10.7 4.8 4 .5 9.9-2 9.9 6A26.9 26.9 0 0 1 32 58 26.9 26.9 0 0 1 6 32Z'

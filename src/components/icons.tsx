@@ -128,9 +128,13 @@ export function CloudOffIcon() {
 
 export function HelpIcon() {
   return (
-    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
-      <path d='M9.4 9.2a2.7 2.7 0 1 1 3.9 2.4c-.8.4-1.3.9-1.3 1.8v.5' />
-      <path d='M12 17.4h.01' strokeWidth={3.4} />
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2}>
+      <circle cx='12' cy='12' r='9' />
+      <circle cx='12' cy='12' r='3.6' />
+      <path d='m5.6 5.6 3.9 3.9' />
+      <path d='m14.5 14.5 3.9 3.9' />
+      <path d='m18.4 5.6-3.9 3.9' />
+      <path d='m9.5 14.5-3.9 3.9' />
     </svg>
   )
 }
