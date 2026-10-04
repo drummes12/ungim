@@ -33,6 +33,7 @@ import { Celebration } from './components/Celebration'
 import {
   AccountPanel,
   ConfirmMonthForm,
+  HelpPanel,
   WorkoutDetailsForm
 } from './components/sheets'
 import {
@@ -40,6 +41,7 @@ import {
   BrandIcon,
   CloudOffIcon,
   DonutIcon,
+  HelpIcon,
   HomeIcon,
   TrophyIcon
 } from './components/icons'
@@ -125,6 +127,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const [notice, setNotice] = useState<string | null>(null)
   const [celebrateKey, setCelebrateKey] = useState<string | null>(null)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [installOpen, setInstallOpen] = useState(false)
   const [daySheet, setDaySheet] = useState<string | null>(null)
   const [detailsDate, setDetailsDate] = useState<string | null>(null)
@@ -661,28 +664,38 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
               error={queueError}
             />
           </div>
-          <button
-            className='account-button'
-            type='button'
-            aria-label={`Cuenta de ${profile?.displayName ?? 'usuario'}${partner ? `, en reto con ${partner.displayName}` : ''}`}
-            onClick={() => setAccountOpen(true)}
-          >
-            <span className='avatar-stack'>
-              {partner && (
+          <div className='topbar-actions'>
+            <button
+              className='help-button'
+              type='button'
+              aria-label='¿Cómo funciona?'
+              onClick={() => setHelpOpen(true)}
+            >
+              <HelpIcon />
+            </button>
+            <button
+              className='account-button'
+              type='button'
+              aria-label={`Cuenta de ${profile?.displayName ?? 'usuario'}${partner ? `, en reto con ${partner.displayName}` : ''}`}
+              onClick={() => setAccountOpen(true)}
+            >
+              <span className='avatar-stack'>
+                {partner && (
+                  <Avatar
+                    name={partner.displayName}
+                    color={partner.avatarColor}
+                    size='sm'
+                  />
+                )}
                 <Avatar
-                  name={partner.displayName}
-                  color={partner.avatarColor}
+                  name={profile?.displayName ?? '?'}
+                  color={profile?.avatarColor ?? '#14110f'}
                   size='sm'
                 />
-              )}
-              <Avatar
-                name={profile?.displayName ?? '?'}
-                color={profile?.avatarColor ?? '#14110f'}
-                size='sm'
-              />
-            </span>
-            <span className='account-name'>{profile?.displayName}</span>
-          </button>
+              </span>
+              <span className='account-name'>{profile?.displayName}</span>
+            </button>
+          </div>
         </header>
       </div>
 
@@ -778,6 +791,10 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 setAccountOpen(false)
                 setInstallOpen(true)
               }}
+              onHelp={() => {
+                setAccountOpen(false)
+                setHelpOpen(true)
+              }}
               onSignOut={signOut}
             />
           )}
@@ -838,6 +855,16 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       {installOpen && (
         <Sheet title='Instalar la app' onClose={() => setInstallOpen(false)}>
           <InstallHelp />
+        </Sheet>
+      )}
+
+      {helpOpen && (
+        <Sheet
+          title='¿Cómo funciona?'
+          wide
+          onClose={() => setHelpOpen(false)}
+        >
+          <HelpPanel />
         </Sheet>
       )}
 

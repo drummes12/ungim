@@ -126,6 +126,15 @@ export function CloudOffIcon() {
   )
 }
 
+export function HelpIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
+      <path d='M9.4 9.2a2.7 2.7 0 1 1 3.9 2.4c-.8.4-1.3.9-1.3 1.8v.5' />
+      <path d='M12 17.4h.01' strokeWidth={3.4} />
+    </svg>
+  )
+}
+
 export function SyncIcon() {
   return (
     <svg {...base} fill='none' stroke='currentColor' strokeWidth={2}>
