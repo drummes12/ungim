@@ -1748,6 +1748,11 @@ button.cell:active {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
+}
+
+.routine-sets .routine-moves {
+  align-self: flex-start;
 }
 
 .set-pill {
@@ -1782,13 +1787,15 @@ button.cell:active {
 .routine-fields {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 6px 16px;
   align-items: flex-end;
+  justify-content: center;
 }
 
 .routine-field {
   display: grid;
   gap: 0;
+  justify-items: center;
 }
 
 .routine-field > span {
