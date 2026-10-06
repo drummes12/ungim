@@ -1711,6 +1711,11 @@ button.cell:active {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
+  transition: background-color 220ms ease-out;
+}
+
+.routine-ex.is-moving {
+  background: var(--yellow);
 }
 
 .routine-head {
@@ -1817,7 +1822,7 @@ button.cell:active {
 }
 
 .routine-field .stepper strong {
-  min-width: 5ch;
+  min-width: 6ch;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -2232,7 +2237,7 @@ button.cell:active {
   padding: 10px 12px;
   border: 2px solid var(--ink);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--paper);
   color: var(--ink);
   text-align: left;
 }

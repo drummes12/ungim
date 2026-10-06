@@ -22,6 +22,7 @@ import {
   CloseIcon,
   DumbbellIcon,
   ExtraIcon,
+  PencilIcon,
   TreatIcon
 } from './icons'
 
@@ -179,10 +180,12 @@ export function DayEditor({
             {editable && (
               <button
                 type='button'
-                className='btn-link'
+                className='icon-flat'
+                aria-label={workout ? 'Editar detalle' : 'Tipo y nota'}
+                title={workout ? 'Editar detalle' : 'Tipo y nota'}
                 onClick={() => onOpenDetails(date)}
               >
-                {workout ? 'Editar detalle' : 'Tipo y nota'}
+                <PencilIcon />
               </button>
             )}
             <button

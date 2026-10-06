@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   addTemplate,
   removeTemplate,
@@ -145,6 +145,8 @@ export function RoutinePanel({
   const [activeId, setActiveId] = useState<number | null>(null)
   const [day, setDay] = useState<DayExercise[]>([])
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [movedId, setMovedId] = useState<number | null>(null)
+  const moveTimer = useRef<number | undefined>(undefined)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<TemplateExercise>({
     name: '',
@@ -251,6 +253,9 @@ export function RoutinePanel({
       ;[next[from], next[to]] = [next[to], next[from]]
       return next
     })
+    setMovedId(id)
+    window.clearTimeout(moveTimer.current)
+    moveTimer.current = window.setTimeout(() => setMovedId(null), 900)
   }
 
   function add() {
@@ -531,7 +536,7 @@ export function RoutinePanel({
           const editing = editingId === exercise.id
           return (
             <li
-              className={`routine-ex${exercise.skipped ? ' is-skipped' : ''}`}
+              className={`routine-ex${exercise.skipped ? ' is-skipped' : ''}${movedId === exercise.id ? ' is-moving' : ''}`}
               key={exercise.id}
             >
               <div className='routine-head'>

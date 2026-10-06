@@ -92,6 +92,15 @@ export function ChevronIcon() {
   )
 }
 
+export function PencilIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
+      <path d='M4 20l1.1-4.1L16.4 4.6a2 2 0 0 1 2.9 0l.1.1a2 2 0 0 1 0 2.9L8.1 18.9 4 20z' />
+      <path d='M14.5 6.5l3 3' />
+    </svg>
+  )
+}
+
 export function TrashIcon() {
   return (
     <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
