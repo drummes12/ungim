@@ -13,6 +13,7 @@ import {
   CloudOffIcon,
   DonutIcon,
   DumbbellIcon,
+  ExtraIcon,
   HomeIcon,
   TreatIcon,
   TrophyIcon
@@ -161,6 +162,11 @@ const helpTopics: Array<{
     body: 'Tu plan marca cuántos días por semana toca entrenar; el objetivo del mes se prorratea. «Detalle» guarda el tipo de sesión y una nota.'
   },
   {
+    title: 'Actividad extra',
+    Icon: ExtraIcon,
+    body: 'Lo que sumes por fuera del plan: una caminata, movilidad u otro esfuerzo. Es opcional y no cuenta como entreno ni afecta la semana perfecta. Mueve el control según el esfuerzo: suave +0.5, media +1, fuerte +2 — hasta +6 al mes de bonus.'
+  },
+  {
     title: 'Semana perfecta',
     Icon: DonutIcon,
     body: 'De lunes a domingo: todas las comidas cumplidas, el objetivo de entrenos y cero libres. Cada semana perfecta suma +2 de bonus (máximo +10) y una rosquilla.'
@@ -173,7 +179,7 @@ const helpTopics: Array<{
   {
     title: 'El calendario',
     Icon: CalendarIcon,
-    body: 'El relleno del día sube con las comidas cumplidas, el punto marca entrenamiento y el punto rosa marca libres. Un día glaseado es un día perfecto.'
+    body: 'El relleno del día sube con las comidas cumplidas, el punto marca entrenamiento, el punto rosa marca libres y el rombo menta marca actividad extra. Un día glaseado es un día perfecto.'
   },
   {
     title: 'Cierre de mes',

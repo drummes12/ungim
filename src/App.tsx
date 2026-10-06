@@ -7,7 +7,12 @@ import {
   todayInTimezone
 } from './lib/dates'
 import { applyMutationLocally } from './lib/mutations'
-import { freeMealEntryFor, mealEntryFor, workoutForDate } from './lib/scoring'
+import {
+  extraEntryFor,
+  freeMealEntryFor,
+  mealEntryFor,
+  workoutForDate
+} from './lib/scoring'
 import {
   loadDashboardSnapshot,
   loadQueue,
@@ -19,6 +24,7 @@ import type {
   BackendApi,
   Dashboard,
   EntryMutation,
+  ExtraLevel,
   MealSlot,
   MealStatus,
   PlanInput,
@@ -74,17 +80,29 @@ function applyQueueToDashboard(
 }
 
 function describeMutation(mutation: EntryMutation): string {
-  const action = mutation.type.includes('free')
-    ? mutation.type === 'clear-free'
-      ? 'Comida libre deshecha'
-      : 'Comida libre'
-    : mutation.type.includes('workout')
-      ? mutation.type === 'clear-workout'
-        ? 'Entrenamiento deshecho'
-        : 'Entrenamiento'
-      : mutation.type === 'clear-meal'
-        ? 'Comida desmarcada'
-        : 'Comida'
+  const kind = mutation.type.includes('extra')
+    ? 'extra'
+    : mutation.type.includes('free')
+      ? 'free'
+      : mutation.type.includes('workout')
+        ? 'workout'
+        : 'meal'
+  const action =
+    kind === 'extra'
+      ? mutation.type === 'clear-extra'
+        ? 'Actividad extra deshecha'
+        : 'Actividad extra'
+      : kind === 'free'
+        ? mutation.type === 'clear-free'
+          ? 'Comida libre deshecha'
+          : 'Comida libre'
+        : kind === 'workout'
+          ? mutation.type === 'clear-workout'
+            ? 'Entrenamiento deshecho'
+            : 'Entrenamiento'
+          : mutation.type === 'clear-meal'
+            ? 'Comida desmarcada'
+            : 'Comida'
   return `${action} · ${mutation.entryDate}`
 }
 
@@ -417,6 +435,27 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
     )
   }
 
+  async function setExtra(
+    date: string,
+    entry: {
+      level: ExtraLevel
+      note: string | null
+    } | null
+  ) {
+    const existing = extraEntryFor(dashboardRef.current!, profileId!, date)
+    const base = {
+      id: crypto.randomUUID(),
+      profileId: profileId!,
+      entryDate: date,
+      expectedVersion: existing?.version ?? 0
+    }
+    await enqueue(
+      entry
+        ? { ...base, type: 'upsert-extra', ...entry }
+        : { ...base, type: 'clear-extra' }
+    )
+  }
+
   async function savePlan(input: PlanInput) {
     if (!backend || !navigator.onLine)
       throw new Error('El plan necesita conexión para guardarse.')
@@ -741,6 +780,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 onMeal={setMeal}
                 onWorkout={(date, done) => void setWorkout(date, done)}
                 onFree={(date, count, note) => void setFree(date, count, note)}
+                onExtra={(date, entry) => void setExtra(date, entry)}
                 onOpenDetails={setDetailsDate}
                 onEditPlan={() => setPlanOpen(true)}
               />
@@ -830,6 +870,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
             onMeal={setMeal}
             onWorkout={(date, done) => void setWorkout(date, done)}
             onFree={(date, count, note) => void setFree(date, count, note)}
+            onExtra={(date, entry) => void setExtra(date, entry)}
             onOpenDetails={setDetailsDate}
           />
         </Sheet>

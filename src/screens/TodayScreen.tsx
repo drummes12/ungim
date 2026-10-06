@@ -1,6 +1,11 @@
 import { formatDay } from '../lib/dates'
 import { workoutProgressThisWeek } from '../lib/scoring'
-import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
+import type {
+  Dashboard,
+  ExtraLevel,
+  MealSlot,
+  MealStatus
+} from '../lib/types'
 import { DayEditor } from '../components/DayEditor'
 import { WeekStrip } from '../components/charts'
 import { DonutIcon } from '../components/icons'
@@ -12,6 +17,7 @@ export function TodayScreen({
   onMeal,
   onWorkout,
   onFree,
+  onExtra,
   onOpenDetails,
   onEditPlan
 }: {
@@ -21,6 +27,13 @@ export function TodayScreen({
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
   onFree: (date: string, count: number, note: string | null) => void
+  onExtra: (
+    date: string,
+    entry: {
+      level: ExtraLevel
+      note: string | null
+    } | null
+  ) => void
   onOpenDetails: (date: string) => void
   onEditPlan: () => void
 }) {
@@ -74,6 +87,7 @@ export function TodayScreen({
             onMeal={onMeal}
             onWorkout={onWorkout}
             onFree={onFree}
+            onExtra={onExtra}
             onOpenDetails={onOpenDetails}
           />
         </div>
