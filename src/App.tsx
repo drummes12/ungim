@@ -6,7 +6,11 @@ import {
   monthKeyForDate,
   todayInTimezone
 } from './lib/dates'
-import { applyMutationLocally, mergePendingMutation } from './lib/mutations'
+import {
+  applyMutationLocally,
+  expectedVersionFor,
+  mergePendingMutation
+} from './lib/mutations'
 import { routineDayFor } from './lib/routines'
 import {
   extraEntryFor,
@@ -211,6 +215,9 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       return
     syncingRef.current = true
     try {
+      // Mutations already rebased onto fresh server state this pass; a second
+      // revision_conflict is a real failure, not a stale version.
+      const rebasedIds = new Set<string>()
       for (;;) {
         const item = queueRef.current.find(
           (queued) => queued.status === 'pending'
@@ -228,13 +235,47 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
           await updateQueue(nextQueue, profileId)
           await saveDashboardSnapshot(profileId, remote).catch(() => undefined)
         } catch (cause) {
+          const message =
+            cause instanceof Error ? cause.message : 'No sincronizó'
+          if (
+            !rebasedIds.has(item.mutation.id) &&
+            message.includes('revision_conflict')
+          ) {
+            // Rebase the stale expectedVersion onto the server's current row
+            // version and let the loop retry the mutation once in place.
+            rebasedIds.add(item.mutation.id)
+            try {
+              const remote = await backend.loadDashboard()
+              let mutation = item.mutation
+              if ('expectedVersion' in mutation) {
+                mutation = {
+                  ...mutation,
+                  expectedVersion: expectedVersionFor(mutation, remote)
+                }
+              }
+              const nextQueue = queueRef.current.map((queued) =>
+                queued.mutation.id === item.mutation.id
+                  ? { ...queued, mutation }
+                  : queued
+              )
+              const visible = applyQueueToDashboard(remote, nextQueue)
+              dashboardRef.current = visible
+              setDashboard(visible)
+              await saveDashboardSnapshot(profileId, remote).catch(
+                () => undefined
+              )
+              await updateQueue(nextQueue, profileId)
+              continue
+            } catch {
+              // fall through and mark the item as failed
+            }
+          }
           const nextQueue = queueRef.current.map((queued) =>
             queued.mutation.id === item.mutation.id
               ? {
                   ...queued,
                   status: 'error' as const,
-                  error:
-                    cause instanceof Error ? cause.message : 'No sincronizó'
+                  error: message
                 }
               : queued
           )

@@ -42,6 +42,70 @@ export function mergePendingMutation(
   return next
 }
 
+// Server-side row version for a mutation, used to rebase expectedVersion
+// after a revision_conflict so the retry applies on top of current data.
+export function expectedVersionFor(
+  mutation: EntryMutation,
+  dashboard: Dashboard,
+): number | null {
+  switch (mutation.type) {
+    case 'upsert-meal':
+    case 'clear-meal':
+      return (
+        dashboard.mealEntries.find(
+          (e) =>
+            e.profileId === mutation.profileId &&
+            e.mealSlotId === mutation.mealSlotId &&
+            e.entryDate === mutation.entryDate,
+        )?.version ?? 0
+      )
+    case 'upsert-workout':
+    case 'clear-workout':
+      return (
+        dashboard.workoutEntries.find(
+          (e) =>
+            e.profileId === mutation.profileId &&
+            e.entryDate === mutation.entryDate,
+        )?.version ?? 0
+      )
+    case 'upsert-free':
+    case 'clear-free':
+      return (
+        dashboard.freeMealEntries.find(
+          (e) =>
+            e.profileId === mutation.profileId &&
+            e.entryDate === mutation.entryDate,
+        )?.version ?? 0
+      )
+    case 'upsert-extra':
+    case 'clear-extra':
+      return (
+        dashboard.extraEntries.find(
+          (e) =>
+            e.profileId === mutation.profileId &&
+            e.entryDate === mutation.entryDate,
+        )?.version ?? 0
+      )
+    case 'upsert-routine':
+    case 'delete-routine':
+      return (
+        dashboard.routines.find((r) => r.id === mutation.routineId)?.version ??
+        null
+      )
+    case 'upsert-routine-day':
+    case 'clear-routine-day':
+      return (
+        dashboard.routineDays.find(
+          (d) =>
+            d.profileId === mutation.profileId &&
+            d.entryDate === mutation.entryDate,
+        )?.version ?? 0
+      )
+    case 'set-routine-weekday':
+      return null
+  }
+}
+
 export function applyMutationLocally(dashboard: Dashboard, mutation: EntryMutation): Dashboard {
   if (mutation.type === 'upsert-meal') {
     const index = dashboard.mealEntries.findIndex(
