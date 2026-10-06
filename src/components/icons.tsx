@@ -92,6 +92,15 @@ export function ChevronIcon() {
   )
 }
 
+export function TrashIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
+      <path d='M4 7h16M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2M6.5 7l.8 12a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1l.8-12' />
+      <path d='M10 11v5.5M14 11v5.5' />
+    </svg>
+  )
+}
+
 export function CloudCheckIcon() {
   return (
     <svg

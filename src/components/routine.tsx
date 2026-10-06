@@ -9,7 +9,8 @@ import {
   type RoutineTemplate,
   type TemplateExercise
 } from '../lib/routines'
-import { CheckIcon, ChevronIcon } from './icons'
+import { Sheet } from './Sheet'
+import { CheckIcon, ChevronIcon, TrashIcon } from './icons'
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
@@ -545,24 +546,6 @@ export function RoutinePanel({
                 <div className='routine-tools'>
                   <button
                     type='button'
-                    className='routine-move is-up'
-                    aria-label='Subir'
-                    disabled={index === 0}
-                    onClick={() => move(exercise.id, -1)}
-                  >
-                    <ChevronIcon />
-                  </button>
-                  <button
-                    type='button'
-                    className='routine-move'
-                    aria-label='Bajar'
-                    disabled={index === day.length - 1}
-                    onClick={() => move(exercise.id, 1)}
-                  >
-                    <ChevronIcon />
-                  </button>
-                  <button
-                    type='button'
                     className='btn-link'
                     onClick={() =>
                       patch(exercise.id, { skipped: !exercise.skipped })
@@ -597,6 +580,26 @@ export function RoutinePanel({
                     {setIndex + 1}
                   </button>
                 ))}
+                <span className='routine-moves'>
+                  <button
+                    type='button'
+                    className='routine-move is-up'
+                    aria-label='Subir'
+                    disabled={index === 0}
+                    onClick={() => move(exercise.id, -1)}
+                  >
+                    <ChevronIcon />
+                  </button>
+                  <button
+                    type='button'
+                    className='routine-move'
+                    aria-label='Bajar'
+                    disabled={index === day.length - 1}
+                    onClick={() => move(exercise.id, 1)}
+                  >
+                    <ChevronIcon />
+                  </button>
+                </span>
               </div>
               {editing && (
                 <ExerciseFields
@@ -707,7 +710,46 @@ export function RoutinePanel({
 
 export function RoutineManager() {
   const { templates, weekday } = useRoutineState()
+  const [open, setOpen] = useState(false)
+  const assigned = DAY_LABELS.map((label, index) => {
+    const template = templates.find((item) => item.id === weekday[index])
+    return template ? `${label}: ${template.name}` : null
+  })
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <fieldset className='routine-manager'>
+      <legend>Rutinas de entrenamiento</legend>
+      <p className='field-note'>
+        {templates.length} rutina{templates.length === 1 ? '' : 's'}
+        {assigned ? ` · ${assigned}` : ' · sin asignar'} — prueba visual, aún
+        no se guarda con el plan.
+      </p>
+      <button
+        type='button'
+        className='btn'
+        onClick={() => setOpen(true)}
+      >
+        Editar rutinas
+      </button>
+      {open && (
+        <Sheet title='Rutinas' onClose={() => setOpen(false)}>
+          <RoutineEditor />
+        </Sheet>
+      )}
+    </fieldset>
+  )
+}
+
+function RoutineEditor() {
+  const { templates, weekday } = useRoutineState()
+  const [selDay, setSelDay] = useState(() => weekdayIndex(new Date()))
   const [openId, setOpenId] = useState<number | null>(null)
+  const [editEx, setEditEx] = useState<number | null>(null)
+  const openTpl = templates.find((item) => item.id === openId)
+  const editExercise =
+    openTpl && editEx !== null ? openTpl.exercises[editEx] : undefined
 
   function patchExercise(
     template: RoutineTemplate,
@@ -721,139 +763,210 @@ export function RoutineManager() {
     })
   }
 
-  function stopSubmit(event: { key: string; preventDefault: () => void }) {
-    if (event.key === 'Enter') event.preventDefault()
+  function templateName(id: number | null) {
+    return templates.find((item) => item.id === id)?.name ?? 'Libre'
+  }
+
+  if (openTpl && editExercise && editEx !== null) {
+    return (
+      <div className='stack'>
+        <div className='run-head'>
+          <button
+            type='button'
+            className='btn-link'
+            onClick={() => setEditEx(null)}
+          >
+            ← Ejercicios
+          </button>
+          <button
+            type='button'
+            className='btn btn-primary'
+            onClick={() => setEditEx(null)}
+          >
+            Listo
+          </button>
+        </div>
+        <input
+          className='input-ghost'
+          aria-label='Nombre del ejercicio'
+          value={editExercise.name}
+          placeholder='Ejercicio'
+          maxLength={60}
+          onChange={(event) =>
+            patchExercise(openTpl, editEx, { name: event.target.value })
+          }
+        />
+        <ExerciseFields
+          exercise={editExercise}
+          onChange={(changes) => patchExercise(openTpl, editEx, changes)}
+        />
+        <button
+          type='button'
+          className='btn-quiet'
+          onClick={() => {
+            updateTemplate(openTpl.id, {
+              exercises: openTpl.exercises.filter(
+                (_, index) => index !== editEx
+              )
+            })
+            setEditEx(null)
+          }}
+        >
+          Eliminar ejercicio
+        </button>
+      </div>
+    )
+  }
+
+  if (openTpl) {
+    return (
+      <div className='stack'>
+        <div className='run-head'>
+          <button
+            type='button'
+            className='btn-link'
+            onClick={() => setOpenId(null)}
+          >
+            ← Rutinas
+          </button>
+          <button
+            type='button'
+            className='btn btn-primary'
+            onClick={() => setOpenId(null)}
+          >
+            Listo
+          </button>
+        </div>
+        <input
+          className='input-ghost'
+          aria-label='Nombre de la rutina'
+          value={openTpl.name}
+          placeholder='Nombre de la rutina'
+          maxLength={40}
+          onChange={(event) =>
+            updateTemplate(openTpl.id, { name: event.target.value })
+          }
+        />
+        <ul className='tpl-exlist'>
+          {openTpl.exercises.map((exercise, index) => (
+            <li key={index}>
+              <button
+                type='button'
+                className='tpl-ex-row'
+                onClick={() => setEditEx(index)}
+              >
+                <strong>{exercise.name || 'Sin nombre'}</strong>
+                <span>
+                  {exercise.sets} × {exercise.reps} · {kg(exercise.weight)}
+                </span>
+                <ChevronIcon />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button
+          type='button'
+          className='btn'
+          onClick={() =>
+            updateTemplate(openTpl.id, {
+              exercises: [
+                ...openTpl.exercises,
+                { name: '', sets: 3, reps: 10, weight: 20 }
+              ]
+            })
+          }
+        >
+          + ejercicio
+        </button>
+        <button
+          type='button'
+          className='btn-quiet'
+          onClick={() => {
+            removeTemplate(openTpl.id)
+            setOpenId(null)
+          }}
+        >
+          Eliminar rutina
+        </button>
+      </div>
+    )
   }
 
   return (
-    <fieldset className='routine-manager'>
-      <legend>Rutinas de entrenamiento</legend>
-      <p className='field-note'>
+    <div className='stack'>
+      <p className='routine-note'>
         Asigna una rutina a cada día (opcional — en el día puedes escoger otra
-        o ir libre). Prueba visual: las rutinas aún no se guardan con el plan.
+        o ir libre) y edita los ejercicios de cada rutina. Prueba visual: aún
+        no se guarda con el plan.
       </p>
-      <div className='routine-week'>
+      <div
+        className='day-strip'
+        role='group'
+        aria-label='Días de la semana'
+      >
         {DAY_LABELS.map((label, index) => (
-          <label key={label} className='routine-weekday'>
+          <button
+            key={label}
+            type='button'
+            className={`day-chip${index === selDay ? ' is-active' : ''}${weekday[index] ? ' has-routine' : ''}`}
+            aria-pressed={index === selDay}
+            onClick={() => setSelDay(index)}
+          >
             <span>{label}</span>
-            <select
-              value={weekday[index] ?? ''}
-              onChange={(event) =>
-                setWeekdayRoutine(
-                  index,
-                  event.target.value ? Number(event.target.value) : null
-                )
-              }
-            >
-              <option value=''>Libre</option>
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            <small>{templateName(weekday[index])}</small>
+          </button>
         ))}
       </div>
-      <ul className='routine-tpls'>
-        {templates.map((template) => {
-          const open = openId === template.id
-          return (
-            <li className='routine-tpl' key={template.id}>
-              <div className='routine-head'>
-                <div className='routine-copy'>
-                  <strong>{template.name}</strong>
-                  <p>
-                    {template.exercises.length} ejercicio
-                    {template.exercises.length === 1 ? '' : 's'}
-                  </p>
-                </div>
-                <button
-                  type='button'
-                  className='btn-link'
-                  onClick={() => setOpenId(open ? null : template.id)}
-                >
-                  {open ? 'Listo' : 'Editar'}
-                </button>
-              </div>
-              {open && (
-                <>
-                  <input
-                    aria-label='Nombre de la rutina'
-                    value={template.name}
-                    maxLength={40}
-                    onKeyDown={stopSubmit}
-                    onChange={(event) =>
-                      updateTemplate(template.id, {
-                        name: event.target.value
-                      })
-                    }
-                  />
-                  {template.exercises.map((exercise, index) => (
-                    <div className='tpl-ex' key={index}>
-                      <div className='routine-head'>
-                        <input
-                          aria-label={`Ejercicio ${index + 1}`}
-                          className='tpl-ex-name'
-                          value={exercise.name}
-                          placeholder='Ejercicio'
-                          maxLength={60}
-                          onKeyDown={stopSubmit}
-                          onChange={(event) =>
-                            patchExercise(template, index, {
-                              name: event.target.value
-                            })
-                          }
-                        />
-                        <button
-                          type='button'
-                          className='icon-remove'
-                          aria-label={`Quitar ${exercise.name}`}
-                          onClick={() =>
-                            updateTemplate(template.id, {
-                              exercises: template.exercises.filter(
-                                (_, itemIndex) => itemIndex !== index
-                              )
-                            })
-                          }
-                        >
-                          Quitar
-                        </button>
-                      </div>
-                      <ExerciseFields
-                        exercise={exercise}
-                        onChange={(changes) =>
-                          patchExercise(template, index, changes)
-                        }
-                      />
-                    </div>
-                  ))}
-                  <button
-                    type='button'
-                    className='btn'
-                    onClick={() =>
-                      updateTemplate(template.id, {
-                        exercises: [
-                          ...template.exercises,
-                          { name: '', sets: 3, reps: 10, weight: 20 }
-                        ]
-                      })
-                    }
-                  >
-                    + ejercicio
-                  </button>
-                  <button
-                    type='button'
-                    className='btn-link'
-                    onClick={() => removeTemplate(template.id)}
-                  >
-                    Eliminar rutina
-                  </button>
-                </>
-              )}
-            </li>
-          )
-        })}
+      <div
+        className='routine-chips'
+        role='group'
+        aria-label={`Rutina para ${DAY_LABELS[selDay]}`}
+      >
+        <button
+          type='button'
+          className={`routine-chip${weekday[selDay] === null ? ' is-active' : ''}`}
+          aria-pressed={weekday[selDay] === null}
+          onClick={() => setWeekdayRoutine(selDay, null)}
+        >
+          Libre
+        </button>
+        {templates.map((template) => (
+          <button
+            key={template.id}
+            type='button'
+            className={`routine-chip${weekday[selDay] === template.id ? ' is-active' : ''}`}
+            aria-pressed={weekday[selDay] === template.id}
+            onClick={() => setWeekdayRoutine(selDay, template.id)}
+          >
+            {template.name}
+          </button>
+        ))}
+      </div>
+      <ul className='tpl-list'>
+        {templates.map((template) => (
+          <li className='tpl-row' key={template.id}>
+            <button
+              type='button'
+              className='tpl-open'
+              onClick={() => setOpenId(template.id)}
+            >
+              <strong>{template.name}</strong>
+              <span>
+                {template.exercises.length} ejercicio
+                {template.exercises.length === 1 ? '' : 's'}
+              </span>
+              <ChevronIcon />
+            </button>
+            <button
+              type='button'
+              className='icon-flat'
+              aria-label={`Eliminar ${template.name}`}
+              onClick={() => removeTemplate(template.id)}
+            >
+              <TrashIcon />
+            </button>
+          </li>
+        ))}
       </ul>
       <button
         type='button'
@@ -865,6 +978,6 @@ export function RoutineManager() {
       >
         + Nueva rutina
       </button>
-    </fieldset>
+    </div>
   )
 }
