@@ -237,7 +237,8 @@ fieldset {
 
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled),
-  .stepper button:hover {
+  .free-card .stepper button:hover,
+  .workout-card .stepper button:hover {
     transform: translate(-1px, -1px);
     box-shadow: 4px 4px 0 var(--ink);
   }
@@ -1751,8 +1752,8 @@ button.cell:active {
 
 .set-pill {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   aspect-ratio: 1;
   padding: 0;
@@ -1806,14 +1807,15 @@ button.cell:active {
 }
 
 .routine-field .stepper button {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
   box-shadow: none;
+  font-size: 1.35rem;
 }
 
 .routine-field .stepper button:active:not(:disabled) {
@@ -1822,7 +1824,7 @@ button.cell:active {
 }
 
 .routine-field .stepper strong {
-  min-width: 6ch;
+  min-width: 8ch;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -1875,7 +1877,7 @@ button.cell:active {
 
 .routine-moves {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   margin-left: auto;
 }
 
@@ -2048,8 +2050,8 @@ button.cell:active {
 
 .routine-move {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   padding: 0;
   place-items: center;
@@ -2060,8 +2062,8 @@ button.cell:active {
 }
 
 .routine-move svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   transform: rotate(90deg);
 }
 
@@ -2194,8 +2196,8 @@ button.cell:active {
 
 .icon-flat {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   padding: 0;
   place-items: center;
