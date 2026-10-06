@@ -787,7 +787,6 @@ function RoutineEditor() {
           </button>
         </div>
         <input
-          className='input-ghost'
           aria-label='Nombre del ejercicio'
           value={editExercise.name}
           placeholder='Ejercicio'
@@ -838,7 +837,6 @@ function RoutineEditor() {
           </button>
         </div>
         <input
-          className='input-ghost'
           aria-label='Nombre de la rutina'
           value={openTpl.name}
           placeholder='Nombre de la rutina'

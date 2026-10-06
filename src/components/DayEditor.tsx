@@ -172,26 +172,28 @@ export function DayEditor({
           </p>
         </div>
         <div className='workout-actions'>
-          <button
-            type='button'
-            className={workout ? 'btn' : 'btn btn-primary'}
-            disabled={!editable}
-            onClick={() => onWorkout(date, !workout)}
-          >
-            {workout ? 'Deshacer' : 'Entrené'}
-          </button>
-          {editable && (
-            <button
-              type='button'
-              className='btn-link'
-              onClick={() => onOpenDetails(date)}
-            >
-              {workout ? 'Editar detalle' : 'Tipo y nota'}
-            </button>
-          )}
-          <button type='button' className='btn-link' onClick={onOpenRoutine}>
+          <button type='button' className='btn' onClick={onOpenRoutine}>
             Rutina
           </button>
+          <div className='workout-actions-end'>
+            {editable && (
+              <button
+                type='button'
+                className='btn-link'
+                onClick={() => onOpenDetails(date)}
+              >
+                {workout ? 'Editar detalle' : 'Tipo y nota'}
+              </button>
+            )}
+            <button
+              type='button'
+              className={workout ? 'btn' : 'btn btn-primary'}
+              disabled={!editable}
+              onClick={() => onWorkout(date, !workout)}
+            >
+              {workout ? 'Deshacer' : 'Entrené'}
+            </button>
+          </div>
         </div>
       </div>
 
