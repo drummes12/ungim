@@ -7,7 +7,7 @@ import {
   todayInTimezone
 } from '../lib/dates'
 import { activePlanForDate } from '../lib/scoring'
-import type { Dashboard, PlanInput } from '../lib/types'
+import type { Dashboard, PlanInput, RoutineExercise } from '../lib/types'
 import { CalendarIcon } from '../components/icons'
 import { RoutineManager } from '../components/routine'
 
@@ -16,13 +16,23 @@ export function PlanScreen({
   onSave,
   onCancel,
   onSaved,
-  embedded = false
+  embedded = false,
+  onRoutine
 }: {
   dashboard: Dashboard
   onSave: (input: PlanInput) => Promise<void>
   onCancel?: () => void
   onSaved?: () => void
   embedded?: boolean
+  onRoutine: {
+    saveTemplate: (
+      id: string | null,
+      name: string,
+      exercises: RoutineExercise[]
+    ) => string
+    deleteTemplate: (id: string) => void
+    setWeekday: (weekday: number, routineId: string | null) => void
+  }
 }) {
   const profile = dashboard.profiles.find(
     (item) => item.id === dashboard.currentProfileId
@@ -272,7 +282,13 @@ export function PlanScreen({
           </button>
         </fieldset>
 
-        <RoutineManager />
+        <RoutineManager
+          templates={dashboard.routines}
+          weekday={dashboard.routineSchedule}
+          onSaveTemplate={onRoutine.saveTemplate}
+          onDeleteTemplate={onRoutine.deleteTemplate}
+          onSetWeekday={onRoutine.setWeekday}
+        />
 
         {error && (
           <p className='form-error' role='alert'>

@@ -7,6 +7,7 @@ import {
   todayInTimezone
 } from './lib/dates'
 import { applyMutationLocally } from './lib/mutations'
+import { routineDayFor } from './lib/routines'
 import {
   extraEntryFor,
   freeMealEntryFor,
@@ -28,7 +29,9 @@ import type {
   MealSlot,
   MealStatus,
   PlanInput,
-  QueuedMutation
+  QueuedMutation,
+  RoutineDayExercise,
+  RoutineExercise
 } from './lib/types'
 import { Avatar } from './components/Avatar'
 import { DayEditor } from './components/DayEditor'
@@ -81,6 +84,15 @@ function applyQueueToDashboard(
 }
 
 function describeMutation(mutation: EntryMutation): string {
+  if (mutation.type === 'upsert-routine')
+    return `Rutina guardada · ${mutation.name}`
+  if (mutation.type === 'delete-routine') return 'Rutina eliminada'
+  if (mutation.type === 'set-routine-weekday')
+    return `Rutina semanal · ${['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][mutation.weekday]}`
+  if (mutation.type === 'upsert-routine-day')
+    return `Rutina del día · ${mutation.entryDate}`
+  if (mutation.type === 'clear-routine-day')
+    return `Rutina del día borrada · ${mutation.entryDate}`
   const kind = mutation.type.includes('extra')
     ? 'extra'
     : mutation.type.includes('free')
@@ -458,6 +470,80 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
     )
   }
 
+  async function saveRoutineDay(
+    date: string,
+    payload: {
+      routineId: string | null
+      exercises: RoutineDayExercise[]
+      completed: boolean
+    }
+  ) {
+    if (!profileId) return
+    const existing = routineDayFor(dashboardRef.current!, profileId, date)
+    await enqueue({
+      id: crypto.randomUUID(),
+      type: 'upsert-routine-day',
+      profileId,
+      entryDate: date,
+      routineId: payload.routineId,
+      exercises: payload.exercises,
+      completed: payload.completed,
+      expectedVersion: existing?.version ?? 0
+    })
+  }
+
+  function saveRoutineTemplate(
+    routineId: string | null,
+    name: string,
+    exercises: RoutineExercise[]
+  ): string {
+    const existing = routineId
+      ? dashboardRef.current?.routines.find(
+          (routine) => routine.id === routineId
+        )
+      : null
+    const id = routineId ?? crypto.randomUUID()
+    void enqueue({
+      id: crypto.randomUUID(),
+      type: 'upsert-routine',
+      profileId: profileId!,
+      routineId: id,
+      name,
+      exercises,
+      expectedVersion: existing?.version ?? null
+    })
+    return id
+  }
+
+  function deleteRoutineTemplate(routineId: string) {
+    const existing = dashboardRef.current?.routines.find(
+      (routine) => routine.id === routineId
+    )
+    void enqueue({
+      id: crypto.randomUUID(),
+      type: 'delete-routine',
+      profileId: profileId!,
+      routineId,
+      expectedVersion: existing?.version ?? null
+    })
+  }
+
+  function setRoutineWeekday(weekday: number, routineId: string | null) {
+    void enqueue({
+      id: crypto.randomUUID(),
+      type: 'set-routine-weekday',
+      profileId: profileId!,
+      weekday,
+      routineId
+    })
+  }
+
+  const routineActions = {
+    saveTemplate: saveRoutineTemplate,
+    deleteTemplate: deleteRoutineTemplate,
+    setWeekday: setRoutineWeekday
+  }
+
   async function savePlan(input: PlanInput) {
     if (!backend || !navigator.onLine)
       throw new Error('El plan necesita conexión para guardarse.')
@@ -771,7 +857,11 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
         )}
 
         {needsSetup ? (
-          <PlanScreen dashboard={dashboard} onSave={savePlan} />
+          <PlanScreen
+            dashboard={dashboard}
+            onSave={savePlan}
+            onRoutine={routineActions}
+          />
         ) : (
           <>
             {route === 'today' && (
@@ -853,6 +943,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
               onSave={savePlan}
               onCancel={close}
               onSaved={close}
+              onRoutine={routineActions}
             />
           )}
         </Sheet>
@@ -885,9 +976,26 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
           {(close) => (
             <RoutinePanel
               date={routineDate}
+              templates={dashboard.routines}
+              weekday={dashboard.routineSchedule}
+              savedDay={
+                routineDayFor(
+                  dashboard,
+                  dashboard.currentProfileId,
+                  routineDate
+                ) ?? null
+              }
+              onSaveDay={(payload) =>
+                void saveRoutineDay(routineDate, payload)
+              }
+              onSaveTemplate={saveRoutineTemplate}
               onComplete={
                 dayEditable(routineDate)
-                  ? () => void setWorkout(routineDate, true)
+                  ? (routineName) =>
+                      void setWorkout(routineDate, true, {
+                        workoutType: 'Rutina',
+                        note: routineName ?? ''
+                      })
                   : undefined
               }
               onClose={close}

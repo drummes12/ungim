@@ -47,6 +47,9 @@ function dashboard(
     workoutEntries,
     freeMealEntries,
     extraEntries,
+    routines: [],
+    routineSchedule: Array<string | null>(7).fill(null),
+    routineDays: [],
     months: {}
   }
 }

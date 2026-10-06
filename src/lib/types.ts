@@ -77,6 +77,40 @@ export interface ExtraEntry {
   updatedAt: string
 }
 
+export interface RoutineExercise {
+  name: string
+  sets: number
+  reps: number
+  weight: number
+}
+
+export interface RoutineTemplate {
+  id: string
+  name: string
+  position: number
+  version: number
+  exercises: RoutineExercise[]
+}
+
+export interface RoutineDayExercise extends RoutineExercise {
+  id: number
+  skipped: boolean
+  done: boolean[]
+  repsDone: number[]
+}
+
+export interface RoutineDay {
+  id: string
+  profileId: string
+  entryDate: string
+  routineId: string | null
+  exercises: RoutineDayExercise[]
+  completed: boolean
+  version: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface MonthRecord {
   monthKey: string
   confirmedBy: string[]
@@ -95,6 +129,9 @@ export interface Dashboard {
   workoutEntries: WorkoutEntry[]
   freeMealEntries: FreeMealEntry[]
   extraEntries: ExtraEntry[]
+  routines: RoutineTemplate[]
+  routineSchedule: (string | null)[]
+  routineDays: RoutineDay[]
   months: Record<string, MonthRecord>
 }
 
@@ -183,6 +220,46 @@ export type EntryMutation =
   | {
       id: string
       type: 'clear-extra'
+      profileId: string
+      entryDate: string
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'upsert-routine'
+      profileId: string
+      routineId: string | null
+      name: string
+      exercises: RoutineExercise[]
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'delete-routine'
+      profileId: string
+      routineId: string
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'set-routine-weekday'
+      profileId: string
+      weekday: number
+      routineId: string | null
+    }
+  | {
+      id: string
+      type: 'upsert-routine-day'
+      profileId: string
+      entryDate: string
+      routineId: string | null
+      exercises: RoutineDayExercise[]
+      completed: boolean
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'clear-routine-day'
       profileId: string
       entryDate: string
       expectedVersion: number | null

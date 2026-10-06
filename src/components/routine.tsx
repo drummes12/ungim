@@ -1,14 +1,11 @@
 import { useRef, useState } from 'react'
-import {
-  addTemplate,
-  removeTemplate,
-  setWeekdayRoutine,
-  updateTemplate,
-  useRoutineState,
-  weekdayIndex,
-  type RoutineTemplate,
-  type TemplateExercise
-} from '../lib/routines'
+import { weekdayIndex } from '../lib/routines'
+import type {
+  RoutineDay,
+  RoutineDayExercise,
+  RoutineExercise,
+  RoutineTemplate
+} from '../lib/types'
 import { Sheet } from './Sheet'
 import { CheckIcon, ChevronIcon, TrashIcon } from './icons'
 
@@ -65,8 +62,8 @@ function ExerciseFields({
   exercise,
   onChange
 }: {
-  exercise: TemplateExercise
-  onChange: (patch: Partial<TemplateExercise>) => void
+  exercise: RoutineExercise
+  onChange: (patch: Partial<RoutineExercise>) => void
 }) {
   return (
     <div className='routine-fields'>
@@ -97,16 +94,12 @@ function ExerciseFields({
   )
 }
 
-type DayExercise = TemplateExercise & {
-  id: number
-  done: boolean[]
-  repsDone: number[]
-  skipped: boolean
-}
+type DayExercise = RoutineDayExercise
 
 function toDay(template: RoutineTemplate): DayExercise[] {
   return template.exercises.map((exercise, index) => ({
     ...exercise,
+    name: exercise.name || 'Sin nombre',
     id: index + 1,
     done: Array<boolean>(exercise.sets).fill(false),
     repsDone: Array<number>(exercise.sets).fill(exercise.reps),
@@ -114,7 +107,7 @@ function toDay(template: RoutineTemplate): DayExercise[] {
   }))
 }
 
-function toTemplate(day: DayExercise[]): TemplateExercise[] {
+function toTemplate(day: DayExercise[]): RoutineExercise[] {
   return day.map(({ name, sets, reps, weight }) => ({
     name,
     sets,
@@ -125,30 +118,54 @@ function toTemplate(day: DayExercise[]): TemplateExercise[] {
 
 export function RoutinePanel({
   date,
+  templates,
+  weekday,
+  savedDay,
+  onSaveDay,
+  onSaveTemplate,
   onComplete,
   onClose
 }: {
   date?: string
-  onComplete?: () => void
+  templates: RoutineTemplate[]
+  weekday: (string | null)[]
+  savedDay: RoutineDay | null
+  onSaveDay: (day: {
+    routineId: string | null
+    exercises: RoutineDayExercise[]
+    completed: boolean
+  }) => void
+  onSaveTemplate: (
+    templateId: string | null,
+    name: string,
+    exercises: RoutineExercise[]
+  ) => string
+  onComplete?: (routineName: string | null) => void
   onClose?: () => void
 }) {
-  const { templates, weekday } = useRoutineState()
   const suggestedId = weekday[
     weekdayIndex(date ? new Date(`${date}T12:00:00`) : new Date())
   ]
   const [phase, setPhase] = useState<'pick' | 'session' | 'list' | 'done'>(
-    'pick'
+    savedDay?.completed
+      ? 'done'
+      : savedDay && savedDay.exercises.length > 0
+        ? 'session'
+        : 'pick'
   )
-  const [pickedId, setPickedId] = useState<number | 'free' | null>(
-    suggestedId ?? null
+  const [pickedId, setPickedId] = useState<string | 'free' | null>(
+    savedDay ? (savedDay.routineId ?? 'free') : (suggestedId ?? null)
   )
-  const [activeId, setActiveId] = useState<number | null>(null)
-  const [day, setDay] = useState<DayExercise[]>([])
+  const [activeId, setActiveId] = useState<string | null>(
+    savedDay?.routineId ?? null
+  )
+  const [day, setDay] = useState<DayExercise[]>(savedDay?.exercises ?? [])
+  const [completed, setCompleted] = useState(savedDay?.completed ?? false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [movedId, setMovedId] = useState<number | null>(null)
   const moveTimer = useRef<number | undefined>(undefined)
   const [adding, setAdding] = useState(false)
-  const [draft, setDraft] = useState<TemplateExercise>({
+  const [draft, setDraft] = useState<RoutineExercise>({
     name: '',
     sets: 3,
     reps: 10,
@@ -171,26 +188,38 @@ export function RoutinePanel({
   )
   const skippedCount = day.filter((item) => item.skipped).length
 
+  function commit(
+    next: DayExercise[],
+    overrides?: { routineId?: string | null; completed?: boolean }
+  ) {
+    const routineId =
+      overrides?.routineId !== undefined ? overrides.routineId : activeId
+    const done = overrides?.completed !== undefined ? overrides.completed : completed
+    setDay(next)
+    if (routineId !== activeId) setActiveId(routineId)
+    if (done !== completed) setCompleted(done)
+    if (next.length === 0 && !done && !savedDay) return
+    onSaveDay({ routineId, exercises: next, completed: done })
+  }
+
   function start() {
     if (pickedId === 'free') {
-      setActiveId(null)
-      setDay([])
       setPhase('list')
       setAdding(true)
+      if (savedDay) commit([], { routineId: null, completed: false })
       return
     }
     const template = templates.find((item) => item.id === pickedId)
     if (!template) return
-    setActiveId(template.id)
-    setDay(toDay(template))
     setEditingId(null)
     setSaveOpen(false)
+    commit(toDay(template), { routineId: template.id, completed: false })
     setPhase('session')
   }
 
   function patch(id: number, changes: Partial<DayExercise>) {
-    setDay((items) =>
-      items.map((item) => {
+    commit(
+      day.map((item) => {
         if (item.id !== id) return item
         const merged = { ...item, ...changes }
         if (changes.sets !== undefined) {
@@ -232,8 +261,8 @@ export function RoutinePanel({
   }
 
   function toggleSet(id: number, index: number) {
-    setDay((items) =>
-      items.map((item) =>
+    commit(
+      day.map((item) =>
         item.id === id
           ? {
               ...item,
@@ -245,14 +274,12 @@ export function RoutinePanel({
   }
 
   function move(id: number, delta: number) {
-    setDay((items) => {
-      const from = items.findIndex((item) => item.id === id)
-      const to = from + delta
-      if (from < 0 || to < 0 || to >= items.length) return items
-      const next = items.slice()
-      ;[next[from], next[to]] = [next[to], next[from]]
-      return next
-    })
+    const from = day.findIndex((item) => item.id === id)
+    const to = from + delta
+    if (from < 0 || to < 0 || to >= day.length) return
+    const next = day.slice()
+    ;[next[from], next[to]] = [next[to], next[from]]
+    commit(next)
     setMovedId(id)
     window.clearTimeout(moveTimer.current)
     moveTimer.current = window.setTimeout(() => setMovedId(null), 900)
@@ -261,8 +288,8 @@ export function RoutinePanel({
   function add() {
     const name = draft.name.trim()
     if (!name) return
-    setDay((items) => [
-      ...items,
+    commit([
+      ...day,
       {
         ...draft,
         name,
@@ -278,21 +305,23 @@ export function RoutinePanel({
 
   function saveOverwrite() {
     if (!active) return
-    updateTemplate(active.id, { exercises: toTemplate(day) })
+    onSaveTemplate(active.id, active.name, toTemplate(day))
     setSaveOpen(false)
   }
 
   function saveNew() {
     const name = saveName.trim()
     if (!name) return
-    setActiveId(addTemplate(name, toTemplate(day)))
+    const newId = onSaveTemplate(null, name, toTemplate(day))
+    commit(day, { routineId: newId })
     setSaveOpen(false)
     setSaveName('')
   }
 
   function finish() {
+    commit(day, { completed: true })
     setPhase('done')
-    onComplete?.()
+    onComplete?.(active?.name ?? null)
   }
 
   const head = (
@@ -355,9 +384,8 @@ export function RoutinePanel({
             {skippedCount > 0 ? ` · ${skippedCount} omitidos` : ''}
           </p>
           <p className='routine-note'>
-            {onComplete
-              ? 'El día quedó marcado como entrenado.'
-              : 'Prueba visual — en la app real marcaría el día como entrenado.'}
+            El día quedó marcado como entrenado
+            {active?.name ? ` · Rutina: ${active.name}` : ''}.
           </p>
           <button
             type='button'
@@ -375,8 +403,8 @@ export function RoutinePanel({
     return (
       <div className='stack'>
         <p className='routine-note'>
-          Prueba visual — el entreno no se guarda al cerrar. Las rutinas se
-          configuran en Plan.
+          El progreso se guarda solo — cierra y retoma cuando quieras. Las
+          rutinas se configuran en Plan.
         </p>
         {suggested && (
           <p className='run-hint'>
@@ -541,7 +569,7 @@ export function RoutinePanel({
             >
               <div className='routine-head'>
                 <div className='routine-copy'>
-                  <strong>{exercise.name}</strong>
+                  <strong>{exercise.name || 'Sin nombre'}</strong>
                   <p>
                     {exercise.skipped
                       ? 'Omitido hoy'
@@ -713,8 +741,23 @@ export function RoutinePanel({
   )
 }
 
-export function RoutineManager() {
-  const { templates, weekday } = useRoutineState()
+export function RoutineManager({
+  templates,
+  weekday,
+  onSaveTemplate,
+  onDeleteTemplate,
+  onSetWeekday
+}: {
+  templates: RoutineTemplate[]
+  weekday: (string | null)[]
+  onSaveTemplate: (
+    templateId: string | null,
+    name: string,
+    exercises: RoutineExercise[]
+  ) => string
+  onDeleteTemplate: (templateId: string) => void
+  onSetWeekday: (weekday: number, routineId: string | null) => void
+}) {
   const [open, setOpen] = useState(false)
   const assigned = DAY_LABELS.map((label, index) => {
     const template = templates.find((item) => item.id === weekday[index])
@@ -728,8 +771,7 @@ export function RoutineManager() {
       <legend>Rutinas de entrenamiento</legend>
       <p className='field-note'>
         {templates.length} rutina{templates.length === 1 ? '' : 's'}
-        {assigned ? ` · ${assigned}` : ' · sin asignar'} — prueba visual, aún
-        no se guarda con el plan.
+        {assigned ? ` · ${assigned}` : ' · sin asignar'}
       </p>
       <button
         type='button'
@@ -740,18 +782,40 @@ export function RoutineManager() {
       </button>
       {open && (
         <Sheet title='Rutinas' onClose={() => setOpen(false)}>
-          <RoutineEditor />
+          <RoutineEditor
+            templates={templates}
+            weekday={weekday}
+            onSaveTemplate={onSaveTemplate}
+            onDeleteTemplate={onDeleteTemplate}
+            onSetWeekday={onSetWeekday}
+          />
         </Sheet>
       )}
     </fieldset>
   )
 }
 
-function RoutineEditor() {
-  const { templates, weekday } = useRoutineState()
+function RoutineEditor({
+  templates,
+  weekday,
+  onSaveTemplate,
+  onDeleteTemplate,
+  onSetWeekday
+}: {
+  templates: RoutineTemplate[]
+  weekday: (string | null)[]
+  onSaveTemplate: (
+    templateId: string | null,
+    name: string,
+    exercises: RoutineExercise[]
+  ) => string
+  onDeleteTemplate: (templateId: string) => void
+  onSetWeekday: (weekday: number, routineId: string | null) => void
+}) {
   const [selDay, setSelDay] = useState(() => weekdayIndex(new Date()))
-  const [openId, setOpenId] = useState<number | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
   const [editEx, setEditEx] = useState<number | null>(null)
+  const [nameDraft, setNameDraft] = useState<string | null>(null)
   const openTpl = templates.find((item) => item.id === openId)
   const editExercise =
     openTpl && editEx !== null ? openTpl.exercises[editEx] : undefined
@@ -759,16 +823,26 @@ function RoutineEditor() {
   function patchExercise(
     template: RoutineTemplate,
     index: number,
-    changes: Partial<TemplateExercise>
+    changes: Partial<RoutineExercise>
   ) {
-    updateTemplate(template.id, {
-      exercises: template.exercises.map((exercise, itemIndex) =>
+    onSaveTemplate(
+      template.id,
+      template.name,
+      template.exercises.map((exercise, itemIndex) =>
         itemIndex === index ? { ...exercise, ...changes } : exercise
       )
-    })
+    )
   }
 
-  function templateName(id: number | null) {
+  function commitName() {
+    const name = nameDraft?.trim()
+    setNameDraft(null)
+    if (!openTpl || name === undefined || name === openTpl.name) return
+    if (!name) return
+    onSaveTemplate(openTpl.id, name, openTpl.exercises)
+  }
+
+  function templateName(id: string | null) {
     return templates.find((item) => item.id === id)?.name ?? 'Libre'
   }
 
@@ -779,26 +853,31 @@ function RoutineEditor() {
           <button
             type='button'
             className='btn-link'
-            onClick={() => setEditEx(null)}
+            onClick={() => {
+              commitName()
+              setEditEx(null)
+            }}
           >
             ← Ejercicios
           </button>
           <button
             type='button'
             className='btn btn-primary'
-            onClick={() => setEditEx(null)}
+            onClick={() => {
+              commitName()
+              setEditEx(null)
+            }}
           >
             Listo
           </button>
         </div>
         <input
           aria-label='Nombre del ejercicio'
-          value={editExercise.name}
+          value={nameDraft ?? editExercise.name}
           placeholder='Ejercicio'
           maxLength={60}
-          onChange={(event) =>
-            patchExercise(openTpl, editEx, { name: event.target.value })
-          }
+          onChange={(event) => setNameDraft(event.target.value)}
+          onBlur={commitName}
         />
         <ExerciseFields
           exercise={editExercise}
@@ -808,11 +887,11 @@ function RoutineEditor() {
           type='button'
           className='btn-quiet'
           onClick={() => {
-            updateTemplate(openTpl.id, {
-              exercises: openTpl.exercises.filter(
-                (_, index) => index !== editEx
-              )
-            })
+            onSaveTemplate(
+              openTpl.id,
+              openTpl.name,
+              openTpl.exercises.filter((_, index) => index !== editEx)
+            )
             setEditEx(null)
           }}
         >
@@ -829,26 +908,31 @@ function RoutineEditor() {
           <button
             type='button'
             className='btn-link'
-            onClick={() => setOpenId(null)}
+            onClick={() => {
+              commitName()
+              setOpenId(null)
+            }}
           >
             ← Rutinas
           </button>
           <button
             type='button'
             className='btn btn-primary'
-            onClick={() => setOpenId(null)}
+            onClick={() => {
+              commitName()
+              setOpenId(null)
+            }}
           >
             Listo
           </button>
         </div>
         <input
           aria-label='Nombre de la rutina'
-          value={openTpl.name}
+          value={nameDraft ?? openTpl.name}
           placeholder='Nombre de la rutina'
           maxLength={40}
-          onChange={(event) =>
-            updateTemplate(openTpl.id, { name: event.target.value })
-          }
+          onChange={(event) => setNameDraft(event.target.value)}
+          onBlur={commitName}
         />
         <ul className='tpl-exlist'>
           {openTpl.exercises.map((exercise, index) => (
@@ -856,7 +940,10 @@ function RoutineEditor() {
               <button
                 type='button'
                 className='tpl-ex-row'
-                onClick={() => setEditEx(index)}
+                onClick={() => {
+                  commitName()
+                  setEditEx(index)
+                }}
               >
                 <strong>{exercise.name || 'Sin nombre'}</strong>
                 <span>
@@ -871,12 +958,10 @@ function RoutineEditor() {
           type='button'
           className='btn'
           onClick={() =>
-            updateTemplate(openTpl.id, {
-              exercises: [
-                ...openTpl.exercises,
-                { name: '', sets: 3, reps: 10, weight: 20 }
-              ]
-            })
+            onSaveTemplate(openTpl.id, openTpl.name, [
+              ...openTpl.exercises,
+              { name: '', sets: 3, reps: 10, weight: 20 }
+            ])
           }
         >
           + ejercicio
@@ -885,7 +970,7 @@ function RoutineEditor() {
           type='button'
           className='btn-quiet'
           onClick={() => {
-            removeTemplate(openTpl.id)
+            onDeleteTemplate(openTpl.id)
             setOpenId(null)
           }}
         >
@@ -899,8 +984,7 @@ function RoutineEditor() {
     <div className='stack'>
       <p className='routine-note'>
         Asigna una rutina a cada día (opcional — en el día puedes escoger otra
-        o ir libre) y edita los ejercicios de cada rutina. Prueba visual: aún
-        no se guarda con el plan.
+        o ir libre) y edita los ejercicios de cada rutina.
       </p>
       <div
         className='day-strip'
@@ -929,7 +1013,7 @@ function RoutineEditor() {
           type='button'
           className={`routine-chip${weekday[selDay] === null ? ' is-active' : ''}`}
           aria-pressed={weekday[selDay] === null}
-          onClick={() => setWeekdayRoutine(selDay, null)}
+          onClick={() => onSetWeekday(selDay, null)}
         >
           Libre
         </button>
@@ -939,7 +1023,7 @@ function RoutineEditor() {
             type='button'
             className={`routine-chip${weekday[selDay] === template.id ? ' is-active' : ''}`}
             aria-pressed={weekday[selDay] === template.id}
-            onClick={() => setWeekdayRoutine(selDay, template.id)}
+            onClick={() => onSetWeekday(selDay, template.id)}
           >
             {template.name}
           </button>
@@ -964,7 +1048,7 @@ function RoutineEditor() {
               type='button'
               className='icon-flat'
               aria-label={`Eliminar ${template.name}`}
-              onClick={() => removeTemplate(template.id)}
+              onClick={() => onDeleteTemplate(template.id)}
             >
               <TrashIcon />
             </button>
@@ -975,7 +1059,7 @@ function RoutineEditor() {
         type='button'
         className='btn'
         onClick={() => {
-          const id = addTemplate('Nueva rutina', [])
+          const id = onSaveTemplate(null, 'Nueva rutina', [])
           setOpenId(id)
         }}
       >
