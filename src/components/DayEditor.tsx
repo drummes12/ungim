@@ -41,7 +41,8 @@ export function DayEditor({
   onWorkout,
   onFree,
   onExtra,
-  onOpenDetails
+  onOpenDetails,
+  onOpenRoutine
 }: {
   dashboard: Dashboard
   profileId: string
@@ -59,6 +60,7 @@ export function DayEditor({
     } | null
   ) => void
   onOpenDetails: (date: string) => void
+  onOpenRoutine: () => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
   const workout = workoutForDate(dashboard, profileId, date)
@@ -187,6 +189,9 @@ export function DayEditor({
               {workout ? 'Editar detalle' : 'Tipo y nota'}
             </button>
           )}
+          <button type='button' className='btn-link' onClick={onOpenRoutine}>
+            Rutina
+          </button>
         </div>
       </div>
 

@@ -1678,6 +1678,183 @@ button.cell:active {
   text-align: center;
 }
 
+/* ---------- Rutina (POC visual) ---------- */
+
+.routine-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.routine-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine-ex {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.routine-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routine-copy {
+  min-width: 0;
+}
+
+.routine-copy strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-copy p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.routine-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.set-pill {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background-color 140ms ease-out;
+}
+
+.set-pill.is-done {
+  background: var(--mint);
+  box-shadow: var(--shadow);
+}
+
+.set-pill:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.routine-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: flex-end;
+}
+
+.routine-field {
+  display: grid;
+  gap: 0;
+}
+
+.routine-field > span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.routine-field .stepper {
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.routine-field .stepper button {
+  width: 40px;
+  min-height: 40px;
+}
+
+.routine-field .stepper strong {
+  min-width: 44px;
+  font-size: 1.15rem;
+}
+
+.routine-add-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routine-chip {
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background-color 140ms ease-out;
+}
+
+.routine-chip.is-active {
+  background: var(--yellow);
+  box-shadow: var(--shadow);
+}
+
+.routine-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.routine-ex.is-skipped {
+  opacity: 0.55;
+}
+
+.routine-ex.is-skipped .routine-copy strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.routine-save {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.routine-save input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--coral);
+}
+
 .meal-edit {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
