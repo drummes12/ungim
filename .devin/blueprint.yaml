@@ -1,0 +1,26 @@
+initialize: |
+  # Node pinned by .node-version + pnpm via corepack (VM ships without Node).
+  NODE_VER=$(cat .node-version)
+  curl -fsSL -o /tmp/node.tar.xz "https://nodejs.org/dist/v${NODE_VER}/node-v${NODE_VER}-linux-x64.tar.xz"
+  sudo mkdir -p /opt/node
+  sudo tar -xJf /tmp/node.tar.xz -C /opt/node
+  for bin in node npm npx corepack; do
+    sudo ln -sf "/opt/node/node-v${NODE_VER}-linux-x64/bin/${bin}" "/usr/local/bin/${bin}"
+  done
+  sudo corepack enable --install-directory /usr/local/bin
+maintenance: |
+  pnpm install
+  pnpm exec playwright install chromium
+knowledge:
+  - name: lint
+    contents: pnpm lint
+  - name: test
+    contents: pnpm test
+  - name: typecheck
+    contents: pnpm typecheck
+  - name: build
+    contents: pnpm build
+  - name: demo
+    contents: |
+      # VITE_DEMO_MODE=true pnpm build, serve dist/, login ana@ungim.test / donuts
+      # Local Supabase: pnpm supabase start && pnpm supabase db reset (needs Docker; seed password donuts123)
