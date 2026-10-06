@@ -36,7 +36,7 @@ function NumField({
   onChange: (value: number) => void
 }) {
   return (
-    <label className='routine-field'>
+    <div className='routine-field'>
       <span>{label}</span>
       <div className='stepper'>
         <button
@@ -57,7 +57,7 @@ function NumField({
           +
         </button>
       </div>
-    </label>
+    </div>
   )
 }
 
