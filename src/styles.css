@@ -1785,17 +1785,19 @@ button.cell:active {
 }
 
 .routine-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  align-items: flex-end;
-  justify-content: center;
+  display: grid;
+  gap: 10px;
 }
 
 .routine-field {
   display: grid;
   gap: 0;
   justify-items: center;
+}
+
+.routine-field .stepper {
+  width: 100%;
+  justify-content: space-between;
 }
 
 .routine-field > span {
@@ -3012,6 +3014,22 @@ button.cell:active {
 /* ---------- Tablet ---------- */
 
 @media (min-width: 600px) {
+  .routine-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+
+  .routine-field {
+    justify-items: start;
+  }
+
+  .routine-field .stepper {
+    width: auto;
+  }
+
   .screen,
   .loading-screen {
     padding-right: 28px;
