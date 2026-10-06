@@ -167,6 +167,39 @@ input::placeholder {
   color: #7a7268;
 }
 
+.pass-wrap {
+  position: relative;
+  display: block;
+}
+
+.pass-wrap input {
+  padding-right: 54px;
+}
+
+.pass-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  color: var(--muted);
+  transform: translateY(-50%);
+}
+
+.pass-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pass-toggle[aria-pressed='true'] {
+  color: var(--accent-ink);
+}
+
 label,
 legend {
   display: grid;
@@ -183,8 +216,7 @@ fieldset {
 }
 
 .btn,
-.stepper button,
-.icon-remove {
+.stepper button {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -213,14 +245,12 @@ fieldset {
 
 .btn:active:not(:disabled),
 .stepper button:active,
-.icon-remove:active:not(:disabled),
 .choice:active:not(:disabled) {
   transform: translate(3px, 3px);
   box-shadow: 0 0 0 var(--ink);
 }
 
-.btn:disabled,
-.icon-remove:disabled {
+.btn:disabled {
   box-shadow: none;
 }
 
@@ -236,9 +266,7 @@ fieldset {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover:not(:disabled),
-  .free-card .stepper button:hover,
-  .workout-card .stepper button:hover {
+  .btn:hover:not(:disabled) {
     transform: translate(-1px, -1px);
     box-shadow: 4px 4px 0 var(--ink);
   }
@@ -891,23 +919,6 @@ fieldset {
 
 .free-card.is-done {
   background: color-mix(in srgb, var(--pink) 40%, var(--surface));
-}
-
-.free-card .stepper {
-  margin-top: 0;
-  gap: 8px;
-}
-
-.free-card .stepper button {
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
-  font-size: 1.1rem;
-}
-
-.free-card .stepper strong {
-  min-width: 20px;
-  font-size: 1.1rem;
 }
 
 .free-note {
@@ -1789,24 +1800,19 @@ button.cell:active {
   gap: 10px;
 }
 
-.routine-field {
+.num-field {
   display: grid;
   gap: 0;
   justify-items: center;
 }
 
-.routine-field .stepper {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.routine-field > span {
+.num-field > span {
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 800;
 }
 
-.routine-field .stepper {
+.stepper-capsule {
   gap: 2px;
   margin-top: 2px;
   padding: 2px;
@@ -1815,7 +1821,12 @@ button.cell:active {
   background: var(--surface);
 }
 
-.routine-field .stepper button {
+.num-field .stepper-capsule {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.stepper-capsule button {
   width: 44px;
   height: 44px;
   min-height: 0;
@@ -1827,12 +1838,12 @@ button.cell:active {
   font-size: 1.35rem;
 }
 
-.routine-field .stepper button:active:not(:disabled) {
+.stepper-capsule button:active:not(:disabled) {
   transform: none;
   background: var(--hair);
 }
 
-.routine-field .stepper strong {
+.stepper-capsule strong {
   min-width: 8ch;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
@@ -2294,26 +2305,6 @@ button.cell:active {
 .btn-quiet:active:not(:disabled) {
   transform: translate(3px, 3px);
   box-shadow: none;
-}
-
-.meal-edit {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-  padding: 14px 0;
-  border-top: 1px solid var(--hair);
-}
-
-.meal-edit:first-of-type {
-  margin-top: 6px;
-}
-
-.icon-remove {
-  justify-self: end;
-  min-height: 40px;
-  padding: 0 14px;
-  font-size: 0.85rem;
-  box-shadow: 2px 2px 0 var(--ink);
 }
 
 .form-actions,
@@ -3022,11 +3013,11 @@ button.cell:active {
     justify-content: flex-start;
   }
 
-  .routine-field {
+  .num-field {
     justify-items: start;
   }
 
-  .routine-field .stepper {
+  .num-field .stepper-capsule {
     width: auto;
   }
 
@@ -3261,11 +3252,6 @@ button.cell:active {
 
   .toast-panel {
     width: min(420px, calc(100% - var(--sidebar) - 96px));
-  }
-
-  .plan-screen .plan-form .meal-edit {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
-    align-items: center;
   }
 
   .login-screen {

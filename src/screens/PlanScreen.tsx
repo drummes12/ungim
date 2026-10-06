@@ -9,6 +9,8 @@ import {
 import { activePlanForDate } from '../lib/scoring'
 import type { Dashboard, PlanInput, RoutineExercise } from '../lib/types'
 import { CalendarIcon } from '../components/icons'
+import { NumField } from '../components/fields'
+import { MealManager } from '../components/meals'
 import { RoutineManager } from '../components/routine'
 
 export function PlanScreen({
@@ -179,44 +181,26 @@ export function PlanScreen({
 
         <fieldset>
           <legend>Entrenamientos por semana</legend>
-          <div className='stepper'>
-            <button
-              type='button'
-              onClick={() => setWorkoutTarget(Math.max(1, workoutTarget - 1))}
-            >
-              −
-            </button>
-            <strong>{workoutTarget}</strong>
-            <button
-              type='button'
-              onClick={() => setWorkoutTarget(Math.min(7, workoutTarget + 1))}
-            >
-              +
-            </button>
-          </div>
+          <NumField
+            value={workoutTarget}
+            min={1}
+            max={7}
+            decLabel='Menos entrenamientos'
+            incLabel='Más entrenamientos'
+            onChange={setWorkoutTarget}
+          />
         </fieldset>
 
         <fieldset>
           <legend>Comidas libres por mes</legend>
-          <div className='stepper'>
-            <button
-              type='button'
-              onClick={() =>
-                setFreeMealsPerMonth(Math.max(0, freeMealsPerMonth - 1))
-              }
-            >
-              −
-            </button>
-            <strong>{freeMealsPerMonth}</strong>
-            <button
-              type='button'
-              onClick={() =>
-                setFreeMealsPerMonth(Math.min(15, freeMealsPerMonth + 1))
-              }
-            >
-              +
-            </button>
-          </div>
+          <NumField
+            value={freeMealsPerMonth}
+            min={0}
+            max={15}
+            decLabel='Menos comidas libres'
+            incLabel='Más comidas libres'
+            onChange={setFreeMealsPerMonth}
+          />
           <p className='field-note'>
             Postres, helados y antojos fuera del plan. El cupo son las que
             salen gratis al mes; las que lo pasen cuentan como comida
@@ -224,63 +208,7 @@ export function PlanScreen({
           </p>
         </fieldset>
 
-        <fieldset>
-          <legend>Comidas del plan</legend>
-          {meals.map((meal, index) => (
-            <div className='meal-edit' key={index}>
-              <input
-                aria-label={`Nombre de comida ${index + 1}`}
-                value={meal.name}
-                onChange={(event) =>
-                  setMeals(
-                    meals.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, name: event.target.value }
-                        : item
-                    )
-                  )
-                }
-                maxLength={40}
-                placeholder='Comida'
-                required
-              />
-              <input
-                aria-label={`Regla de ${meal.name || index + 1}`}
-                value={meal.rule}
-                onChange={(event) =>
-                  setMeals(
-                    meals.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, rule: event.target.value }
-                        : item
-                    )
-                  )
-                }
-                maxLength={180}
-                placeholder='Regla breve'
-                required
-              />
-              <button
-                type='button'
-                className='icon-remove'
-                disabled={meals.length <= 1}
-                onClick={() =>
-                  setMeals(meals.filter((_, itemIndex) => itemIndex !== index))
-                }
-              >
-                Quitar
-              </button>
-            </div>
-          ))}
-          <button
-            type='button'
-            className='btn'
-            disabled={meals.length >= 5}
-            onClick={() => setMeals([...meals, { name: '', rule: '' }])}
-          >
-            Añadir comida
-          </button>
-        </fieldset>
+        <MealManager meals={meals} onChange={setMeals} />
 
         <RoutineManager
           templates={dashboard.routines}
