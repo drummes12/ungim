@@ -59,6 +59,36 @@ export function PlanScreen({
   )
   const pendingPlan =
     currentPlan && currentPlan.effectiveWeekStart > isoWeekStart(today)
+  const activePlan = activePlanForDate(
+    dashboard,
+    dashboard.currentProfileId,
+    isoWeekStart(today)
+  )
+  const pendingChanges = (() => {
+    if (!pendingPlan || !currentPlan) return [] as string[]
+    const prev = activePlan
+    const lines: string[] = []
+    if (!prev || prev.workoutTarget !== currentPlan.workoutTarget)
+      lines.push(
+        `Entrenamientos por semana: ${prev?.workoutTarget ?? 0} → ${currentPlan.workoutTarget}`
+      )
+    if (!prev || prev.freeMealsPerMonth !== currentPlan.freeMealsPerMonth)
+      lines.push(
+        `Comidas libres al mes: ${prev?.freeMealsPerMonth ?? 0} → ${currentPlan.freeMealsPerMonth}`
+      )
+    const prevMeals = prev?.meals ?? []
+    const nextNames = new Set(currentPlan.meals.map((meal) => meal.name))
+    for (const meal of currentPlan.meals) {
+      const before = prevMeals.find((item) => item.name === meal.name)
+      if (!before) lines.push(`Comida nueva: ${meal.name}`)
+      else if (before.rule !== meal.rule)
+        lines.push(`${meal.name}: regla actualizada`)
+    }
+    for (const meal of prevMeals) {
+      if (!nextNames.has(meal.name)) lines.push(`Comida eliminada: ${meal.name}`)
+    }
+    return lines
+  })()
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '')
   const [selectedTimezone, setSelectedTimezone] = useState(timezone)
   const [workoutTarget, setWorkoutTarget] = useState(
@@ -145,6 +175,13 @@ export function PlanScreen({
                   ? `Estás editando la versión que entra en vigor la semana ${formatWeekRange(currentPlan.effectiveWeekStart)}.`
                   : `Lo que guardes aplicará desde la semana ${formatWeekRange(effectiveWeek)}.`}
               </p>
+              {pendingChanges.length > 0 && (
+                <ul className='notice-diff'>
+                  {pendingChanges.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </section>
         )}
