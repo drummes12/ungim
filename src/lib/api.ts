@@ -13,6 +13,10 @@ import type {
   MonthRecord,
   PlanInput,
   Profile,
+  RoutineDay,
+  RoutineDayExercise,
+  RoutineExercise,
+  RoutineTemplate,
   WorkoutEntry
 } from './types'
 
@@ -119,6 +123,52 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
       createdAt: text(entry.createdAt ?? entry.created_at),
       updatedAt: text(entry.updatedAt ?? entry.updated_at)
     })),
+    routines: (((raw.routines as Record<string, unknown>[]) ?? []).map(
+      (routine) => ({
+        id: text(routine.id),
+        name: text(routine.name),
+        position: Number(routine.position),
+        version: Number(routine.version),
+        exercises: (
+          (routine.exercises as Record<string, unknown>[]) ?? []
+        ).map(
+          (exercise): RoutineExercise => ({
+            name: text(exercise.name),
+            sets: Number(exercise.sets),
+            reps: Number(exercise.reps),
+            weight: Number(exercise.weight)
+          })
+        )
+      })
+    ) satisfies RoutineTemplate[]),
+    routineSchedule: (() => {
+      const schedule = (raw.routineSchedule ?? raw.routine_schedule ?? {}) as
+        | Record<string, string>
+        | (string | null)[]
+      return Array.from({ length: 7 }, (_, index) =>
+        Array.isArray(schedule)
+          ? (schedule[index] ?? null)
+          : (schedule[String(index)] ?? null)
+      )
+    })(),
+    routineDays: (
+      ((raw.routineDays ?? raw.routine_days) as Record<
+        string,
+        unknown
+      >[]) ?? []
+    ).map(
+      (day): RoutineDay => ({
+        id: text(day.id),
+        profileId: text(day.profileId ?? day.profile_id),
+        entryDate: text(day.entryDate ?? day.entry_date),
+        routineId: (day.routineId ?? day.routine_id) as string | null,
+        exercises: (day.exercises as RoutineDayExercise[]) ?? [],
+        completed: Boolean(day.completed),
+        version: Number(day.version),
+        createdAt: text(day.createdAt ?? day.created_at),
+        updatedAt: text(day.updatedAt ?? day.updated_at)
+      })
+    ),
     months: Object.fromEntries(
       Object.entries(
         (raw.months as Record<string, Record<string, unknown>>) ?? {}
@@ -262,11 +312,46 @@ class SupabaseBackend implements BackendApi {
                         p_note: mutation.note,
                         p_expected_version: mutation.expectedVersion
                       })
-                    : client.rpc('clear_extra_entry', {
-                        ...common,
-                        p_entry_date: mutation.entryDate,
-                        p_expected_version: mutation.expectedVersion
-                      })
+                    : mutation.type === 'clear-extra'
+                      ? client.rpc('clear_extra_entry', {
+                          ...common,
+                          p_entry_date: mutation.entryDate,
+                          p_expected_version: mutation.expectedVersion
+                        })
+                      : mutation.type === 'upsert-routine'
+                        ? client.rpc('upsert_routine', {
+                            ...common,
+                            p_routine_id: mutation.routineId,
+                            p_name: mutation.name,
+                            p_exercises: mutation.exercises,
+                            p_expected_version: mutation.expectedVersion
+                          })
+                        : mutation.type === 'delete-routine'
+                          ? client.rpc('delete_routine', {
+                              ...common,
+                              p_routine_id: mutation.routineId,
+                              p_expected_version: mutation.expectedVersion
+                            })
+                          : mutation.type === 'set-routine-weekday'
+                            ? client.rpc('set_routine_weekday', {
+                                ...common,
+                                p_weekday: mutation.weekday,
+                                p_routine_id: mutation.routineId
+                              })
+                            : mutation.type === 'upsert-routine-day'
+                              ? client.rpc('upsert_routine_day', {
+                                  ...common,
+                                  p_entry_date: mutation.entryDate,
+                                  p_routine_id: mutation.routineId,
+                                  p_exercises: mutation.exercises,
+                                  p_completed: mutation.completed,
+                                  p_expected_version: mutation.expectedVersion
+                                })
+                              : client.rpc('clear_routine_day', {
+                                  ...common,
+                                  p_entry_date: mutation.entryDate,
+                                  p_expected_version: mutation.expectedVersion
+                                })
     const { data, error } = await rpc
     if (error) throw error
     return normalizeDashboard(data as Record<string, unknown>)
@@ -318,6 +403,10 @@ class SupabaseBackend implements BackendApi {
         'meal_entries',
         'workout_entries',
         'free_meal_entries',
+        'routines',
+        'routine_exercises',
+        'routine_schedule',
+        'routine_days',
         'months'
       ]) {
         channel.on(
@@ -348,7 +437,13 @@ function demoEntries(
   today: string
 ): Pick<
   Dashboard,
-  'mealEntries' | 'workoutEntries' | 'freeMealEntries' | 'extraEntries'
+  | 'mealEntries'
+  | 'workoutEntries'
+  | 'freeMealEntries'
+  | 'extraEntries'
+  | 'routines'
+  | 'routineSchedule'
+  | 'routineDays'
 > {
   const slots: Record<string, string[]> = {
     'demo-ana': ['meal-ana-1', 'meal-ana-2', 'meal-ana-3'],
@@ -363,6 +458,42 @@ function demoEntries(
   const workoutEntries: WorkoutEntry[] = []
   const freeMealEntries: FreeMealEntry[] = []
   const extraEntries: ExtraEntry[] = []
+  const routines: RoutineTemplate[] = [
+    {
+      id: 'routine-ana-pierna',
+      name: 'Pierna',
+      position: 0,
+      version: 1,
+      exercises: [
+        { name: 'Sentadilla', sets: 4, reps: 8, weight: 60 },
+        { name: 'Prensa', sets: 4, reps: 10, weight: 90 },
+        { name: 'Extensión de cuádriceps', sets: 3, reps: 12, weight: 30 },
+        { name: 'Peso muerto rumano', sets: 3, reps: 10, weight: 50 }
+      ]
+    },
+    {
+      id: 'routine-ana-pecho',
+      name: 'Pecho y brazo',
+      position: 1,
+      version: 1,
+      exercises: [
+        { name: 'Press banca', sets: 4, reps: 8, weight: 40 },
+        { name: 'Aperturas', sets: 3, reps: 12, weight: 10 },
+        { name: 'Fondos', sets: 3, reps: 10, weight: 0 },
+        { name: 'Curl bíceps', sets: 3, reps: 12, weight: 12 }
+      ]
+    }
+  ]
+  const routineSchedule: (string | null)[] = [
+    'routine-ana-pierna',
+    null,
+    'routine-ana-pecho',
+    null,
+    'routine-ana-pierna',
+    null,
+    null
+  ]
+  const routineDays: RoutineDay[] = []
   let day = 0
   for (let date = firstWeek; date < today; date = addDays(date, 1), day += 1) {
     for (const [profileId, ids] of Object.entries(slots)) {
@@ -405,7 +536,15 @@ function demoEntries(
         })
     }
   }
-  return { mealEntries, workoutEntries, freeMealEntries, extraEntries }
+  return {
+    mealEntries,
+    workoutEntries,
+    freeMealEntries,
+    extraEntries,
+    routines,
+    routineSchedule,
+    routineDays
+  }
 }
 
 class DemoBackend implements BackendApi {

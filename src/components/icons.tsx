@@ -92,6 +92,24 @@ export function ChevronIcon() {
   )
 }
 
+export function PencilIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
+      <path d='M4 20l1.1-4.1L16.4 4.6a2 2 0 0 1 2.9 0l.1.1a2 2 0 0 1 0 2.9L8.1 18.9 4 20z' />
+      <path d='M14.5 6.5l3 3' />
+    </svg>
+  )
+}
+
+export function TrashIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor' strokeWidth={2.2}>
+      <path d='M4 7h16M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2M6.5 7l.8 12a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1l.8-12' />
+      <path d='M10 11v5.5M14 11v5.5' />
+    </svg>
+  )
+}
+
 export function CloudCheckIcon() {
   return (
     <svg

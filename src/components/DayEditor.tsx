@@ -22,6 +22,7 @@ import {
   CloseIcon,
   DumbbellIcon,
   ExtraIcon,
+  PencilIcon,
   TreatIcon
 } from './icons'
 
@@ -41,7 +42,8 @@ export function DayEditor({
   onWorkout,
   onFree,
   onExtra,
-  onOpenDetails
+  onOpenDetails,
+  onOpenRoutine
 }: {
   dashboard: Dashboard
   profileId: string
@@ -59,6 +61,7 @@ export function DayEditor({
     } | null
   ) => void
   onOpenDetails: (date: string) => void
+  onOpenRoutine: () => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
   const workout = workoutForDate(dashboard, profileId, date)
@@ -170,23 +173,30 @@ export function DayEditor({
           </p>
         </div>
         <div className='workout-actions'>
-          <button
-            type='button'
-            className={workout ? 'btn' : 'btn btn-primary'}
-            disabled={!editable}
-            onClick={() => onWorkout(date, !workout)}
-          >
-            {workout ? 'Deshacer' : 'Entrené'}
+          <button type='button' className='btn' onClick={onOpenRoutine}>
+            Rutina
           </button>
-          {editable && (
+          <div className='workout-actions-end'>
+            {editable && (
+              <button
+                type='button'
+                className='icon-flat'
+                aria-label={workout ? 'Editar detalle' : 'Tipo y nota'}
+                title={workout ? 'Editar detalle' : 'Tipo y nota'}
+                onClick={() => onOpenDetails(date)}
+              >
+                <PencilIcon />
+              </button>
+            )}
             <button
               type='button'
-              className='btn-link'
-              onClick={() => onOpenDetails(date)}
+              className={workout ? 'btn' : 'btn btn-primary'}
+              disabled={!editable}
+              onClick={() => onWorkout(date, !workout)}
             >
-              {workout ? 'Editar detalle' : 'Tipo y nota'}
+              {workout ? 'Deshacer' : 'Entrené'}
             </button>
-          )}
+          </div>
         </div>
       </div>
 

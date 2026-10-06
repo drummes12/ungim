@@ -19,6 +19,7 @@ export function TodayScreen({
   onFree,
   onExtra,
   onOpenDetails,
+  onOpenRoutine,
   onEditPlan
 }: {
   dashboard: Dashboard
@@ -35,6 +36,7 @@ export function TodayScreen({
     } | null
   ) => void
   onOpenDetails: (date: string) => void
+  onOpenRoutine: () => void
   onEditPlan: () => void
 }) {
   const profile = dashboard.profiles.find(
@@ -89,6 +91,7 @@ export function TodayScreen({
             onFree={onFree}
             onExtra={onExtra}
             onOpenDetails={onOpenDetails}
+            onOpenRoutine={onOpenRoutine}
           />
         </div>
 

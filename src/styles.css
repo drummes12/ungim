@@ -237,7 +237,8 @@ fieldset {
 
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled),
-  .stepper button:hover {
+  .free-card .stepper button:hover,
+  .workout-card .stepper button:hover {
     transform: translate(-1px, -1px);
     box-shadow: 4px 4px 0 var(--ink);
   }
@@ -914,7 +915,7 @@ fieldset {
   min-width: 0;
   height: 40px;
   min-height: 40px;
-  font-size: 0.85rem;
+  font-size: 16px;
 }
 
 .extra-card.is-done {
@@ -1144,6 +1145,12 @@ fieldset {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.workout-actions-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* ---------- Charts ---------- */
@@ -1676,6 +1683,617 @@ button.cell:active {
   min-width: 56px;
   font: 800 1.6rem var(--mono);
   text-align: center;
+}
+
+/* ---------- Rutina (POC visual) ---------- */
+
+.routine-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.routine-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routine-ex {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: background-color 220ms ease-out;
+}
+
+.routine-ex.is-moving {
+  background: var(--yellow);
+}
+
+.routine-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routine-copy {
+  min-width: 0;
+}
+
+.routine-copy strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-copy p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.routine-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.routine-sets .routine-moves {
+  align-self: flex-start;
+}
+
+.set-pill {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background-color 140ms ease-out;
+}
+
+.set-pill.is-done {
+  background: var(--mint);
+  box-shadow: var(--shadow);
+}
+
+.set-pill:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.routine-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.routine-field {
+  display: grid;
+  gap: 0;
+  justify-items: center;
+}
+
+.routine-field .stepper {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.routine-field > span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.routine-field .stepper {
+  gap: 2px;
+  margin-top: 2px;
+  padding: 2px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.routine-field .stepper button {
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.35rem;
+}
+
+.routine-field .stepper button:active:not(:disabled) {
+  transform: none;
+  background: var(--hair);
+}
+
+.routine-field .stepper strong {
+  min-width: 8ch;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.routine-add-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routine-chip {
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    background-color 140ms ease-out;
+}
+
+.routine-chip.is-active {
+  background: var(--yellow);
+  box-shadow: var(--shadow);
+}
+
+.routine-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.routine-ex.is-skipped {
+  opacity: 0.55;
+}
+
+.routine-ex.is-skipped .routine-copy strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.routine-moves {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Rutina — modo sesión */
+
+.run-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.run-hint {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.run-progress {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.run-card {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 20px 16px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.run-name {
+  font-size: 1.35rem;
+  overflow-wrap: anywhere;
+}
+
+.run-goal {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.run-reps {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.run-reps > button {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.run-reps > button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.run-count {
+  display: grid;
+  justify-items: center;
+}
+
+.run-count strong {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.run-count span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.run-sets {
+  display: flex;
+  gap: 8px;
+}
+
+.run-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.run-dot.is-done {
+  background: var(--mint);
+}
+
+.run-dot.is-current {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.run-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 10px;
+}
+
+.run-actions .btn {
+  min-height: 56px;
+  font-size: 1.05rem;
+}
+
+.run-done {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 24px 16px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.run-done h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.run-done p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.run-done-check {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: var(--shadow);
+}
+
+.run-done-check svg {
+  width: 34px;
+  height: 34px;
+}
+
+.routine-tools {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.routine-move {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.routine-move svg {
+  width: 18px;
+  height: 18px;
+  transform: rotate(90deg);
+}
+
+.routine-move.is-up svg {
+  transform: rotate(-90deg);
+}
+
+.routine-move:disabled {
+  opacity: 0.35;
+}
+
+.routine-savebox {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.routine-savebox .btn-link {
+  justify-self: center;
+}
+
+.routine-savenew {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+/* Rutina — config en Plan */
+
+.routine-manager {
+  display: grid;
+  gap: 12px;
+}
+
+.day-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.day-chip {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  min-height: 0;
+  padding: 8px 2px 6px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.day-chip small {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-chip.has-routine small {
+  color: var(--accent-ink);
+}
+
+.day-chip.is-active {
+  border-color: var(--ink);
+  background: var(--yellow);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.tpl-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tpl-open {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  text-align: left;
+}
+
+.tpl-open strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpl-open span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tpl-open svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.icon-flat {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out;
+}
+
+.icon-flat svg {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-flat:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+  color: var(--accent-ink);
+}
+
+.tpl-exlist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tpl-ex-row {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+
+.tpl-ex-row strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpl-ex-row span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tpl-ex-row svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.btn-quiet {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--coral) 16%, var(--surface));
+  box-shadow: var(--shadow);
+  color: var(--accent-ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out;
+}
+
+.btn-quiet:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .meal-edit {
@@ -2396,6 +3014,22 @@ button.cell:active {
 /* ---------- Tablet ---------- */
 
 @media (min-width: 600px) {
+  .routine-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+
+  .routine-field {
+    justify-items: start;
+  }
+
+  .routine-field .stepper {
+    width: auto;
+  }
+
   .screen,
   .loading-screen {
     padding-right: 28px;
@@ -2419,10 +3053,11 @@ button.cell:active {
   }
 
   .workout-actions {
-    display: grid;
-    grid-column: auto;
-    justify-items: end;
-    gap: 2px;
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
   }
 
   .free-card .workout-actions {
