@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type FormEvent } from 'react'
 import { demoModeEnabled } from '../lib/api'
 import { BrandIcon } from '../components/icons'
+import { PasswordInput } from '../components/fields'
 
 const GLAZE_H =
   'M0 14 C14 4 22 30 36 26 C50 22 44 40 58 36 C72 32 66 14 80 18 C94 22 88 36 102 32 C116 28 112 10 126 14 C140 18 134 34 148 30 C162 26 156 8 170 12 C184 16 178 32 192 28 C206 24 200 40 214 36 C228 32 222 14 236 18 C250 22 244 36 258 32 C272 28 268 12 282 16 C296 20 290 34 304 30 C318 26 312 10 326 14 C340 18 346 28 360 24'
@@ -174,8 +175,7 @@ export function LoginScreen({
             {mode === 'signin' && (
               <label>
                 Contraseña
-                <input
-                  type='password'
+                <PasswordInput
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete='current-password'

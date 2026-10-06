@@ -25,6 +25,7 @@ import {
   PencilIcon,
   TreatIcon
 } from './icons'
+import { NumField } from './fields'
 
 const EXTRA_LEVELS: Array<{ id: ExtraLevel; label: string; color: string }> = [
   { id: 1, label: 'Suave', color: 'var(--mint)' },
@@ -219,29 +220,15 @@ export function DayEditor({
           </p>
         </div>
         <div className='workout-actions'>
-          <div className='stepper'>
-            <button
-              type='button'
-              aria-label='Quitar comida libre'
-              disabled={!editable || !free}
-              onClick={() =>
-                onFree(date, (free?.count ?? 0) - 1, free?.note ?? null)
-              }
-            >
-              −
-            </button>
-            <strong>{free?.count ?? 0}</strong>
-            <button
-              type='button'
-              aria-label='Añadir comida libre'
-              disabled={!editable || (free?.count ?? 0) >= 9}
-              onClick={() =>
-                onFree(date, (free?.count ?? 0) + 1, free?.note ?? null)
-              }
-            >
-              +
-            </button>
-          </div>
+          <NumField
+            value={free?.count ?? 0}
+            min={0}
+            max={9}
+            decLabel='Quitar comida libre'
+            incLabel='Añadir comida libre'
+            disabled={!editable}
+            onChange={(count) => onFree(date, count, free?.note ?? null)}
+          />
           {editable && (
             <input
               className='free-note'

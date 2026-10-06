@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { BrandIcon } from '../components/icons'
+import { PasswordInput } from '../components/fields'
 import type { AuthLinkInput } from '../lib/types'
 import { GlazeEdge, SprinkleField } from './LoginScreen'
 
@@ -90,8 +91,7 @@ export function AuthLinkScreen({
           <form onSubmit={submit}>
             <label>
               Contraseña nueva
-              <input
-                type='password'
+              <PasswordInput
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete='new-password'
@@ -101,8 +101,7 @@ export function AuthLinkScreen({
             </label>
             <label>
               Repite la contraseña
-              <input
-                type='password'
+              <PasswordInput
                 value={confirm}
                 onChange={(event) => setConfirm(event.target.value)}
                 autoComplete='new-password'

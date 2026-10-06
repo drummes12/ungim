@@ -7,55 +7,13 @@ import type {
   RoutineTemplate
 } from '../lib/types'
 import { Sheet } from './Sheet'
+import { NumField } from './fields'
 import { CheckIcon, ChevronIcon, TrashIcon } from './icons'
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 function kg(value: number) {
   return `${Number.isInteger(value) ? value : value.toFixed(1)}kg`
-}
-
-function NumField({
-  label,
-  value,
-  step = 1,
-  min,
-  max,
-  format = String,
-  onChange
-}: {
-  label: string
-  value: number
-  step?: number
-  min: number
-  max: number
-  format?: (value: number) => string
-  onChange: (value: number) => void
-}) {
-  return (
-    <div className='routine-field'>
-      <span>{label}</span>
-      <div className='stepper'>
-        <button
-          type='button'
-          aria-label={`Menos ${label}`}
-          disabled={value - step < min}
-          onClick={() => onChange(value - step)}
-        >
-          −
-        </button>
-        <strong>{format(value)}</strong>
-        <button
-          type='button'
-          aria-label={`Más ${label}`}
-          disabled={value + step > max}
-          onClick={() => onChange(value + step)}
-        >
-          +
-        </button>
-      </div>
-    </div>
-  )
 }
 
 function ExerciseFields({
