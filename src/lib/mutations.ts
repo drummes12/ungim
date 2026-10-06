@@ -1,4 +1,46 @@
-import type { Dashboard, EntryMutation } from './types'
+import type { Dashboard, EntryMutation, QueuedMutation } from './types'
+
+// Mutations that fully rewrite one entity can be collapsed while still pending:
+// only the latest payload matters and the queued item keeps its original
+// expectedVersion so the optimistic version chain stays valid.
+function coalesceKey(mutation: EntryMutation): string | null {
+  if (mutation.type === 'upsert-routine')
+    return `routine:${mutation.profileId}:${mutation.routineId}`
+  if (mutation.type === 'upsert-routine-day')
+    return `routine-day:${mutation.profileId}:${mutation.entryDate}`
+  if (mutation.type === 'set-routine-weekday')
+    return `routine-weekday:${mutation.profileId}:${mutation.weekday}`
+  return null
+}
+
+export function mergePendingMutation(
+  queue: QueuedMutation[],
+  mutation: EntryMutation,
+  isInFlight: (mutationId: string) => boolean
+): QueuedMutation[] | null {
+  const key = coalesceKey(mutation)
+  if (!key) return null
+  let index = -1
+  for (let i = queue.length - 1; i >= 0; i -= 1) {
+    const queued = queue[i]
+    if (
+      queued.status === 'pending' &&
+      !isInFlight(queued.mutation.id) &&
+      coalesceKey(queued.mutation) === key
+    ) {
+      index = i
+      break
+    }
+  }
+  if (index < 0) return null
+  const queued = queue[index]
+  const merged = { ...mutation, id: queued.mutation.id } as EntryMutation
+  if ('expectedVersion' in queued.mutation && 'expectedVersion' in merged)
+    merged.expectedVersion = queued.mutation.expectedVersion
+  const next = queue.slice()
+  next[index] = { ...queued, mutation: merged }
+  return next
+}
 
 export function applyMutationLocally(dashboard: Dashboard, mutation: EntryMutation): Dashboard {
   if (mutation.type === 'upsert-meal') {

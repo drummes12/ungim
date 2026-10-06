@@ -776,6 +776,7 @@ function RoutineEditor({
   const [openId, setOpenId] = useState<string | null>(null)
   const [editEx, setEditEx] = useState<number | null>(null)
   const [nameDraft, setNameDraft] = useState<string | null>(null)
+  const [exNameDraft, setExNameDraft] = useState<string | null>(null)
   const openTpl = templates.find((item) => item.id === openId)
   const editExercise =
     openTpl && editEx !== null ? openTpl.exercises[editEx] : undefined
@@ -802,6 +803,15 @@ function RoutineEditor({
     onSaveTemplate(openTpl.id, name, openTpl.exercises)
   }
 
+  function commitExName() {
+    const name = exNameDraft?.trim()
+    setExNameDraft(null)
+    if (!openTpl || editEx === null || name === undefined) return
+    const exercise = openTpl.exercises[editEx]
+    if (!exercise || name === exercise.name) return
+    patchExercise(openTpl, editEx, { name })
+  }
+
   function templateName(id: string | null) {
     return templates.find((item) => item.id === id)?.name ?? 'Libre'
   }
@@ -814,7 +824,7 @@ function RoutineEditor({
             type='button'
             className='btn-link'
             onClick={() => {
-              commitName()
+              commitExName()
               setEditEx(null)
             }}
           >
@@ -824,7 +834,7 @@ function RoutineEditor({
             type='button'
             className='btn btn-primary'
             onClick={() => {
-              commitName()
+              commitExName()
               setEditEx(null)
             }}
           >
@@ -833,11 +843,11 @@ function RoutineEditor({
         </div>
         <input
           aria-label='Nombre del ejercicio'
-          value={nameDraft ?? editExercise.name}
+          value={exNameDraft ?? editExercise.name}
           placeholder='Ejercicio'
           maxLength={60}
-          onChange={(event) => setNameDraft(event.target.value)}
-          onBlur={commitName}
+          onChange={(event) => setExNameDraft(event.target.value)}
+          onBlur={commitExName}
         />
         <ExerciseFields
           exercise={editExercise}
@@ -847,6 +857,7 @@ function RoutineEditor({
           type='button'
           className='btn-quiet'
           onClick={() => {
+            setExNameDraft(null)
             onSaveTemplate(
               openTpl.id,
               openTpl.name,

@@ -6,7 +6,7 @@ import {
   monthKeyForDate,
   todayInTimezone
 } from './lib/dates'
-import { applyMutationLocally } from './lib/mutations'
+import { applyMutationLocally, mergePendingMutation } from './lib/mutations'
 import { routineDayFor } from './lib/routines'
 import {
   extraEntryFor,
@@ -168,6 +168,9 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const queueWriteRef = useRef(Promise.resolve())
   const dashboardRef = useRef(dashboard)
   const syncingRef = useRef(false)
+  const inFlightRef = useRef(new Set<string>())
+  const syncTimerRef = useRef<number | undefined>(undefined)
+  const refreshTimerRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (!loading) onReady?.()
@@ -208,21 +211,24 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       return
     syncingRef.current = true
     try {
-      let workingQueue = queueRef.current
-      for (const item of workingQueue) {
-        if (item.status !== 'pending') continue
+      for (;;) {
+        const item = queueRef.current.find(
+          (queued) => queued.status === 'pending'
+        )
+        if (!item) break
+        inFlightRef.current.add(item.mutation.id)
         try {
           const remote = await backend.applyMutation(item.mutation)
-          workingQueue = workingQueue.filter(
+          const nextQueue = queueRef.current.filter(
             (queued) => queued.mutation.id !== item.mutation.id
           )
-          const visible = applyQueueToDashboard(remote, workingQueue)
+          const visible = applyQueueToDashboard(remote, nextQueue)
           dashboardRef.current = visible
           setDashboard(visible)
+          await updateQueue(nextQueue, profileId)
           await saveDashboardSnapshot(profileId, remote).catch(() => undefined)
-          await updateQueue(workingQueue, profileId)
         } catch (cause) {
-          workingQueue = workingQueue.map((queued) =>
+          const nextQueue = queueRef.current.map((queued) =>
             queued.mutation.id === item.mutation.id
               ? {
                   ...queued,
@@ -232,23 +238,32 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 }
               : queued
           )
-          await updateQueue(workingQueue, profileId)
+          await updateQueue(nextQueue, profileId)
           const snapshot = await loadDashboardSnapshot(profileId).catch(
             () => null
           )
           if (snapshot) {
-            const visible = applyQueueToDashboard(snapshot, workingQueue)
+            const visible = applyQueueToDashboard(snapshot, nextQueue)
             dashboardRef.current = visible
             setDashboard(visible)
           }
           setNotice('Un cambio quedó pendiente por revisar.')
           break
+        } finally {
+          inFlightRef.current.delete(item.mutation.id)
         }
       }
     } finally {
       syncingRef.current = false
     }
   }, [backend, profileId, updateQueue])
+
+  const scheduleSync = useCallback(() => {
+    window.clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = window.setTimeout(() => {
+      if (navigator.onLine) void syncPending()
+    }, 400)
+  }, [syncPending])
 
   const refreshDashboard = useCallback(
     async (userId = profileId) => {
@@ -323,7 +338,12 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   useEffect(() => {
     if (!backend?.subscribe || !profileId) return
     return backend.subscribe(() => {
-      if (navigator.onLine) void refreshDashboard()
+      if (!navigator.onLine) return
+      window.clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = window.setTimeout(
+        () => void refreshDashboard(),
+        300
+      )
     })
   }, [backend, profileId, refreshDashboard])
 
@@ -375,12 +395,15 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       error: null,
       createdAt: new Date().toISOString()
     }
-    const nextQueue = [...queueRef.current, item]
+    const nextQueue =
+      mergePendingMutation(queueRef.current, mutation, (id) =>
+        inFlightRef.current.has(id)
+      ) ?? [...queueRef.current, item]
     const nextDashboard = applyMutationLocally(dashboardRef.current, mutation)
     dashboardRef.current = nextDashboard
     setDashboard(nextDashboard)
     await updateQueue(nextQueue, profileId)
-    if (navigator.onLine) void syncPending()
+    scheduleSync()
   }
 
   async function setMeal(
