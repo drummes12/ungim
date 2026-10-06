@@ -162,6 +162,11 @@ const helpTopics: Array<{
     body: 'Tu plan marca cuántos días por semana toca entrenar; el objetivo del mes se prorratea. «Detalle» guarda el tipo de sesión y una nota.'
   },
   {
+    title: 'Rutinas',
+    Icon: DumbbellIcon,
+    body: 'Desde «Rutina» en la card de entrenamiento escoges una de tus plantillas (ejercicios con series, reps y peso) o el modo Libre. La sesión te guía serie por serie: marcas hechas, omites o añades ejercicios solo para ese día, y el progreso se guarda solo. En tu plan, «Editar rutinas» crea plantillas y las asigna a días de la semana. Completarla marca el entreno como cualquier otro.'
+  },
+  {
     title: 'Actividad extra',
     Icon: ExtraIcon,
     body: 'Lo que sumes por fuera del plan: una caminata, movilidad u otro esfuerzo. Es opcional y no cuenta como entreno ni afecta la semana perfecta. Mueve el control según el esfuerzo: suave +0.5, media +1, fuerte +2 — hasta +6 al mes de bonus.'

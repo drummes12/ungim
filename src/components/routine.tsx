@@ -403,8 +403,10 @@ export function RoutinePanel({
     return (
       <div className='stack'>
         <p className='routine-note'>
-          El progreso se guarda solo — cierra y retoma cuando quieras. Las
-          rutinas se configuran en Plan.
+          El progreso se guarda solo — cierra y retoma cuando quieras.{' '}
+          {templates.length === 0
+            ? 'Aún no tienes rutinas: créalas en Plan → Editar rutinas, o entrena en modo Libre.'
+            : 'Las rutinas se configuran en Plan.'}
         </p>
         {suggested && (
           <p className='run-hint'>
