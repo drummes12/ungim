@@ -14,6 +14,12 @@ import { PwaNotices } from './components/PwaNotices'
 import { notifySwUpdate } from './lib/pwa'
 import './styles.css'
 
+declare global {
+  interface Window {
+    __ungimBooted?: boolean
+  }
+}
+
 registerSW({
   immediate: true,
   onNeedReload: notifySwUpdate,
@@ -143,3 +149,10 @@ createRoot(document.getElementById('root')!).render(
     <Launch />
   </StrictMode>
 )
+
+window.__ungimBooted = true
+try {
+  sessionStorage.removeItem('ungim-boot-retry')
+} catch {
+  // storage unavailable — the watchdog already skipped its counter
+}

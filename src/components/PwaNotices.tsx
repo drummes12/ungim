@@ -72,7 +72,11 @@ export function PwaNotices() {
           <button
             className='btn btn-primary'
             type='button'
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('r', String(Date.now()))
+              window.location.replace(url.toString())
+            }}
           >
             Actualizar
           </button>

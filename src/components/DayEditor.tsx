@@ -146,6 +146,50 @@ export function DayEditor({
         )}
       </ul>
 
+      <h2 className='block-title'>Entrenamiento</h2>
+      <div className={`workout-card ${workout ? 'is-done' : ''}`}>
+        <span
+          className={`workout-icon${celebrating ? ' is-celebrating' : ''}`}
+          aria-hidden='true'
+        >
+          <DumbbellIcon />
+          {workout && (
+            <span className='workout-check'>
+              <CheckIcon />
+            </span>
+          )}
+        </span>
+        <div className='workout-copy'>
+          <strong>{workout ? '¡Ahhh, un gim!' : 'Sin registrar'}</strong>
+          <p>
+            {workout
+              ? [workout.workoutType, workout.note]
+                  .filter(Boolean)
+                  .join(' · ') || 'Registrado'
+              : 'Un toque y queda marcado.'}
+          </p>
+        </div>
+        <div className='workout-actions'>
+          <button
+            type='button'
+            className={workout ? 'btn' : 'btn btn-primary'}
+            disabled={!editable}
+            onClick={() => onWorkout(date, !workout)}
+          >
+            {workout ? 'Deshacer' : 'Entrené'}
+          </button>
+          {editable && (
+            <button
+              type='button'
+              className='btn-link'
+              onClick={() => onOpenDetails(date)}
+            >
+              {workout ? 'Editar detalle' : 'Tipo y nota'}
+            </button>
+          )}
+        </div>
+      </div>
+
       <h2 className='block-title'>Comidas libres</h2>
       <div className={`workout-card free-card ${free ? 'is-done' : ''}`}>
         <span className='workout-icon' aria-hidden='true'>
@@ -202,50 +246,6 @@ export function DayEditor({
                   onFree(date, free.count, value)
               }}
             />
-          )}
-        </div>
-      </div>
-
-      <h2 className='block-title'>Entrenamiento</h2>
-      <div className={`workout-card ${workout ? 'is-done' : ''}`}>
-        <span
-          className={`workout-icon${celebrating ? ' is-celebrating' : ''}`}
-          aria-hidden='true'
-        >
-          <DumbbellIcon />
-          {workout && (
-            <span className='workout-check'>
-              <CheckIcon />
-            </span>
-          )}
-        </span>
-        <div className='workout-copy'>
-          <strong>{workout ? '¡Ahhh, un gim!' : 'Sin registrar'}</strong>
-          <p>
-            {workout
-              ? [workout.workoutType, workout.note]
-                  .filter(Boolean)
-                  .join(' · ') || 'Registrado'
-              : 'Un toque y queda marcado.'}
-          </p>
-        </div>
-        <div className='workout-actions'>
-          <button
-            type='button'
-            className={workout ? 'btn' : 'btn btn-primary'}
-            disabled={!editable}
-            onClick={() => onWorkout(date, !workout)}
-          >
-            {workout ? 'Deshacer' : 'Entrené'}
-          </button>
-          {editable && (
-            <button
-              type='button'
-              className='btn-link'
-              onClick={() => onOpenDetails(date)}
-            >
-              {workout ? 'Editar detalle' : 'Tipo y nota'}
-            </button>
           )}
         </div>
       </div>

@@ -34,6 +34,26 @@
 
 <body>
   <div id="root"></div>
+  <script>
+    // Watchdog: if the app JS never boots (e.g. a stale cached document
+    // pointing at chunks the last deploy removed), reload once with a
+    // cache-busting query so the document is fetched fresh.
+    window.__ungimBooted = false
+    window.setTimeout(function () {
+      if (window.__ungimBooted) return
+      var retries = 0
+      try {
+        retries = Number(sessionStorage.getItem('ungim-boot-retry') || '0')
+      } catch (e) { }
+      if (retries >= 2) return
+      try {
+        sessionStorage.setItem('ungim-boot-retry', String(retries + 1))
+      } catch (e) { }
+      var url = new URL(window.location.href)
+      url.searchParams.set('r', String(Date.now()))
+      window.location.replace(url.toString())
+    }, 12000)
+  </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 
