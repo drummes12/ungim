@@ -9,6 +9,7 @@ import {
 import { activePlanForDate } from '../lib/scoring'
 import type { Dashboard, PlanInput } from '../lib/types'
 import { CalendarIcon } from '../components/icons'
+import { RoutineManager } from '../components/routine'
 
 export function PlanScreen({
   dashboard,
@@ -270,6 +271,8 @@ export function PlanScreen({
             Añadir comida
           </button>
         </fieldset>
+
+        <RoutineManager />
 
         {error && (
           <p className='form-error' role='alert'>

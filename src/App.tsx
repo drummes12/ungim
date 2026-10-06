@@ -40,9 +40,9 @@ import {
   AccountPanel,
   ConfirmMonthForm,
   HelpPanel,
-  RoutinePanel,
   WorkoutDetailsForm
 } from './components/sheets'
+import { RoutinePanel } from './components/routine'
 import {
   CalendarIcon,
   BrandIcon,
@@ -150,7 +150,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const [installOpen, setInstallOpen] = useState(false)
   const [daySheet, setDaySheet] = useState<string | null>(null)
   const [detailsDate, setDetailsDate] = useState<string | null>(null)
-  const [routineOpen, setRoutineOpen] = useState(false)
+  const [routineDate, setRoutineDate] = useState<string | null>(null)
   const [closeMonthKey, setCloseMonthKey] = useState<string | null>(null)
   const queueRef = useRef(queue)
   const queueWriteRef = useRef(Promise.resolve())
@@ -784,7 +784,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 onFree={(date, count, note) => void setFree(date, count, note)}
                 onExtra={(date, entry) => void setExtra(date, entry)}
                 onOpenDetails={setDetailsDate}
-                onOpenRoutine={() => setRoutineOpen(true)}
+                onOpenRoutine={() => setRoutineDate(today)}
                 onEditPlan={() => setPlanOpen(true)}
               />
             )}
@@ -875,14 +875,24 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
             onFree={(date, count, note) => void setFree(date, count, note)}
             onExtra={(date, entry) => void setExtra(date, entry)}
             onOpenDetails={setDetailsDate}
-            onOpenRoutine={() => setRoutineOpen(true)}
+            onOpenRoutine={() => setRoutineDate(daySheet)}
           />
         </Sheet>
       )}
 
-      {routineOpen && (
-        <Sheet title='Mi rutina' onClose={() => setRoutineOpen(false)}>
-          <RoutinePanel />
+      {routineDate && (
+        <Sheet title='Mi rutina' onClose={() => setRoutineDate(null)}>
+          {(close) => (
+            <RoutinePanel
+              date={routineDate}
+              onComplete={
+                dayEditable(routineDate)
+                  ? () => void setWorkout(routineDate, true)
+                  : undefined
+              }
+              onClose={close}
+            />
+          )}
         </Sheet>
       )}
 
