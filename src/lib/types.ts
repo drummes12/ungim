@@ -1,5 +1,8 @@
 export type MealStatus = 'met' | 'missed'
 
+
+export type ExtraLevel = 1 | 2 | 3
+
 export interface Profile {
   id: string
   displayName: string
@@ -63,6 +66,17 @@ export interface FreeMealEntry {
   updatedAt: string
 }
 
+export interface ExtraEntry {
+  id: string
+  profileId: string
+  entryDate: string
+  level: ExtraLevel
+  note: string | null
+  version: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface MonthRecord {
   monthKey: string
   confirmedBy: string[]
@@ -80,6 +94,7 @@ export interface Dashboard {
   mealEntries: MealEntry[]
   workoutEntries: WorkoutEntry[]
   freeMealEntries: FreeMealEntry[]
+  extraEntries: ExtraEntry[]
   months: Record<string, MonthRecord>
 }
 
@@ -95,6 +110,7 @@ export interface ParticipantScore {
   workout: { earned: number; target: number }
   meals: { met: number; planned: number }
   freeMeals: { used: number; quota: number }
+  extraPoints: number
 }
 
 export interface MonthResult {
@@ -151,6 +167,22 @@ export type EntryMutation =
   | {
       id: string
       type: 'clear-free'
+      profileId: string
+      entryDate: string
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'upsert-extra'
+      profileId: string
+      entryDate: string
+      level: ExtraLevel
+      note: string | null
+      expectedVersion: number | null
+    }
+  | {
+      id: string
+      type: 'clear-extra'
       profileId: string
       entryDate: string
       expectedVersion: number | null

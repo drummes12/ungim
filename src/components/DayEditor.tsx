@@ -2,13 +2,34 @@ import { formatDay, monthEnd, monthStart } from '../lib/dates'
 import {
   activePlanForDate,
   countFreeMeals,
+  EXTRA_LEVEL_POINTS,
+  EXTRA_MONTH_CAP,
+  extraEntryFor,
   freeMealEntryFor,
   mealEntryFor,
   mealsForDate,
+  sumExtraPoints,
   workoutForDate
 } from '../lib/scoring'
-import type { Dashboard, MealSlot, MealStatus } from '../lib/types'
-import { CheckIcon, CloseIcon, DumbbellIcon, TreatIcon } from './icons'
+import type {
+  Dashboard,
+  ExtraLevel,
+  MealSlot,
+  MealStatus
+} from '../lib/types'
+import {
+  CheckIcon,
+  CloseIcon,
+  DumbbellIcon,
+  ExtraIcon,
+  TreatIcon
+} from './icons'
+
+const EXTRA_LEVELS: Array<{ id: ExtraLevel; label: string; color: string }> = [
+  { id: 1, label: 'Suave', color: 'var(--mint)' },
+  { id: 2, label: 'Media', color: 'var(--yellow)' },
+  { id: 3, label: 'Fuerte', color: 'var(--coral)' }
+]
 
 export function DayEditor({
   dashboard,
@@ -19,6 +40,7 @@ export function DayEditor({
   onMeal,
   onWorkout,
   onFree,
+  onExtra,
   onOpenDetails
 }: {
   dashboard: Dashboard
@@ -29,6 +51,13 @@ export function DayEditor({
   onMeal: (date: string, slot: MealSlot, status: MealStatus | null) => void
   onWorkout: (date: string, done: boolean) => void
   onFree: (date: string, count: number, note: string | null) => void
+  onExtra: (
+    date: string,
+    entry: {
+      level: ExtraLevel
+      note: string | null
+    } | null
+  ) => void
   onOpenDetails: (date: string) => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
@@ -45,6 +74,14 @@ export function DayEditor({
     monthEnd(monthKey)
   )
   const freeExcess = Math.max(0, freeUsed - freeQuota)
+  const extra = extraEntryFor(dashboard, profileId, date)
+  const extraPoints = sumExtraPoints(
+    dashboard,
+    profileId,
+    monthStart(monthKey),
+    monthEnd(monthKey)
+  )
+  const extraLevel = EXTRA_LEVELS.find((item) => item.id === extra?.level)
 
   return (
     <section
@@ -209,6 +246,101 @@ export function DayEditor({
             >
               {workout ? 'Editar detalle' : 'Tipo y nota'}
             </button>
+          )}
+        </div>
+      </div>
+
+      <h2 className='block-title'>Actividad extra</h2>
+      <div className={`workout-card extra-card ${extra ? 'is-done' : ''}`}>
+        <span className='workout-icon' aria-hidden='true'>
+          <ExtraIcon />
+        </span>
+        <div className='workout-copy'>
+          <strong>
+            {extra ? (
+              <>
+                <span
+                  className='extra-level-dot'
+                  style={{ background: extraLevel?.color }}
+                  aria-hidden='true'
+                />
+                {`${extraLevel?.label ?? ''} · +${EXTRA_LEVEL_POINTS[extra.level] ?? 0}`}
+              </>
+            ) : (
+              'Sin registrar'
+            )}
+          </strong>
+          <div
+            className='extra-bonus'
+            role='img'
+            aria-label={`Bonus del mes: +${extraPoints} de ${EXTRA_MONTH_CAP}`}
+          >
+            {Array.from({ length: EXTRA_MONTH_CAP }).map((_, i) => (
+              <span
+                key={i}
+                className={
+                  extraPoints >= i + 1 ? 'on' : extraPoints > i ? 'half' : ''
+                }
+              />
+            ))}
+          </div>
+        </div>
+        <div className='workout-actions extra-actions'>
+          <div className='extra-slider'>
+            <input
+              type='range'
+              min={0}
+              max={3}
+              step={1}
+              value={extra?.level ?? 0}
+              style={{
+                ['--level' as string]: String(extra?.level ?? 0),
+                ['--level-color' as string]: extraLevel?.color ?? 'var(--mint)'
+              }}
+              disabled={!editable}
+              aria-label='Esfuerzo de la actividad extra'
+              aria-valuetext={
+                extra ? `${extraLevel?.label}` : 'Sin registrar'
+              }
+              onChange={(event) => {
+                const level = Number(event.target.value) as 0 | ExtraLevel
+                onExtra(
+                  date,
+                  level === 0
+                    ? null
+                    : { level, note: extra?.note ?? null }
+                )
+              }}
+            />
+            <div className='extra-slider-ticks' aria-hidden='true'>
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+          </div>
+          {extra && editable && (
+            <div className='extra-meta'>
+              <input
+                className='free-note'
+                key={`${date}-${extra.version}`}
+                defaultValue={extra.note ?? ''}
+                placeholder='¿Qué fue? (opcional)'
+                maxLength={240}
+                onBlur={(event) => {
+                  const value = event.target.value.trim() || null
+                  if (value !== (extra.note ?? null))
+                    onExtra(date, { ...extra, note: value })
+                }}
+              />
+              <button
+                type='button'
+                className='btn-link'
+                onClick={() => onExtra(date, null)}
+              >
+                Quitar
+              </button>
+            </div>
           )}
         </div>
       </div>

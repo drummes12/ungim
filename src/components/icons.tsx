@@ -126,6 +126,61 @@ export function CloudOffIcon() {
   )
 }
 
+export function ExtraIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox='0 0 64 64' aria-hidden='true'>
+      <line x1='36' y1='3' x2='36' y2='13' stroke='#14110f' strokeWidth='3' />
+      <path
+        d='M36 3 L49 6.5 L36 10 Z'
+        fill='#ff9078'
+        stroke='#14110f'
+        strokeWidth='1.75'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M18 56 L36 12 L55 56 Z'
+        fill='#abe7c2'
+        stroke='#14110f'
+        strokeWidth='3.5'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M36 12 L39.6 21.5 L43.6 29.5 L38.8 27 L36.4 31.5 L32.9 23.5 Z'
+        fill='#fffdf9'
+        stroke='#14110f'
+        strokeWidth='1.75'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M4 56 L22.8 25.8 L41.5 56 Z'
+        fill='#ffb3c9'
+        stroke='#14110f'
+        strokeWidth='3.5'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M22.8 25.8 L26.8 33.3 L30.6 39.3 L26.1 36.8 L22.8 41 L19.3 35 Z'
+        fill='#fffdf9'
+        stroke='#14110f'
+        strokeWidth='1.75'
+        strokeLinejoin='round'
+      />
+      <path
+        d='M8.5 47 L12.5 44.5 M51.5 45.5 L55.5 48'
+        stroke='#14110f'
+        strokeWidth='2.5'
+        strokeLinecap='round'
+      />
+      <path
+        d='M4 56 H60'
+        stroke='#14110f'
+        strokeWidth='4'
+        strokeLinecap='round'
+      />
+    </svg>
+  )
+}
+
 export function HelpIcon() {
   return (
     <svg {...base} fill='none' stroke='currentColor' strokeWidth={2}>

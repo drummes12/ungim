@@ -8,6 +8,7 @@ import {
 } from './scoring'
 import type {
   Dashboard,
+  ExtraEntry,
   FreeMealEntry,
   MealEntry,
   PlanVersion,
@@ -19,7 +20,8 @@ function dashboard(
   mealEntries: MealEntry[],
   workoutEntries: WorkoutEntry[],
   startsOn = '2026-01-05',
-  freeMealEntries: FreeMealEntry[] = []
+  freeMealEntries: FreeMealEntry[] = [],
+  extraEntries: ExtraEntry[] = []
 ): Dashboard {
   return {
     currentProfileId: 'ana',
@@ -44,6 +46,7 @@ function dashboard(
     mealEntries,
     workoutEntries,
     freeMealEntries,
+    extraEntries,
     months: {}
   }
 }
@@ -112,6 +115,23 @@ function freeMeal(
     profileId,
     entryDate: date,
     count,
+    note: null,
+    version: 1,
+    createdAt: '',
+    updatedAt: ''
+  }
+}
+
+function extra(
+  profileId: string,
+  date: string,
+  level: ExtraEntry['level'] = 2
+): ExtraEntry {
+  return {
+    id: `${profileId}-extra-${date}`,
+    profileId,
+    entryDate: date,
+    level,
     note: null,
     version: 1,
     createdAt: '',
@@ -242,13 +262,15 @@ describe('monthly competition scoring', () => {
       entries,
       [workout('ana', '2026-01-06')],
       '2026-01-05',
-      [freeMeal('ana', '2026-01-06', 2)]
+      [freeMeal('ana', '2026-01-06', 2)],
+      [extra('ana', '2026-01-06', 2)]
     )
     expect(dayStatus(data, 'ana', '2026-01-06', '2026-01-10')).toEqual({
       planned: 2,
       met: 1,
       missed: 1,
       free: 2,
+      extra: 2,
       workout: true,
       future: false,
       active: true
@@ -336,6 +358,52 @@ describe('monthly competition scoring', () => {
     const ana = result.participants[0]
     expect(ana.freeMeals).toEqual({ used: 2, quota: 0 })
     expect(ana.meals).toEqual({ met: 8, planned: 10 })
+  })
+
+  it('adds extra activity points by level and caps them at six per month', () => {
+    const anaPlan = plan('ana', '2026-01-05', 1, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11')
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      [workout('ana', '2026-01-05')],
+      '2026-01-05',
+      [],
+      [
+        extra('ana', '2026-01-05', 1),
+        extra('ana', '2026-01-06', 2),
+        extra('ana', '2026-01-07', 3),
+        extra('ana', '2026-01-08', 3),
+        extra('ana', '2026-01-09', 3)
+      ]
+    )
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.extraPoints).toBe(6)
+    expect(ana.total).toBeCloseTo(ana.base + ana.bonus + 6, 3)
+  })
+
+  it('keeps extra activity out of the perfect week check', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-11')
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('ana', '2026-01-08')
+    ]
+    const data = dashboard(
+      [anaPlan, plan('leo', '2026-01-05', 1, 1)],
+      entries,
+      workouts,
+      '2026-01-05',
+      [],
+      [extra('ana', '2026-01-07', 3)]
+    )
+    const week = isoWeekStart('2026-01-08')
+    expect(isPerfectWeek(data, 'ana', week, '2026-01-05')).toBe(true)
+    const result = computeMonthScore(data, '2026-01', '2026-01-12')
+    const ana = result.participants[0]
+    expect(ana.bonus).toBe(2)
+    expect(ana.extraPoints).toBe(2)
   })
 
   it('uses exact base score for ties and can share a true tie', () => {

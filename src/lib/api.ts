@@ -7,6 +7,7 @@ import type {
   BackendApi,
   Dashboard,
   EntryMutation,
+  ExtraEntry,
   FreeMealEntry,
   MealEntry,
   MonthRecord,
@@ -98,6 +99,21 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
       profileId: text(entry.profileId ?? entry.profile_id),
       entryDate: text(entry.entryDate ?? entry.entry_date),
       count: Number(entry.count),
+      note: (entry.note as string | null) ?? null,
+      version: Number(entry.version),
+      createdAt: text(entry.createdAt ?? entry.created_at),
+      updatedAt: text(entry.updatedAt ?? entry.updated_at)
+    })),
+    extraEntries: (
+      ((raw.extraEntries ?? raw.extra_entries) as Record<
+        string,
+        unknown
+      >[]) ?? []
+    ).map((entry) => ({
+      id: text(entry.id),
+      profileId: text(entry.profileId ?? entry.profile_id),
+      entryDate: text(entry.entryDate ?? entry.entry_date),
+      level: Number(entry.level) as ExtraEntry['level'],
       note: (entry.note as string | null) ?? null,
       version: Number(entry.version),
       createdAt: text(entry.createdAt ?? entry.created_at),
@@ -232,11 +248,25 @@ class SupabaseBackend implements BackendApi {
                     p_note: mutation.note,
                     p_expected_version: mutation.expectedVersion
                   })
-                : client.rpc('clear_free_meal_entry', {
-                    ...common,
-                    p_entry_date: mutation.entryDate,
-                    p_expected_version: mutation.expectedVersion
-                  })
+                : mutation.type === 'clear-free'
+                  ? client.rpc('clear_free_meal_entry', {
+                      ...common,
+                      p_entry_date: mutation.entryDate,
+                      p_expected_version: mutation.expectedVersion
+                    })
+                  : mutation.type === 'upsert-extra'
+                    ? client.rpc('upsert_extra_entry', {
+                        ...common,
+                        p_entry_date: mutation.entryDate,
+                        p_level: mutation.level,
+                        p_note: mutation.note,
+                        p_expected_version: mutation.expectedVersion
+                      })
+                    : client.rpc('clear_extra_entry', {
+                        ...common,
+                        p_entry_date: mutation.entryDate,
+                        p_expected_version: mutation.expectedVersion
+                      })
     const { data, error } = await rpc
     if (error) throw error
     return normalizeDashboard(data as Record<string, unknown>)
@@ -316,7 +346,10 @@ const demoUsers = new Map([
 function demoEntries(
   firstWeek: string,
   today: string
-): Pick<Dashboard, 'mealEntries' | 'workoutEntries' | 'freeMealEntries'> {
+): Pick<
+  Dashboard,
+  'mealEntries' | 'workoutEntries' | 'freeMealEntries' | 'extraEntries'
+> {
   const slots: Record<string, string[]> = {
     'demo-ana': ['meal-ana-1', 'meal-ana-2', 'meal-ana-3'],
     'demo-leo': ['meal-leo-1', 'meal-leo-2']
@@ -329,6 +362,7 @@ function demoEntries(
   const mealEntries: MealEntry[] = []
   const workoutEntries: WorkoutEntry[] = []
   const freeMealEntries: FreeMealEntry[] = []
+  const extraEntries: ExtraEntry[] = []
   let day = 0
   for (let date = firstWeek; date < today; date = addDays(date, 1), day += 1) {
     for (const [profileId, ids] of Object.entries(slots)) {
@@ -371,7 +405,7 @@ function demoEntries(
         })
     }
   }
-  return { mealEntries, workoutEntries, freeMealEntries }
+  return { mealEntries, workoutEntries, freeMealEntries, extraEntries }
 }
 
 class DemoBackend implements BackendApi {

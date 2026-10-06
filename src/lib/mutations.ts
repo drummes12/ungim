@@ -103,10 +103,50 @@ export function applyMutationLocally(dashboard: Dashboard, mutation: EntryMutati
     return { ...dashboard, freeMealEntries: entries }
   }
 
-  return {
-    ...dashboard,
-    freeMealEntries: dashboard.freeMealEntries.filter(
-      (entry) => !(entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate),
-    ),
+  if (mutation.type === 'clear-free') {
+    return {
+      ...dashboard,
+      freeMealEntries: dashboard.freeMealEntries.filter(
+        (entry) => !(entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate),
+      ),
+    }
   }
+
+  if (mutation.type === 'upsert-extra') {
+    const index = dashboard.extraEntries.findIndex(
+      (entry) => entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate,
+    )
+    const entries = dashboard.extraEntries.slice()
+    if (index >= 0) {
+      entries[index] = {
+        ...entries[index],
+        level: mutation.level,
+        note: mutation.note,
+        version: entries[index].version + 1,
+      }
+    } else {
+      entries.push({
+        id: `local-${mutation.id}`,
+        profileId: mutation.profileId,
+        entryDate: mutation.entryDate,
+        level: mutation.level,
+        note: mutation.note,
+        version: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    }
+    return { ...dashboard, extraEntries: entries }
+  }
+
+  if (mutation.type === 'clear-extra') {
+    return {
+      ...dashboard,
+      extraEntries: dashboard.extraEntries.filter(
+        (entry) => !(entry.profileId === mutation.profileId && entry.entryDate === mutation.entryDate),
+      ),
+    }
+  }
+
+  return dashboard
 }
