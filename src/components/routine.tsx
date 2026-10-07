@@ -54,6 +54,29 @@ function ExerciseFields({
 
 type DayExercise = RoutineDayExercise
 
+function applyExerciseChanges(
+  item: DayExercise,
+  changes: Partial<DayExercise>
+): DayExercise {
+  const merged = { ...item, ...changes }
+  if (changes.sets !== undefined) {
+    merged.done = Array.from(
+      { length: changes.sets },
+      (_, index) => item.done[index] ?? false
+    )
+    merged.repsDone = Array.from(
+      { length: changes.sets },
+      (_, index) => item.repsDone[index] ?? item.reps
+    )
+  }
+  if (changes.reps !== undefined) {
+    merged.repsDone = merged.repsDone.map((logged) =>
+      Math.min(logged, changes.reps!)
+    )
+  }
+  return merged
+}
+
 function toDay(template: RoutineTemplate): DayExercise[] {
   return template.exercises.map((exercise, index) => ({
     ...exercise,
@@ -122,6 +145,9 @@ export function RoutinePanel({
   const [editingId, setEditingId] = useState<number | null>(null)
   const [movedId, setMovedId] = useState<number | null>(null)
   const moveTimer = useRef<number | undefined>(undefined)
+  const [listDraft, setListDraft] = useState<DayExercise[] | null>(null)
+  const [listSaved, setListSaved] = useState(false)
+  const savedTimer = useRef<number | undefined>(undefined)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<RoutineExercise>({
     name: '',
@@ -177,27 +203,89 @@ export function RoutinePanel({
 
   function patch(id: number, changes: Partial<DayExercise>) {
     commit(
-      day.map((item) => {
-        if (item.id !== id) return item
-        const merged = { ...item, ...changes }
-        if (changes.sets !== undefined) {
-          merged.done = Array.from(
-            { length: changes.sets },
-            (_, index) => item.done[index] ?? false
-          )
-          merged.repsDone = Array.from(
-            { length: changes.sets },
-            (_, index) => item.repsDone[index] ?? item.reps
-          )
-        }
-        if (changes.reps !== undefined) {
-          merged.repsDone = merged.repsDone.map((logged) =>
-            Math.min(logged, changes.reps!)
-          )
-        }
-        return merged
-      })
+      day.map((item) =>
+        item.id === id ? applyExerciseChanges(item, changes) : item
+      )
     )
+  }
+
+  // List phase edits stay in a local draft: structure changes (reorder, add,
+  // remove, field edits, set pills) don't sync until "Guardar cambios" sends
+  // one upsert-routine-day with the whole snapshot.
+  function updateDraft(updater: (items: DayExercise[]) => DayExercise[]) {
+    setListDraft((prev) => updater(prev ?? day))
+    setListSaved(false)
+  }
+
+  function patchDraft(id: number, changes: Partial<DayExercise>) {
+    updateDraft((items) =>
+      items.map((item) =>
+        item.id === id ? applyExerciseChanges(item, changes) : item
+      )
+    )
+  }
+
+  function toggleSetDraft(id: number, index: number) {
+    updateDraft((items) =>
+      items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              done: item.done.map((flag, i) => (i === index ? !flag : flag))
+            }
+          : item
+      )
+    )
+  }
+
+  function moveDraft(id: number, delta: number) {
+    updateDraft((items) => {
+      const from = items.findIndex((item) => item.id === id)
+      const to = from + delta
+      if (from < 0 || to < 0 || to >= items.length) return items
+      const next = items.slice()
+      ;[next[from], next[to]] = [next[to], next[from]]
+      return next
+    })
+    setMovedId(id)
+    window.clearTimeout(moveTimer.current)
+    moveTimer.current = window.setTimeout(() => setMovedId(null), 900)
+  }
+
+  function addDraft() {
+    const name = draft.name.trim()
+    if (!name) return
+    const nextIndex = (listDraft ?? day).reduce(
+      (max, item) => Math.max(max, item.id),
+      0
+    )
+    updateDraft((items) => [
+      ...items,
+      {
+        ...draft,
+        name,
+        id: nextIndex + 1,
+        done: Array<boolean>(draft.sets).fill(false),
+        repsDone: Array<number>(draft.sets).fill(draft.reps),
+        skipped: false
+      }
+    ])
+    setDraft({ name: '', sets: 3, reps: 10, weight: 20 })
+    setAdding(false)
+  }
+
+  function saveList() {
+    if (listDraft === null) return
+    commit(listDraft)
+    setListDraft(null)
+    setListSaved(true)
+    window.clearTimeout(savedTimer.current)
+    savedTimer.current = window.setTimeout(() => setListSaved(false), 1800)
+  }
+
+  function goPhase(next: typeof phase) {
+    if (next !== 'list') setListDraft(null)
+    setPhase(next)
   }
 
   function completeSet() {
@@ -263,21 +351,23 @@ export function RoutinePanel({
 
   function saveOverwrite() {
     if (!active) return
-    onSaveTemplate(active.id, active.name, toTemplate(day))
+    onSaveTemplate(active.id, active.name, toTemplate(listDraft ?? day))
     setSaveOpen(false)
   }
 
   function saveNew() {
     const name = saveName.trim()
     if (!name) return
-    const newId = onSaveTemplate(null, name, toTemplate(day))
-    commit(day, { routineId: newId })
+    const newId = onSaveTemplate(null, name, toTemplate(listDraft ?? day))
+    commit(listDraft ?? day, { routineId: newId })
+    setListDraft(null)
     setSaveOpen(false)
     setSaveName('')
   }
 
   function finish() {
-    commit(day, { completed: true })
+    commit(listDraft ?? day, { completed: true })
+    setListDraft(null)
     setPhase('done')
     onComplete?.(active?.name ?? null)
   }
@@ -288,7 +378,7 @@ export function RoutinePanel({
         <button
           type='button'
           className='btn-link'
-          onClick={() => setPhase('pick')}
+          onClick={() => goPhase('pick')}
         >
           Rutinas
         </button>
@@ -300,7 +390,7 @@ export function RoutinePanel({
         <button
           type='button'
           className='btn-link'
-          onClick={() => setPhase('list')}
+          onClick={() => goPhase('list')}
         >
           Lista
         </button>
@@ -308,7 +398,7 @@ export function RoutinePanel({
         <button
           type='button'
           className='btn-link'
-          onClick={() => setPhase('session')}
+          onClick={() => goPhase('session')}
         >
           Sesión
         </button>
@@ -417,7 +507,7 @@ export function RoutinePanel({
               type='button'
               className='btn btn-block'
               onClick={() => {
-                setPhase('list')
+                goPhase('list')
                 setAdding(true)
               }}
             >
@@ -502,7 +592,7 @@ export function RoutinePanel({
                 type='button'
                 className='btn-link'
                 onClick={() => {
-                  setPhase('list')
+                  goPhase('list')
                   setAdding(true)
                 }}
               >
@@ -516,11 +606,17 @@ export function RoutinePanel({
     )
   }
 
+  const listDay = listDraft ?? day
+
   return (
     <div className='stack'>
       {head}
+      <p className='routine-note'>
+        La sesión se guarda sola; los cambios de esta lista se aplican con
+        Guardar.
+      </p>
       <ul className='routine-list'>
-        {day.map((exercise, index) => {
+        {listDay.map((exercise, index) => {
           const editing = editingId === exercise.id
           return (
             <li
@@ -541,7 +637,7 @@ export function RoutinePanel({
                     type='button'
                     className='btn-link'
                     onClick={() =>
-                      patch(exercise.id, { skipped: !exercise.skipped })
+                      patchDraft(exercise.id, { skipped: !exercise.skipped })
                     }
                   >
                     {exercise.skipped ? 'Incluir' : 'Omitir'}
@@ -568,7 +664,7 @@ export function RoutinePanel({
                     aria-pressed={flag}
                     aria-label={`Serie ${setIndex + 1}${flag ? ' hecha' : ''}`}
                     disabled={exercise.skipped}
-                    onClick={() => toggleSet(exercise.id, setIndex)}
+                    onClick={() => toggleSetDraft(exercise.id, setIndex)}
                   >
                     {setIndex + 1}
                   </button>
@@ -579,7 +675,7 @@ export function RoutinePanel({
                     className='routine-move is-up'
                     aria-label='Subir'
                     disabled={index === 0}
-                    onClick={() => move(exercise.id, -1)}
+                    onClick={() => moveDraft(exercise.id, -1)}
                   >
                     <ChevronIcon />
                   </button>
@@ -587,8 +683,8 @@ export function RoutinePanel({
                     type='button'
                     className='routine-move'
                     aria-label='Bajar'
-                    disabled={index === day.length - 1}
-                    onClick={() => move(exercise.id, 1)}
+                    disabled={index === listDay.length - 1}
+                    onClick={() => moveDraft(exercise.id, 1)}
                   >
                     <ChevronIcon />
                   </button>
@@ -597,7 +693,7 @@ export function RoutinePanel({
               {editing && (
                 <ExerciseFields
                   exercise={exercise}
-                  onChange={(changes) => patch(exercise.id, changes)}
+                  onChange={(changes) => patchDraft(exercise.id, changes)}
                 />
               )}
             </li>
@@ -633,7 +729,7 @@ export function RoutinePanel({
                 type='button'
                 className='btn btn-primary'
                 disabled={!draft.name.trim()}
-                onClick={add}
+                onClick={addDraft}
               >
                 Añadir
               </button>
@@ -651,7 +747,31 @@ export function RoutinePanel({
           </li>
         )}
       </ul>
-      {day.length > 0 &&
+      {listDraft !== null && (
+        <div className='routine-savebar'>
+          <p className='routine-dirty'>Cambios sin guardar</p>
+          <div className='routine-saveactions'>
+            <button
+              type='button'
+              className='btn-link'
+              onClick={() => setListDraft(null)}
+            >
+              Descartar
+            </button>
+            <button
+              type='button'
+              className='btn btn-primary'
+              onClick={saveList}
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+      )}
+      {listSaved && listDraft === null && (
+        <p className='routine-saved'>Cambios guardados ✓</p>
+      )}
+      {listDay.length > 0 &&
         (saveOpen ? (
           <div className='routine-savebox'>
             {active && (
