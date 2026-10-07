@@ -1876,7 +1876,11 @@ button.cell:active {
 }
 
 .routine-chip {
+  max-width: 100%;
+  overflow: hidden;
   padding: 8px 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1920,6 +1924,15 @@ button.cell:active {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.run-head strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .run-hint {
@@ -2160,6 +2173,17 @@ button.cell:active {
   color: var(--mint-dark, #1d7a5f);
 }
 
+.sheet-actions.routine-foot {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.sheet-actions > .btn,
+.sheet-actions > .btn-quiet {
+  flex: 1 1 0;
+}
+
 /* Rutina — config en Plan */
 
 .routine-manager {
@@ -2209,6 +2233,7 @@ button.cell:active {
 
 .tpl-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -2246,9 +2271,13 @@ button.cell:active {
 
 .tpl-open span {
   margin-left: auto;
+  min-width: 0;
+  max-width: 55%;
+  overflow: hidden;
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 650;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -2289,6 +2318,7 @@ button.cell:active {
 
 .tpl-exlist {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -2319,6 +2349,7 @@ button.cell:active {
 }
 
 .tpl-ex-row span {
+  flex-shrink: 0;
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 650;
