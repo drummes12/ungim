@@ -2127,6 +2127,39 @@ button.cell:active {
   gap: 8px;
 }
 
+.routine-savebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--yellow);
+  box-shadow: var(--shadow);
+}
+
+.routine-dirty {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.routine-saveactions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routine-saved {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--mint-dark, #1d7a5f);
+}
+
 /* Rutina — config en Plan */
 
 .routine-manager {
