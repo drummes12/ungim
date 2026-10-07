@@ -2160,6 +2160,12 @@ button.cell:active {
   color: var(--mint-dark, #1d7a5f);
 }
 
+.sheet-actions.routine-foot {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
 /* Rutina — config en Plan */
 
 .routine-manager {

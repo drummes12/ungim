@@ -159,7 +159,6 @@ export function RoutinePanel({
   const [saveName, setSaveName] = useState('')
   const active = templates.find((item) => item.id === activeId)
   const suggested = templates.find((item) => item.id === suggestedId)
-  const nextId = day.reduce((max, item) => Math.max(max, item.id), 0) + 1
   const currentIndex = day.findIndex(
     (item) => !item.skipped && !item.done.every(Boolean)
   )
@@ -304,49 +303,6 @@ export function RoutinePanel({
         index === setIndex ? Math.max(0, logged + delta) : logged
       )
     })
-  }
-
-  function toggleSet(id: number, index: number) {
-    commit(
-      day.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              done: item.done.map((flag, i) => (i === index ? !flag : flag))
-            }
-          : item
-      )
-    )
-  }
-
-  function move(id: number, delta: number) {
-    const from = day.findIndex((item) => item.id === id)
-    const to = from + delta
-    if (from < 0 || to < 0 || to >= day.length) return
-    const next = day.slice()
-    ;[next[from], next[to]] = [next[to], next[from]]
-    commit(next)
-    setMovedId(id)
-    window.clearTimeout(moveTimer.current)
-    moveTimer.current = window.setTimeout(() => setMovedId(null), 900)
-  }
-
-  function add() {
-    const name = draft.name.trim()
-    if (!name) return
-    commit([
-      ...day,
-      {
-        ...draft,
-        name,
-        id: nextId,
-        done: Array<boolean>(draft.sets).fill(false),
-        repsDone: Array<number>(draft.sets).fill(draft.reps),
-        skipped: false
-      }
-    ])
-    setDraft({ name: '', sets: 3, reps: 10, weight: 20 })
-    setAdding(false)
   }
 
   function saveOverwrite() {
@@ -747,76 +703,78 @@ export function RoutinePanel({
           </li>
         )}
       </ul>
-      {listDraft !== null && (
-        <div className='routine-savebar'>
-          <p className='routine-dirty'>Cambios sin guardar</p>
-          <div className='routine-saveactions'>
-            <button
-              type='button'
-              className='btn-link'
-              onClick={() => setListDraft(null)}
-            >
-              Descartar
-            </button>
-            <button
-              type='button'
-              className='btn btn-primary'
-              onClick={saveList}
-            >
-              Guardar cambios
-            </button>
-          </div>
-        </div>
-      )}
-      {listSaved && listDraft === null && (
-        <p className='routine-saved'>Cambios guardados ✓</p>
-      )}
-      {listDay.length > 0 &&
-        (saveOpen ? (
-          <div className='routine-savebox'>
-            {active && (
+      <div className='sheet-actions routine-foot'>
+        {listDraft !== null && (
+          <div className='routine-savebar'>
+            <p className='routine-dirty'>Cambios sin guardar</p>
+            <div className='routine-saveactions'>
               <button
                 type='button'
-                className='btn'
-                onClick={saveOverwrite}
+                className='btn-link'
+                onClick={() => setListDraft(null)}
               >
-                Actualizar «{active.name}»
+                Descartar
               </button>
-            )}
-            <div className='routine-savenew'>
-              <input
-                value={saveName}
-                placeholder='Nombre nueva rutina'
-                maxLength={40}
-                onChange={(event) => setSaveName(event.target.value)}
-              />
               <button
                 type='button'
                 className='btn btn-primary'
-                disabled={!saveName.trim()}
-                onClick={saveNew}
+                onClick={saveList}
               >
-                Como nueva
+                Guardar cambios
               </button>
             </div>
+          </div>
+        )}
+        {listSaved && listDraft === null && (
+          <p className='routine-saved'>Cambios guardados ✓</p>
+        )}
+        {listDay.length > 0 &&
+          (saveOpen ? (
+            <div className='routine-savebox'>
+              {active && (
+                <button
+                  type='button'
+                  className='btn'
+                  onClick={saveOverwrite}
+                >
+                  Actualizar «{active.name}»
+                </button>
+              )}
+              <div className='routine-savenew'>
+                <input
+                  value={saveName}
+                  placeholder='Nombre nueva rutina'
+                  maxLength={40}
+                  onChange={(event) => setSaveName(event.target.value)}
+                />
+                <button
+                  type='button'
+                  className='btn btn-primary'
+                  disabled={!saveName.trim()}
+                  onClick={saveNew}
+                >
+                  Como nueva
+                </button>
+              </div>
+              <button
+                type='button'
+                className='btn-link'
+                onClick={() => setSaveOpen(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
             <button
               type='button'
-              className='btn-link'
-              onClick={() => setSaveOpen(false)}
+              className='btn'
+              onClick={() => setSaveOpen(true)}
             >
-              Cancelar
+              Guardar rutina
             </button>
-          </div>
-        ) : (
-          <button
-            type='button'
-            className='btn'
-            onClick={() => setSaveOpen(true)}
-          >
-            Guardar rutina
-          </button>
-        ))}
-      {finishButton}
+          ))}
+        {finishButton}
+      </div>
     </div>
   )
 }
@@ -973,21 +931,23 @@ function RoutineEditor({
           exercise={editExercise}
           onChange={(changes) => patchExercise(openTpl, editEx, changes)}
         />
-        <button
-          type='button'
-          className='btn-quiet'
-          onClick={() => {
-            setExNameDraft(null)
-            onSaveTemplate(
-              openTpl.id,
-              openTpl.name,
-              openTpl.exercises.filter((_, index) => index !== editEx)
-            )
-            setEditEx(null)
-          }}
-        >
-          Eliminar ejercicio
-        </button>
+        <div className='sheet-actions'>
+          <button
+            type='button'
+            className='btn-quiet'
+            onClick={() => {
+              setExNameDraft(null)
+              onSaveTemplate(
+                openTpl.id,
+                openTpl.name,
+                openTpl.exercises.filter((_, index) => index !== editEx)
+              )
+              setEditEx(null)
+            }}
+          >
+            Eliminar ejercicio
+          </button>
+        </div>
       </div>
     )
   }
@@ -1045,28 +1005,30 @@ function RoutineEditor({
             </li>
           ))}
         </ul>
-        <button
-          type='button'
-          className='btn'
-          onClick={() =>
-            onSaveTemplate(openTpl.id, openTpl.name, [
-              ...openTpl.exercises,
-              { name: '', sets: 3, reps: 10, weight: 20 }
-            ])
-          }
-        >
-          + ejercicio
-        </button>
-        <button
-          type='button'
-          className='btn-quiet'
-          onClick={() => {
-            onDeleteTemplate(openTpl.id)
-            setOpenId(null)
-          }}
-        >
-          Eliminar rutina
-        </button>
+        <div className='sheet-actions'>
+          <button
+            type='button'
+            className='btn-quiet'
+            onClick={() => {
+              onDeleteTemplate(openTpl.id)
+              setOpenId(null)
+            }}
+          >
+            Eliminar rutina
+          </button>
+          <button
+            type='button'
+            className='btn'
+            onClick={() =>
+              onSaveTemplate(openTpl.id, openTpl.name, [
+                ...openTpl.exercises,
+                { name: '', sets: 3, reps: 10, weight: 20 }
+              ])
+            }
+          >
+            + ejercicio
+          </button>
+        </div>
       </div>
     )
   }
@@ -1146,16 +1108,18 @@ function RoutineEditor({
           </li>
         ))}
       </ul>
-      <button
-        type='button'
-        className='btn'
-        onClick={() => {
-          const id = onSaveTemplate(null, 'Nueva rutina', [])
-          setOpenId(id)
-        }}
-      >
-        + Nueva rutina
-      </button>
+      <div className='sheet-actions'>
+        <button
+          type='button'
+          className='btn'
+          onClick={() => {
+            const id = onSaveTemplate(null, 'Nueva rutina', [])
+            setOpenId(id)
+          }}
+        >
+          + Nueva rutina
+        </button>
+      </div>
     </div>
   )
 }

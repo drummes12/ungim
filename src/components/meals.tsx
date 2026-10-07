@@ -86,17 +86,19 @@ function MealEditor({
           maxLength={180}
           onChange={(event) => patch(editIndex, { rule: event.target.value })}
         />
-        <button
-          type='button'
-          className='btn-quiet'
-          disabled={meals.length <= 1}
-          onClick={() => {
-            onChange(meals.filter((_, index) => index !== editIndex))
-            setEditIndex(null)
-          }}
-        >
-          Eliminar comida
-        </button>
+        <div className='sheet-actions'>
+          <button
+            type='button'
+            className='btn-quiet'
+            disabled={meals.length <= 1}
+            onClick={() => {
+              onChange(meals.filter((_, index) => index !== editIndex))
+              setEditIndex(null)
+            }}
+          >
+            Eliminar comida
+          </button>
+        </div>
       </div>
     )
   }
@@ -122,17 +124,19 @@ function MealEditor({
           </li>
         ))}
       </ul>
-      <button
-        type='button'
-        className='btn'
-        disabled={meals.length >= 5}
-        onClick={() => {
-          onChange([...meals, { name: '', rule: '' }])
-          setEditIndex(meals.length)
-        }}
-      >
-        + Nueva comida
-      </button>
+      <div className='sheet-actions'>
+        <button
+          type='button'
+          className='btn'
+          disabled={meals.length >= 5}
+          onClick={() => {
+            onChange([...meals, { name: '', rule: '' }])
+            setEditIndex(meals.length)
+          }}
+        >
+          + Nueva comida
+        </button>
+      </div>
     </div>
   )
 }
