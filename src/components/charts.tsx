@@ -4,14 +4,13 @@ import {
   formatDay,
   isoWeekStart,
   monthEnd,
-  monthStart
+  monthStart,
+  weekdayLetters
 } from '../lib/dates'
 import { dayStatus, type ScorePoint } from '../lib/scoring'
 import type { Dashboard, ParticipantScore } from '../lib/types'
 import { Avatar } from './Avatar'
 import { DonutIcon, TrophyIcon } from './icons'
-
-const weekdayLetters = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
 function toneStyle(color: string, extra: CSSProperties = {}): CSSProperties {
   return { ['--tone' as string]: color, ...extra }
