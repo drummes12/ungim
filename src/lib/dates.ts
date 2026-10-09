@@ -20,6 +20,8 @@ export function addDays(dateKey: string, days: number): string {
   return toDateKey(date)
 }
 
+export const weekdayLetters = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+
 export function isoWeekStart(dateKey: string): string {
   const date = parseDateKey(dateKey)
   const day = date.getUTCDay() || 7

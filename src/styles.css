@@ -1611,9 +1611,17 @@ button.cell:active {
   display: inline-grid;
   flex: none;
   place-items: center;
+  overflow: hidden;
   border: 2px solid var(--ink);
   border-radius: 50%;
+  background: var(--surface);
   font-weight: 900;
+}
+
+.avatar > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .avatar-sm {
@@ -1642,6 +1650,223 @@ button.cell:active {
 .avatar-stack .avatar + .avatar {
   margin-left: -20px;
   box-shadow: 0 0 0 2px var(--stack-ring, var(--surface));
+}
+
+/* ---------- Share card ---------- */
+
+.block-title:has(> .share-btn) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+}
+
+.share-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.share-card {
+  padding: 20px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.share-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.share-brand {
+  width: 30px;
+  height: 30px;
+}
+
+.share-headline {
+  margin: 4px 0 18px;
+  font-size: 1.65rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.share-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 2px solid var(--ink);
+}
+
+.share-wordmark {
+  font-weight: 900;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.share-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.share-variants {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.share-variant {
+  min-height: 36px;
+  cursor: pointer;
+  font: inherit;
+  background: var(--surface);
+}
+
+.share-variant.is-active {
+  background: var(--yellow);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.share-preview {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.share-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+  margin-bottom: 18px;
+}
+
+.share-arrow {
+  width: 44px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+}
+
+.share-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.share-arrow:first-child svg {
+  transform: rotate(180deg);
+}
+
+.share-nav-pos {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.share-week-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.share-donut {
+  width: 52px;
+  height: 52px;
+  flex: none;
+}
+
+.share-week-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.share-week-name strong {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.share-week-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.share-week {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.share-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.share-day-letter {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.share-day-cell {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.share-day-cell svg {
+  width: 18px;
+  height: 18px;
+}
+
+.share-day-cell.is-done {
+  background: var(--mint, #abe7c2);
+}
+
+.share-day-cell.is-future {
+  opacity: 0.45;
+}
+
+.share-day-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.share-day-dot.is-on {
+  background: var(--ink);
 }
 
 .rival-card {
