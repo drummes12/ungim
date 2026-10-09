@@ -1,164 +1,1041 @@
-import type { Ref } from 'react'
-import type { Dashboard, ParticipantScore } from '../lib/types'
-import { addDays, formatWeekRange, isoWeekStart, weekdayLetters } from '../lib/dates'
-import { dayStatus, isPerfectWeek } from '../lib/scoring'
-import { DuelBar } from './charts'
-import { BrandIcon, CheckIcon, DonutIcon } from './icons'
+import type { ReactNode, Ref } from 'react'
+import { formatDay, formatMonth } from '../lib/dates'
+import {
+  consecutiveMealDays,
+  dayStatus,
+  perfectWeekStreak,
+  workoutProgressThisWeek
+} from '../lib/scoring'
+import type { Dashboard, MonthResult } from '../lib/types'
+import { BrandIcon, DonutIcon } from './icons'
 
-export type RaceMood = 'leading' | 'tied' | 'chasing'
+export type ShareCardKind = 'today' | 'streak' | 'race'
+export type ShareFormat = 'story' | 'sticker'
 
-export const RACE_CAPTIONS: Record<RaceMood, string[]> = {
-  leading: [
-    'La delantera se cocina, no se regala.',
-    'Modo imparable.',
-    'Que venga a buscarme.',
-    'Líder del mes. Que tiemble el cierre.'
+export const SHARE_CAPTIONS: Record<ShareCardKind, string[]> = {
+  today: ['OTRO DÍA QUE SUMA', 'MI PROCESO. MI RITMO.', 'PASO A PASO.'],
+  streak: [
+    'NO ES SUERTE. ES REPETIR.',
+    'UNA COMIDA A LA VEZ.',
+    'SEMANAS QUE DEJAN HUELLA.'
   ],
-  tied: [
-    'Empatados. Esto se pone bueno.',
-    'Punto a punto. Se define en la cocina.',
-    'Nivel a nivel — el mes decide.'
-  ],
-  chasing: [
-    'Voy por la delantera.',
-    'Remontada en progreso.',
-    'Segundo lugar. Por ahora.',
-    'Que no se confíe el líder.'
+  race: [
+    'UNA SEMANA A LA VEZ.',
+    'CADA PUNTO CUENTA.',
+    'EL PROCESO TAMBIÉN SE CELEBRA.'
   ]
 }
 
-export const WEEK_CAPTIONS = {
-  perfect: [
-    '7 de 7. Semana perfecta.',
-    'Ni una comida libre. Toda una semana.',
-    'La rosquilla es mía.',
-    'Sin fallas. Así se entrena.'
-  ],
-  progress: [
-    'Camino a la semana perfecta.',
-    'Día a día, sin excusas.',
-    'Que nadie mueva el marcador.'
-  ]
-}
+const ink = '#14110f'
+const paper = '#faf1e7'
+const surface = '#fffdf9'
+const coral = '#ff9078'
+const blue = '#557fd8'
+const yellow = '#ffe08f'
+const font =
+  "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const mono = 'ui-monospace, SFMono-Regular, Menlo, monospace'
 
-export function raceMood(
-  currentProfileId: string,
-  participants: ParticipantScore[],
-  winnerIds: string[]
-): RaceMood {
-  const me = participants.find((p) => p.profileId === currentProfileId)
-  if (!me || me.noData || participants.filter((p) => !p.noData).length < 2)
-    return 'tied'
-  if (winnerIds.length !== 1) return 'tied'
-  return winnerIds[0] === currentProfileId ? 'leading' : 'chasing'
-}
-
-export function ShareCard({
-  participants,
-  winnerIds,
-  monthLabel,
-  day,
-  daysInMonth,
-  caption,
-  ref
-}: {
-  participants: ParticipantScore[]
-  winnerIds: string[]
-  monthLabel: string
-  day: number
-  daysInMonth: number
-  caption: string
-  ref?: Ref<HTMLDivElement>
-}) {
+function DonutMark({ x, y, size }: { x: number; y: number; size: number }) {
   return (
-    <div className='share-card' ref={ref}>
-      <div className='share-head'>
-        <span className='share-eyebrow'>La carrera · {monthLabel}</span>
-        <BrandIcon className='share-brand' />
-      </div>
-      <p className='share-headline'>{caption}</p>
-      <DuelBar participants={participants} winnerIds={winnerIds} />
-      <div className='share-foot'>
-        <span className='share-wordmark'>Ahhh, un gim!</span>
-        <span className='num share-date'>
-          día {day} de {daysInMonth}
-        </span>
-      </div>
-    </div>
+    <g transform={`translate(${x} ${y}) scale(${size / 64})`}>
+      <DonutIcon />
+    </g>
   )
 }
 
-export function WeekShareCard({
+function BrandLine({
+  x = 76,
+  y = 110,
+  size = 28
+}: {
+  x?: number
+  y?: number
+  size?: number
+}) {
+  return (
+    <g>
+      <g transform={`translate(${x} ${y - size + 8}) scale(${size / 64})`}>
+        <BrandIcon />
+      </g>
+      <text
+        x={x + size + 14}
+        y={y}
+        fill={ink}
+        fontFamily={font}
+        fontSize='25'
+        fontWeight='900'
+        letterSpacing='-0.6'
+      >
+        Ahhh, un gim!
+      </text>
+    </g>
+  )
+}
+
+function BigText({
+  x,
+  y,
+  children,
+  size,
+  fill = ink,
+  anchor = 'start',
+  family = font,
+  weight = 950
+}: {
+  x: number
+  y: number
+  children: ReactNode
+  size: number
+  fill?: string
+  anchor?: 'start' | 'middle' | 'end'
+  family?: string
+  weight?: number
+}) {
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={anchor}
+      fill={fill}
+      fontFamily={family}
+      fontSize={size}
+      fontWeight={weight}
+      letterSpacing={size > 100 ? '-8' : '-2'}
+    >
+      {children}
+    </text>
+  )
+}
+
+function PosterFrame({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <rect width='1080' height='1920' fill={paper} />
+      <rect
+        x='30'
+        y='30'
+        width='1020'
+        height='1860'
+        fill='none'
+        stroke={ink}
+        strokeWidth='5'
+      />
+      {children}
+    </>
+  )
+}
+
+function TodayArtwork({
   dashboard,
   today,
+  sticker,
+  caption
+}: {
+  dashboard: Dashboard
+  today: string
+  sticker: boolean
+  caption: string
+}) {
+  const profileId = dashboard.currentProfileId
+  const status = dayStatus(dashboard, profileId, today, today)
+  const progress = workoutProgressThisWeek(dashboard, profileId, today)
+  const mealCount = status.planned
+  const mealsMet = status.met
+
+  if (sticker) {
+    return (
+      <>
+        <rect
+          x='70'
+          y='120'
+          width='940'
+          height='740'
+          rx='34'
+          fill={surface}
+          stroke={ink}
+          strokeWidth='8'
+        />
+        <path
+          d='M104 124h872a30 30 0 0 1 30 30v171H74V154a30 30 0 0 1 30-30Z'
+          fill={coral}
+        />
+        <BrandLine x={116} y={184} size={48} />
+        <BigText x={120} y={286} size={62}>
+          {caption}
+        </BigText>
+        <BigText x={120} y={444} size={104}>
+          ENTRENO
+        </BigText>
+        <BigText x={120} y={552} size={104}>
+          HECHO.
+        </BigText>
+        <line
+          x1='120'
+          y1='606'
+          x2='960'
+          y2='606'
+          stroke={ink}
+          strokeWidth='6'
+        />
+        <BigText x={120} y={738} size={116} family={mono}>
+          {mealsMet}/{mealCount}
+        </BigText>
+        <text
+          x='468'
+          y='730'
+          fill={ink}
+          fontFamily={font}
+          fontSize='40'
+          fontWeight='900'
+        >
+          COMIDAS
+        </text>
+        <text
+          x='468'
+          y='782'
+          fill={ink}
+          fontFamily={font}
+          fontSize='28'
+          fontWeight='700'
+        >
+          {formatDay(today)}
+        </text>
+      </>
+    )
+  }
+
+  return (
+    <PosterFrame>
+      <BrandLine />
+      <text
+        x='1004'
+        y='110'
+        textAnchor='end'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        {formatDay(today).toUpperCase()}
+      </text>
+      <BigText x={72} y={478} size={182}>
+        HOY SÍ.
+      </BigText>
+      <rect
+        x='72'
+        y='550'
+        width='936'
+        height='500'
+        fill={coral}
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <DonutMark x={760} y={600} size={188} />
+      <BigText x={120} y={760} size={95}>
+        ENTRENO
+      </BigText>
+      <BigText x={120} y={876} size={116}>
+        HECHO.
+      </BigText>
+      <text
+        x='124'
+        y='973'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='30'
+        fontWeight='700'
+      >
+        {caption}
+      </text>
+      <line
+        x1='72'
+        y1='1130'
+        x2='1008'
+        y2='1130'
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <BigText x={76} y={1314} size={172} family={mono}>
+        {mealsMet}/{mealCount}
+      </BigText>
+      <text
+        x='82'
+        y='1394'
+        fill={ink}
+        fontFamily={font}
+        fontSize='36'
+        fontWeight='900'
+      >
+        COMIDAS CUMPLIDAS
+      </text>
+      <rect
+        x='76'
+        y='1480'
+        width='928'
+        height='206'
+        fill={surface}
+        stroke={ink}
+        strokeWidth='5'
+      />
+      <text
+        x='112'
+        y='1544'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='27'
+        fontWeight='700'
+      >
+        ENTRENOS ESTA SEMANA
+      </text>
+      <BigText x={112} y={1653} size={94} family={mono}>
+        {progress.done}/{progress.target}
+      </BigText>
+      <text
+        x='420'
+        y='1648'
+        fill={ink}
+        fontFamily={font}
+        fontSize='32'
+        fontWeight='800'
+      >
+        PASO A PASO.
+      </text>
+      <line
+        x1='76'
+        y1='1764'
+        x2='1004'
+        y2='1764'
+        stroke={ink}
+        strokeWidth='5'
+      />
+      <text
+        x='76'
+        y='1830'
+        fill={ink}
+        fontFamily={font}
+        fontSize='34'
+        fontWeight='900'
+      >
+        MI PROCESO. MI RITMO.
+      </text>
+      <text
+        x='1004'
+        y='1830'
+        textAnchor='end'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        Ahhh, un gim!
+      </text>
+    </PosterFrame>
+  )
+}
+
+function StreakArtwork({
+  dashboard,
+  today,
+  sticker,
+  caption
+}: {
+  dashboard: Dashboard
+  today: string
+  sticker: boolean
+  caption: string
+}) {
+  const profileId = dashboard.currentProfileId
+  const meals = consecutiveMealDays(dashboard, profileId, today)
+  const weeks = perfectWeekStreak(dashboard, profileId, today)
+  const dots = Array.from({ length: 7 }, (_, index) => index < meals)
+  const perfectDots = Array.from({ length: 5 }, (_, index) => index < weeks)
+
+  if (sticker) {
+    return (
+      <>
+        <BrandLine x={92} y={138} size={46} />
+        <text
+          x='1004'
+          y='138'
+          textAnchor='end'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='23'
+          fontWeight='700'
+        >
+          {formatDay(today).toUpperCase()}
+        </text>
+        <rect
+          x='70'
+          y='220'
+          width='940'
+          height='600'
+          rx='34'
+          fill={surface}
+          stroke={ink}
+          strokeWidth='8'
+        />
+        <path
+          d='M104 224h872a30 30 0 0 1 30 30v96H74v-96a30 30 0 0 1 30-30Z'
+          fill={coral}
+        />
+        <line
+          x1='74'
+          y1='350'
+          x2='1006'
+          y2='350'
+          stroke={ink}
+          strokeWidth='8'
+        />
+        <BigText x={540} y={312} size={58} anchor='middle'>
+          DOS RACHAS
+        </BigText>
+        <line
+          x1='540'
+          y1='390'
+          x2='540'
+          y2='682'
+          stroke={ink}
+          strokeWidth='5'
+        />
+        <text
+          x='298'
+          y='430'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='26'
+          fontWeight='700'
+        >
+          COMIDAS
+        </text>
+        <BigText x={298} y={590} size={140} family={mono} anchor='middle'>
+          {String(meals)}
+        </BigText>
+        <text
+          x='298'
+          y='640'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={font}
+          fontSize='30'
+          fontWeight='900'
+        >
+          DÍAS SEGUIDOS
+        </text>
+        <text
+          x='768'
+          y='430'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='24'
+          fontWeight='700'
+        >
+          ENTRENO + COMIDAS
+        </text>
+        <BigText x={768} y={590} size={140} family={mono} anchor='middle'>
+          {String(weeks)}
+        </BigText>
+        <text
+          x='768'
+          y='640'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={font}
+          fontSize='30'
+          fontWeight='900'
+        >
+          SEMANAS PERFECTAS
+        </text>
+        {dots.map((on, index) => (
+          <circle
+            key={`meal-${index}`}
+            cx={172 + index * 42}
+            cy='690'
+            r='12'
+            fill={on ? ink : paper}
+            stroke={ink}
+            strokeWidth='3'
+          />
+        ))}
+        {perfectDots.map((on, index) => (
+          <rect
+            key={`week-${index}`}
+            x={670 + index * 42}
+            y='678'
+            width='24'
+            height='24'
+            fill={on ? ink : paper}
+            stroke={ink}
+            strokeWidth='3'
+          />
+        ))}
+        <line
+          x1='120'
+          y1='730'
+          x2='960'
+          y2='730'
+          stroke={ink}
+          strokeWidth='5'
+        />
+        <text
+          x='540'
+          y='785'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={font}
+          fontSize='24'
+          fontWeight='800'
+        >
+          {caption}
+        </text>
+      </>
+    )
+  }
+
+  return (
+    <PosterFrame>
+      <BrandLine />
+      <text
+        x='1004'
+        y='110'
+        textAnchor='end'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        {formatDay(today).toUpperCase()}
+      </text>
+      <BigText x={72} y={480} size={120}>
+        LA CONSTANCIA
+      </BigText>
+      <BigText x={72} y={625} size={150}>
+        SE CUENTA.
+      </BigText>
+      <rect
+        x='72'
+        y='735'
+        width='936'
+        height='380'
+        fill={coral}
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <text
+        x='118'
+        y='804'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='28'
+        fontWeight='700'
+      >
+        COMIDAS · DÍAS SEGUIDOS
+      </text>
+      <BigText x={115} y={1010} size={172} family={mono}>
+        {String(meals)}
+      </BigText>
+      {dots.map((on, index) => (
+        <circle
+          key={index}
+          cx={660 + index * 42}
+          cy='978'
+          r='14'
+          fill={on ? ink : surface}
+          stroke={ink}
+          strokeWidth='4'
+        />
+      ))}
+      <text
+        x='658'
+        y='1032'
+        fill={ink}
+        fontFamily={font}
+        fontSize='26'
+        fontWeight='800'
+      >
+        ÚLTIMOS 7
+      </text>
+      <rect
+        x='72'
+        y='1155'
+        width='936'
+        height='380'
+        fill={yellow}
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <text
+        x='118'
+        y='1224'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='28'
+        fontWeight='700'
+      >
+        ENTRENO + COMIDAS · SEMANAS
+      </text>
+      <BigText x={115} y={1430} size={172} family={mono}>
+        {String(weeks)}
+      </BigText>
+      {perfectDots.map((on, index) => (
+        <rect
+          key={index}
+          x={660 + index * 54}
+          y='1372'
+          width='34'
+          height='34'
+          fill={on ? ink : surface}
+          stroke={ink}
+          strokeWidth='4'
+        />
+      ))}
+      <text
+        x='658'
+        y='1450'
+        fill={ink}
+        fontFamily={font}
+        fontSize='26'
+        fontWeight='800'
+      >
+        SEMANA PERFECTA
+      </text>
+      <line
+        x1='76'
+        y1='1670'
+        x2='1004'
+        y2='1670'
+        stroke={ink}
+        strokeWidth='5'
+      />
+      <text
+        x='76'
+        y='1754'
+        fill={ink}
+        fontFamily={font}
+        fontSize='42'
+        fontWeight='900'
+      >
+        {caption}
+      </text>
+      <text
+        x='76'
+        y='1830'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        Ahhh, un gim! · {formatDay(today).toUpperCase()}
+      </text>
+    </PosterFrame>
+  )
+}
+
+function RaceArtwork({
+  score,
+  today,
+  dashboard,
+  sticker,
+  caption
+}: {
+  score: MonthResult
+  today: string
+  dashboard: Dashboard
+  sticker: boolean
+  caption: string
+}) {
+  const me = score.participants.find(
+    (item) => item.profileId === dashboard.currentProfileId
+  )
+  const partner = score.participants.find(
+    (item) => item.profileId !== dashboard.currentProfileId
+  )
+  const left = me ?? score.participants[0]
+  const right = partner ?? score.participants[1]
+  const leftTotal = left?.total ?? 0
+  const rightTotal = right?.total ?? 0
+  const maxPoints = 116
+  const outcome =
+    leftTotal === rightTotal
+      ? 'EMPATE'
+      : leftTotal > rightTotal
+        ? 'VOY ARRIBA'
+        : 'VOY POR MÁS'
+  const formatted = (value: number) =>
+    Number.isInteger(value) ? String(value) : value.toFixed(1)
+
+  if (sticker) {
+    return (
+      <>
+        <BrandLine x={96} y={142} size={46} />
+        <rect
+          x='70'
+          y='220'
+          width='940'
+          height='600'
+          rx='34'
+          fill={surface}
+          stroke={ink}
+          strokeWidth='8'
+        />
+        <path
+          d='M104 224h872a30 30 0 0 1 30 30v96H74v-96a30 30 0 0 1 30-30Z'
+          fill={coral}
+        />
+        <line
+          x1='74'
+          y1='350'
+          x2='1006'
+          y2='350'
+          stroke={ink}
+          strokeWidth='8'
+        />
+        <BigText x={540} y={312} size={58} anchor='middle'>
+          LA CARRERA.
+        </BigText>
+        <text
+          x='540'
+          y='392'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='22'
+          fontWeight='700'
+        >
+          {formatMonth(score.monthKey).toUpperCase()} · DÍA{' '}
+          {Number(today.slice(8, 10))}
+        </text>
+        <rect
+          x='90'
+          y='420'
+          width='440'
+          height='286'
+          fill={coral}
+          stroke={ink}
+          strokeWidth='6'
+        />
+        <rect
+          x='550'
+          y='420'
+          width='440'
+          height='286'
+          fill={blue}
+          stroke={ink}
+          strokeWidth='6'
+        />
+        <text
+          x='310'
+          y='490'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={font}
+          fontSize='30'
+          fontWeight='900'
+        >
+          YO
+        </text>
+        <text
+          x='770'
+          y='490'
+          textAnchor='middle'
+          fill={surface}
+          fontFamily={font}
+          fontSize='30'
+          fontWeight='900'
+        >
+          MI DUPLA
+        </text>
+        <BigText x={310} y={622} size={100} family={mono} anchor='middle'>
+          {formatted(leftTotal)}
+        </BigText>
+        <BigText
+          x={770}
+          y={622}
+          size={100}
+          family={mono}
+          fill={surface}
+          anchor='middle'
+        >
+          {formatted(rightTotal)}
+        </BigText>
+        <text
+          x='310'
+          y='672'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='24'
+          fontWeight='700'
+        >
+          PUNTOS
+        </text>
+        <text
+          x='770'
+          y='672'
+          textAnchor='middle'
+          fill={surface}
+          fontFamily={mono}
+          fontSize='24'
+          fontWeight='700'
+        >
+          PUNTOS
+        </text>
+        <text
+          x='540'
+          y='742'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={font}
+          fontSize='36'
+          fontWeight='900'
+        >
+          {outcome}
+        </text>
+        <text
+          x='540'
+          y='786'
+          textAnchor='middle'
+          fill={ink}
+          fontFamily={mono}
+          fontSize='23'
+          fontWeight='700'
+        >
+          {caption}
+        </text>
+      </>
+    )
+  }
+
+  return (
+    <PosterFrame>
+      <BrandLine />
+      <text
+        x='1004'
+        y='110'
+        textAnchor='end'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        {formatMonth(score.monthKey).toUpperCase()}
+      </text>
+      <BigText x={72} y={300} size={150}>
+        LA CARRERA.
+      </BigText>
+      <rect
+        x='72'
+        y='390'
+        width='456'
+        height='570'
+        fill={coral}
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <rect
+        x='552'
+        y='390'
+        width='456'
+        height='570'
+        fill={blue}
+        stroke={ink}
+        strokeWidth='6'
+      />
+      <text
+        x='118'
+        y='470'
+        fill={ink}
+        fontFamily={font}
+        fontSize='42'
+        fontWeight='900'
+      >
+        YO
+      </text>
+      <text
+        x='598'
+        y='470'
+        fill={surface}
+        fontFamily={font}
+        fontSize='42'
+        fontWeight='900'
+      >
+        MI DUPLA
+      </text>
+      <BigText x={118} y={680} size={140} family={mono}>
+        {formatted(leftTotal)}
+      </BigText>
+      <BigText x={598} y={680} size={140} family={mono} fill={surface}>
+        {formatted(rightTotal)}
+      </BigText>
+      <text
+        x='122'
+        y='740'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='30'
+        fontWeight='700'
+      >
+        PUNTOS
+      </text>
+      <text
+        x='602'
+        y='740'
+        fill={surface}
+        fontFamily={mono}
+        fontSize='30'
+        fontWeight='700'
+      >
+        PUNTOS
+      </text>
+      <rect
+        x='120'
+        y='810'
+        width={Math.max(0, 360 * Math.min(1, leftTotal / maxPoints))}
+        height='28'
+        fill={ink}
+      />
+      <rect
+        x='600'
+        y='810'
+        width={Math.max(0, 360 * Math.min(1, rightTotal / maxPoints))}
+        height='28'
+        fill={surface}
+      />
+      <text
+        x='540'
+        y='1055'
+        textAnchor='middle'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='36'
+        fontWeight='800'
+      >
+        {outcome}
+      </text>
+      <text
+        x='540'
+        y='1120'
+        textAnchor='middle'
+        fill={ink}
+        fontFamily={font}
+        fontSize='36'
+        fontWeight='800'
+      >
+        {caption}
+      </text>
+      <line
+        x1='76'
+        y1='1265'
+        x2='1004'
+        y2='1265'
+        stroke={ink}
+        strokeWidth='5'
+      />
+      <BigText x={76} y={1430} size={100}>
+        {Number(today.slice(8, 10))}
+      </BigText>
+      <text
+        x='252'
+        y='1422'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='27'
+        fontWeight='700'
+      >
+        DÍA DEL MES
+      </text>
+      <text
+        x='76'
+        y='1640'
+        fill={ink}
+        fontFamily={font}
+        fontSize='43'
+        fontWeight='900'
+      >
+        EL PROCESO TAMBIÉN SE CELEBRA.
+      </text>
+      <text
+        x='76'
+        y='1830'
+        fill={ink}
+        fontFamily={mono}
+        fontSize='25'
+        fontWeight='700'
+      >
+        Ahhh, un gim!
+      </text>
+    </PosterFrame>
+  )
+}
+
+export function SharePoster({
+  dashboard,
+  today,
+  score,
+  kind,
+  format,
   caption,
   ref
 }: {
   dashboard: Dashboard
   today: string
+  score: MonthResult
+  kind: ShareCardKind
+  format: ShareFormat
   caption: string
-  ref?: Ref<HTMLDivElement>
+  ref?: Ref<SVGSVGElement>
 }) {
-  const profile = dashboard.profiles.find(
-    (p) => p.id === dashboard.currentProfileId
-  )
-  const weekStart = isoWeekStart(today)
-  const days = weekdayLetters.map((letter, index) => {
-    const date = addDays(weekStart, index)
-    const status = dayStatus(dashboard, dashboard.currentProfileId, date, today)
-    return { letter, date, status }
-  })
-  const doneCount = days.filter(
-    ({ status }) => status.planned > 0 && status.met === status.planned
-  ).length
-  const perfect =
-    isPerfectWeek(
-      dashboard,
-      dashboard.currentProfileId,
-      weekStart,
-      dashboard.settings?.startsOn ?? ''
-    ) && days.every(({ status }) => !status.future)
+  const height = format === 'story' ? 1920 : 980
+  const label =
+    kind === 'today'
+      ? 'Mi entrenamiento de hoy'
+      : kind === 'streak'
+        ? 'Mis rachas'
+        : 'La carrera del mes'
 
   return (
-    <div className='share-card' ref={ref}>
-      <div className='share-head'>
-        <span className='share-eyebrow'>
-          Semana · {formatWeekRange(weekStart)}
-        </span>
-        <BrandIcon className='share-brand' />
-      </div>
-      <p className='share-headline'>{caption}</p>
-      <div className='share-week-hero'>
-        <DonutIcon className='share-donut' />
-        <div className='share-week-name'>
-          <strong>{profile?.displayName ?? ''}</strong>
-          <span className='num share-week-count'>
-            {perfect ? '+1 rosquilla al marcador' : `${doneCount} de 7 días`}
-          </span>
-        </div>
-      </div>
-      <div className='share-week'>
-        {days.map(({ letter, date, status }) => {
-          const complete =
-            status.active && status.planned > 0 && status.met === status.planned
-          return (
-            <div className='share-day' key={date}>
-              <span className='share-day-letter'>{letter}</span>
-              <span
-                className={`share-day-cell${complete ? ' is-done' : ''}${status.future ? ' is-future' : ''}`}
-              >
-                {complete && <CheckIcon />}
-              </span>
-              <span
-                className={`share-day-dot${status.workout ? ' is-on' : ''}`}
-              />
-            </div>
-          )
-        })}
-      </div>
-      <div className='share-foot'>
-        <span className='share-wordmark'>Ahhh, un gim!</span>
-      </div>
-    </div>
+    <svg
+      ref={ref}
+      className='share-poster'
+      xmlns='http://www.w3.org/2000/svg'
+      width='1080'
+      height={height}
+      viewBox={`0 0 1080 ${height}`}
+      role='img'
+      aria-label={`${label}, ${format === 'story' ? 'historia' : 'sticker'} de Ahhh, un gim!`}
+      preserveAspectRatio='xMidYMid meet'
+    >
+      {kind === 'today' && (
+        <TodayArtwork
+          dashboard={dashboard}
+          today={today}
+          sticker={format === 'sticker'}
+          caption={caption}
+        />
+      )}
+      {kind === 'streak' && (
+        <StreakArtwork
+          dashboard={dashboard}
+          today={today}
+          sticker={format === 'sticker'}
+          caption={caption}
+        />
+      )}
+      {kind === 'race' && (
+        <RaceArtwork
+          dashboard={dashboard}
+          today={today}
+          score={score}
+          sticker={format === 'sticker'}
+          caption={caption}
+        />
+      )}
+      {format === 'sticker' && (
+        <metadata>{`${label} · ${formatDay(today)} · Anónimo`}</metadata>
+      )}
+    </svg>
   )
 }

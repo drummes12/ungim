@@ -20,7 +20,8 @@ export function TodayScreen({
   onExtra,
   onOpenDetails,
   onOpenRoutine,
-  onEditPlan
+  onEditPlan,
+  onShareToday
 }: {
   dashboard: Dashboard
   today: string
@@ -38,6 +39,7 @@ export function TodayScreen({
   onOpenDetails: (date: string) => void
   onOpenRoutine: () => void
   onEditPlan: () => void
+  onShareToday: () => void
 }) {
   const profile = dashboard.profiles.find(
     (item) => item.id === dashboard.currentProfileId
@@ -92,6 +94,7 @@ export function TodayScreen({
             onExtra={onExtra}
             onOpenDetails={onOpenDetails}
             onOpenRoutine={onOpenRoutine}
+            onShare={onShareToday}
           />
         </div>
 
@@ -124,7 +127,6 @@ export function TodayScreen({
               </span>
             </div>
           </section>
-
         </div>
       </div>
     </main>

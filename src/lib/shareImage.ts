@@ -93,3 +93,89 @@ export async function shareOrDownloadPng(
     return 'downloaded'
   }
 }
+
+export async function svgToPngFile(
+  svg: SVGSVGElement,
+  fileName: string
+): Promise<File> {
+  const { width, height } = svg.viewBox.baseVal
+  if (!width || !height)
+    throw new Error('La tarjeta no tiene dimensiones válidas.')
+
+  const outputWidth = 1080
+  const outputHeight = Math.round((height / width) * outputWidth)
+  const clone = svg.cloneNode(true) as SVGSVGElement
+  clone.style.removeProperty('transform')
+  clone.style.removeProperty('transition')
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  clone.setAttribute('width', String(outputWidth))
+  clone.setAttribute('height', String(outputHeight))
+  const imageSvg = new Blob([new XMLSerializer().serializeToString(clone)], {
+    type: 'image/svg+xml;charset=utf-8'
+  })
+  const imageUrl = URL.createObjectURL(imageSvg)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image()
+      element.onload = () => resolve(element)
+      element.onerror = () =>
+        reject(new Error('No se pudo preparar la tarjeta.'))
+      element.src = imageUrl
+    })
+    const canvas = document.createElement('canvas')
+    canvas.width = outputWidth
+    canvas.height = outputHeight
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('No se pudo preparar la imagen.')
+    context.drawImage(image, 0, 0, outputWidth, outputHeight)
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) =>
+          result
+            ? resolve(result)
+            : reject(new Error('No se pudo crear el PNG.')),
+        'image/png'
+      )
+    })
+    return new File([blob], fileName, { type: 'image/png' })
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
+}
+
+export function canSharePng(file: File): boolean {
+  if (typeof navigator.share !== 'function') return false
+  try {
+    return !navigator.canShare || navigator.canShare({ files: [file] })
+  } catch {
+    return false
+  }
+}
+
+export function sharePng(file: File): Promise<'shared' | 'cancelled'> | null {
+  if (!canSharePng(file)) return null
+  try {
+    return navigator.share({ files: [file] }).then(
+      () => 'shared' as const,
+      (cause: unknown) => {
+        if (cause instanceof DOMException && cause.name === 'AbortError')
+          return 'cancelled' as const
+        throw cause
+      }
+    )
+  } catch {
+    return null
+  }
+}
+
+export function downloadPng(file: File): void {
+  const url = URL.createObjectURL(file)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = file.name
+  document.body.append(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}

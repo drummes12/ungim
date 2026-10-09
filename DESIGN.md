@@ -30,6 +30,7 @@ Participant colors in charts come from each profile's stored `avatar_color`. Tex
 - Desktop (>= 960px): sidebar navigation with brand, nav, sync state and account; content max 1200px in a two-column grid (day editor + race on Today, charts + month grids on Marcador).
 - Sheets: native `<dialog>` that rises from the bottom on phones (grabber, drag to dismiss with velocity projection, scrim) and appears as a centered dialog on desktop. Used for plan editing, workout details, day editing from History, account, and month-close confirmation.
 - Charts: DuelBar (stacked exercise + meals + donut bonus per person), TrendChart (cumulative score line per day for both), MonthGrid (calendar of daily meal fill and workout mark, tappable), WeekStrip (7 days of the current week).
+- Share cards: anonymous, SVG-authored brutalist posters for today's workout, separate meal-day and perfect-week streaks, and the monthly race. Export a 1080px-wide 9:16 Story or transparent PNG sticker; previews follow horizontal drag with transform-only motion.
 
 ## Interaction states
 

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { addDays, isoWeekStart } from './dates'
 import {
   computeMonthScore,
+  consecutiveMealDays,
   dayStatus,
   isPerfectWeek,
+  perfectWeekStreak,
   scoreSeries
 } from './scoring'
 import type {
@@ -426,5 +428,40 @@ describe('monthly competition scoring', () => {
       '2026-01-12'
     )
     expect(result.winnerIds.sort()).toEqual(['ana', 'leo'])
+  })
+
+  it('counts consecutive full meal days and leaves an unfinished current day alone', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 2)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-07')
+    const data = dashboard([anaPlan], entries, [], '2026-01-05')
+
+    expect(consecutiveMealDays(data, 'ana', '2026-01-07')).toBe(3)
+    expect(consecutiveMealDays(data, 'ana', '2026-01-08')).toBe(3)
+  })
+
+  it('breaks a meal streak immediately when a meal is missed today', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 1)
+    const entries = [
+      meal('ana', anaPlan.meals[0].id, '2026-01-05', 'met'),
+      meal('ana', anaPlan.meals[0].id, '2026-01-06', 'missed')
+    ]
+    const data = dashboard([anaPlan], entries, [], '2026-01-05')
+
+    expect(consecutiveMealDays(data, 'ana', '2026-01-06')).toBe(0)
+  })
+
+  it('counts consecutive perfect weeks, including only completed weeks', () => {
+    const anaPlan = plan('ana', '2026-01-05', 2, 1)
+    const entries = fillMeals('ana', anaPlan, '2026-01-05', '2026-01-18')
+    const workouts = [
+      workout('ana', '2026-01-05'),
+      workout('ana', '2026-01-08'),
+      workout('ana', '2026-01-12'),
+      workout('ana', '2026-01-15')
+    ]
+    const data = dashboard([anaPlan], entries, workouts, '2026-01-05')
+
+    expect(perfectWeekStreak(data, 'ana', '2026-01-18')).toBe(2)
+    expect(perfectWeekStreak(data, 'ana', '2026-01-19')).toBe(2)
   })
 })

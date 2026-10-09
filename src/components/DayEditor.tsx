@@ -23,6 +23,7 @@ import {
   DumbbellIcon,
   ExtraIcon,
   PencilIcon,
+  ShareIcon,
   TreatIcon
 } from './icons'
 import { NumField } from './fields'
@@ -44,7 +45,8 @@ export function DayEditor({
   onFree,
   onExtra,
   onOpenDetails,
-  onOpenRoutine
+  onOpenRoutine,
+  onShare
 }: {
   dashboard: Dashboard
   profileId: string
@@ -63,6 +65,7 @@ export function DayEditor({
   ) => void
   onOpenDetails: (date: string) => void
   onOpenRoutine: () => void
+  onShare?: () => void
 }) {
   const meals = mealsForDate(dashboard, profileId, date)
   const workout = workoutForDate(dashboard, profileId, date)
@@ -199,6 +202,16 @@ export function DayEditor({
             </button>
           </div>
         </div>
+        {workout && onShare && (
+          <button
+            className='btn btn-primary workout-share-btn'
+            type='button'
+            onClick={onShare}
+          >
+            <ShareIcon />
+            Compartir mi avance
+          </button>
+        )}
       </div>
 
       <h2 className='block-title'>Comidas libres</h2>
@@ -296,16 +309,12 @@ export function DayEditor({
               }}
               disabled={!editable}
               aria-label='Esfuerzo de la actividad extra'
-              aria-valuetext={
-                extra ? `${extraLevel?.label}` : 'Sin registrar'
-              }
+              aria-valuetext={extra ? `${extraLevel?.label}` : 'Sin registrar'}
               onChange={(event) => {
                 const level = Number(event.target.value) as 0 | ExtraLevel
                 onExtra(
                   date,
-                  level === 0
-                    ? null
-                    : { level, note: extra?.note ?? null }
+                  level === 0 ? null : { level, note: extra?.note ?? null }
                 )
               }}
             />

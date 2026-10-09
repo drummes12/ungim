@@ -43,6 +43,7 @@ import { InstallHelp } from './components/PwaNotices'
 import { Sheet } from './components/Sheet'
 import { StatusPill } from './components/StatusPill'
 import { Celebration } from './components/Celebration'
+import { ShareSheet } from './components/ShareSheet'
 import {
   AccountPanel,
   ConfirmMonthForm,
@@ -65,6 +66,7 @@ import { LoginScreen } from './screens/LoginScreen'
 import { PlanScreen } from './screens/PlanScreen'
 import { ScoreboardScreen } from './screens/ScoreboardScreen'
 import { TodayScreen } from './screens/TodayScreen'
+import type { ShareCardKind } from './components/ShareCard'
 
 type Route = 'today' | 'score' | 'history'
 
@@ -161,6 +163,8 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const [planOpen, setPlanOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [celebrateKey, setCelebrateKey] = useState<string | null>(null)
+  const [shareKind, setShareKind] = useState<ShareCardKind>('today')
+  const [shareOpen, setShareOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [installOpen, setInstallOpen] = useState(false)
@@ -940,6 +944,10 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 onOpenDetails={setDetailsDate}
                 onOpenRoutine={() => setRoutineDate(today)}
                 onEditPlan={() => setPlanOpen(true)}
+                onShareToday={() => {
+                  setShareKind('today')
+                  setShareOpen(true)
+                }}
               />
             )}
             {route === 'score' && (
@@ -949,6 +957,10 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 online={online}
                 pendingCount={queue.length}
                 onRequestClose={setCloseMonthKey}
+                onShare={() => {
+                  setShareKind('race')
+                  setShareOpen(true)
+                }}
               />
             )}
             {route === 'history' && (
@@ -969,6 +981,16 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       )}
 
       {celebrateKey && <Celebration key={celebrateKey} />}
+
+      {shareOpen && (
+        <ShareSheet
+          key={shareKind}
+          dashboard={dashboard}
+          today={today}
+          initialKind={shareKind}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
 
       {accountOpen && (
         <Sheet title='Cuenta' onClose={() => setAccountOpen(false)}>
@@ -1049,9 +1071,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                   routineDate
                 ) ?? null
               }
-              onSaveDay={(payload) =>
-                void saveRoutineDay(routineDate, payload)
-              }
+              onSaveDay={(payload) => void saveRoutineDay(routineDate, payload)}
               onSaveTemplate={saveRoutineTemplate}
               onComplete={
                 dayEditable(routineDate)
@@ -1092,11 +1112,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       )}
 
       {helpOpen && (
-        <Sheet
-          title='¿Cómo funciona?'
-          wide
-          onClose={() => setHelpOpen(false)}
-        >
+        <Sheet title='¿Cómo funciona?' wide onClose={() => setHelpOpen(false)}>
           <HelpPanel />
         </Sheet>
       )}

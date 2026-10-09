@@ -204,6 +204,61 @@ export function isPerfectWeek(
   )
 }
 
+export function consecutiveMealDays(
+  dashboard: Dashboard,
+  profileId: string,
+  asOfDate: string
+): number {
+  const competitionStart = dashboard.settings?.startsOn
+  if (!competitionStart || asOfDate < competitionStart) return 0
+
+  let date = asOfDate
+  let streak = 0
+  while (date >= competitionStart) {
+    const meals = mealsForDate(dashboard, profileId, date)
+    if (meals.length === 0) break
+    const entries = meals.map((meal) =>
+      mealEntryFor(dashboard, profileId, meal.id, date)
+    )
+    if (
+      date === asOfDate &&
+      entries.some((entry) => !entry) &&
+      !entries.some((entry) => entry?.status === 'missed')
+    ) {
+      date = addDays(date, -1)
+      continue
+    }
+    if (entries.every((entry) => entry?.status === 'met')) {
+      streak += 1
+      date = addDays(date, -1)
+      continue
+    }
+    break
+  }
+  return streak
+}
+
+export function perfectWeekStreak(
+  dashboard: Dashboard,
+  profileId: string,
+  asOfDate: string
+): number {
+  const competitionStart = dashboard.settings?.startsOn
+  if (!competitionStart || asOfDate < competitionStart) return 0
+
+  let week = isoWeekStart(asOfDate)
+  if (asOfDate !== addDays(week, 6)) week = addDays(week, -7)
+  let streak = 0
+  while (
+    week >= competitionStart &&
+    isPerfectWeek(dashboard, profileId, week, competitionStart)
+  ) {
+    streak += 1
+    week = addDays(week, -7)
+  }
+  return streak
+}
+
 export function computeMonthScore(
   dashboard: Dashboard,
   monthKey: string,
@@ -345,16 +400,7 @@ function computeParticipantScore(
     }
   }
 
-  let streak = 0
-  let week = isoWeekStart(eligibleEnd)
-  if (eligibleEnd !== addDays(week, 6)) week = addDays(week, -7)
-  while (
-    week >= competitionStart &&
-    isPerfectWeek(dashboard, profile.id, week, competitionStart)
-  ) {
-    streak += 1
-    week = addDays(week, -7)
-  }
+  const streak = perfectWeekStreak(dashboard, profile.id, eligibleEnd)
 
   const extraPoints = sumExtraPoints(
     dashboard,
