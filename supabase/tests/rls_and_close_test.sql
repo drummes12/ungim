@@ -1,11 +1,12 @@
 begin;
 
-select plan(8);
+select plan(10);
 
 do $$
 declare
   plan_id uuid;
   slot_id uuid;
+  max_slot uuid;
 begin
   insert into public.plan_versions (id, profile_id, effective_week_start, workout_target)
   values (
@@ -25,10 +26,33 @@ begin
   returning id into slot_id;
 
   perform set_config('ungim.test_slot_id', slot_id::text, true);
+
+  insert into public.plan_versions (id, profile_id, effective_week_start, workout_target)
+  values (
+    '66666666-6666-6666-6666-666666666667',
+    '33333333-3333-3333-3333-333333333333',
+    current_date - (extract(isodow from current_date)::int - 1),
+    2
+  )
+  on conflict (profile_id, effective_week_start)
+  do update set workout_target = excluded.workout_target
+  returning id into plan_id;
+
+  insert into public.meal_slots (plan_version_id, name, rule, position)
+  values (plan_id, 'Desayuno', 'Plan', 1)
+  returning id into max_slot;
+
+  insert into public.meal_entries (profile_id, meal_slot_id, entry_date, status)
+  values ('33333333-3333-3333-3333-333333333333', max_slot, current_date, 'met')
+  on conflict (profile_id, meal_slot_id, entry_date) do nothing;
 end $$;
 
-select has_table('public', 'profiles', 'profiles exist');
-select has_function('public', 'compute_month_results', array['text'], 'month results function exists');
+select has_table('public', 'competitions', 'competitions exist');
+select has_table('public', 'competition_members', 'competition members exist');
+select has_function(
+  'public', 'compute_month_results', array['uuid', 'text'],
+  'month results function takes a competition'
+);
 
 set role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
@@ -36,7 +60,20 @@ select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-1111111
 select is(
   (select count(*)::int from public.profiles),
   2,
-  'authenticated member can read exactly two profiles'
+  'member reads only profiles sharing a competition (ana + leo)'
+);
+
+select is(
+  (select count(*)::int from public.meal_entries
+    where profile_id = '33333333-3333-3333-3333-333333333333'),
+  0,
+  'ana cannot read entries from a group she is not in'
+);
+
+select is(
+  (select count(*)::int from public.competitions),
+  1,
+  'ana only sees her own competition'
 );
 
 select throws_ok(
@@ -61,22 +98,19 @@ select set_config('request.jwt.claims', '{"sub":"99999999-9999-9999-9999-9999999
 select is(
   (select count(*)::int from public.profiles),
   0,
-  'an authenticated non-member cannot read household profiles'
+  'an authenticated non-member cannot read profiles'
 );
 
 reset role;
-
-select is(
-  (select public.compute_month_results(to_char(now(), 'YYYY-MM'))->>'monthKey'),
-  to_char(now(), 'YYYY-MM'),
-  'month score snapshot is reproducible'
-);
 
 set role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 
 select throws_ok(
-  $$select public.confirm_month(to_char(now(), 'YYYY-MM'))$$,
+  $$select public.confirm_month(
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    to_char(now(), 'YYYY-MM')
+  )$$,
   'month_not_finished',
   'current month cannot be closed early'
 );

@@ -144,7 +144,7 @@ export function PlanScreen({
     ? dashboard.settings?.startsOn
       ? `Los cambios aplican desde la semana ${formatWeekRange(effectiveWeek)}.`
       : 'Puedes corregir el plan antes de que arranque la competencia.'
-    : 'La competencia inicia cuando ambos terminen su configuración.'
+    : 'Cada Cumbre arranca cuando todos sus compañeros terminan su configuración.'
   const Wrapper = embedded ? 'div' : 'main'
 
   return (
@@ -196,10 +196,9 @@ export function PlanScreen({
         </label>
 
         <label>
-          Zona horaria del hogar
+          Tu zona horaria
           <select
             value={selectedTimezone}
-            disabled={Boolean(dashboard.settings)}
             onChange={(event) => setSelectedTimezone(event.target.value)}
             required
           >
@@ -210,11 +209,9 @@ export function PlanScreen({
             ))}
           </select>
         </label>
-        {dashboard.settings && (
-          <p className='field-note'>
-            Compartida por ambos: {dashboard.settings.homeTimezone}
-          </p>
-        )}
+        <p className='field-note'>
+          Se usa para calcular tu día y como zona sugerida al crear Cumbres.
+        </p>
 
         <fieldset>
           <legend>Entrenamientos por semana</legend>

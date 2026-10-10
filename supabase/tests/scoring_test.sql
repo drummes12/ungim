@@ -12,7 +12,9 @@ begin
     first_full_week := first_full_week + 7;
   end if;
 
-  update public.competition_settings set starts_on = first_full_week where id;
+  update public.competitions
+    set starts_on = first_full_week
+    where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   insert into public.plan_versions (id, profile_id, effective_week_start, workout_target)
   values ('77777777-7777-7777-7777-777777777771', '11111111-1111-1111-1111-111111111111', first_full_week, 7)
   on conflict (id) do nothing;
@@ -38,17 +40,25 @@ select is(
   (
     select public.is_perfect_week(
       '11111111-1111-1111-1111-111111111111',
-      (select starts_on from public.competition_settings where id)
+      (select starts_on from public.competitions
+        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
     )
   ),
   true,
   'a full week with all meals and workouts is perfect'
 );
 
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+
 select is(
   (
     select participant->>'bonus'
-    from public.compute_month_results(to_char((select starts_on from public.competition_settings where id), 'YYYY-MM'))
+    from public.compute_month_results(
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      to_char((select starts_on from public.competitions
+        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 'YYYY-MM')
+    )
     cross join lateral jsonb_array_elements(compute_month_results->'participants') participant
     where participant->>'profileId' = '11111111-1111-1111-1111-111111111111'
   ),
@@ -56,11 +66,14 @@ select is(
   'a perfect week awards two donuts'
 );
 
+reset role;
+
 select is(
   (
     select public.is_perfect_week(
       '11111111-1111-1111-1111-111111111111',
-      ((select starts_on from public.competition_settings where id) - interval '7 days')::date
+      ((select starts_on from public.competitions
+        where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') - interval '7 days')::date
     )
   ),
   false,

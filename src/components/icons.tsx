@@ -388,3 +388,41 @@ export function DonutIcon({ className = '' }: { className?: string }) {
     </svg>
   )
 }
+
+export function MountainIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg {...base} className={className} fill='none' stroke='currentColor'>
+      <path d='M3 19.5 9.4 8.6l3 4.7 2.2-3.2 6.4 9.4H3Z' />
+      <path d='m9.4 8.6 1.4-3.6 1.6 3' />
+      <path d='M8.2 15.4h2.4M13.5 13.8h2' />
+    </svg>
+  )
+}
+
+export function UsersIcon({ filled = false }: IconProps) {
+  return (
+    <svg {...base} fill={filled ? 'currentColor' : 'none'} stroke='currentColor'>
+      <circle cx='9' cy='8.2' r='3.4' />
+      <path d='M3.6 19.4c.4-3.2 2.7-5.2 5.4-5.2s5 2 5.4 5.2' />
+      <path d='M15.5 5.6a3.4 3.4 0 0 1 0 5.3M17.8 14.6c1.8.8 2.9 2.4 3.2 4.8' />
+    </svg>
+  )
+}
+
+export function CopyIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor'>
+      <rect x='8.5' y='8.5' width='11' height='11' rx='2' />
+      <path d='M15.5 5.5v-1a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h1' />
+    </svg>
+  )
+}
+
+export function RefreshIcon() {
+  return (
+    <svg {...base} fill='none' stroke='currentColor'>
+      <path d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3' />
+      <path d='M19.7 3.4v3.6h-3.6' />
+    </svg>
+  )
+}

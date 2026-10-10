@@ -63,6 +63,7 @@ export function WorkoutDetailsForm({
 
 export function ConfirmMonthForm({
   dashboard,
+  competitionId,
   monthKey,
   online,
   pendingCount,
@@ -70,6 +71,7 @@ export function ConfirmMonthForm({
   onDone
 }: {
   dashboard: Dashboard
+  competitionId: string
   monthKey: string
   online: boolean
   pendingCount: number
@@ -79,7 +81,8 @@ export function ConfirmMonthForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const result = computeMonthScore(dashboard, monthKey, monthEnd(monthKey))
-  const confirmed = dashboard.months[monthKey]?.confirmedBy ?? []
+  const confirmed =
+    dashboard.months[competitionId]?.[monthKey]?.confirmedBy ?? []
   const blocked = !online || pendingCount > 0
 
   async function confirm() {
@@ -99,8 +102,8 @@ export function ConfirmMonthForm({
   return (
     <div className='stack'>
       <p className='page-sub'>
-        Resultado de {formatMonth(monthKey)}. Cuando ambos confirmen, el mes se
-        cierra y ya no se puede editar.
+        Resultado de {formatMonth(monthKey)}. Cuando todos los compañeros
+        confirmen, el mes se cierra y ya no se puede editar.
       </p>
       <DuelBar
         participants={result.participants}
@@ -189,7 +192,7 @@ const helpTopics: Array<{
   {
     title: 'Cierre de mes',
     Icon: CloudCheckIcon,
-    body: 'Cuando termina el mes ambos confirman el resultado; al confirmar los dos, el mes se congela y ya no admite cambios.'
+    body: 'Cuando termina el mes cada compañero confirma el resultado; al confirmar todos, el mes se congela y ya no admite cambios.'
   },
   {
     title: 'Sin internet',
@@ -220,15 +223,17 @@ export function HelpPanel() {
 
 export function AccountPanel({
   profile,
-  partner,
+  rivals,
   onEditPlan,
+  onManageCompetitions,
   onInstall,
   onHelp,
   onSignOut
 }: {
   profile: Profile | undefined
-  partner: Profile | undefined
+  rivals: Profile[]
   onEditPlan: () => void
+  onManageCompetitions: () => void
   onInstall: () => void
   onHelp: () => void
   onSignOut: () => void
@@ -243,26 +248,33 @@ export function AccountPanel({
         />
         <strong>{profile?.displayName ?? 'Tu cuenta'}</strong>
       </div>
-      {partner && (
+      {rivals.length > 0 && (
         <div className='rival-card'>
-          <span className='field-note'>Compites contra</span>
+          <span className='field-note'>Compañeros de expedición</span>
           <div className='rival-id'>
             <span className='avatar-stack'>
-              <Avatar
-                name={profile?.displayName ?? '?'}
-                color={profile?.avatarColor ?? '#14110f'}
-                size='sm'
-              />
-              <Avatar
-                name={partner.displayName}
-                color={partner.avatarColor}
-                size='sm'
-              />
+              {rivals.slice(0, 4).map((rival) => (
+                <Avatar
+                  key={rival.id}
+                  name={rival.displayName}
+                  color={rival.avatarColor}
+                  size='sm'
+                />
+              ))}
             </span>
-            <strong>{partner.displayName}</strong>
+            <strong>
+              {rivals.map((rival) => rival.displayName).join(', ')}
+            </strong>
           </div>
         </div>
       )}
+      <button
+        className='btn btn-block'
+        type='button'
+        onClick={onManageCompetitions}
+      >
+        Mis Cumbres
+      </button>
       <button className='btn btn-block' type='button' onClick={onEditPlan}>
         Ajustar mi plan
       </button>

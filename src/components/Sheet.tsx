@@ -106,7 +106,8 @@ export function Sheet({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault()
-        requestClose()
+        const open = document.querySelectorAll('dialog[open]')
+        if (open[open.length - 1] === dialogRef.current) requestClose()
       }}
       onClick={(event) => {
         if (event.target === event.currentTarget) requestClose()

@@ -80,7 +80,7 @@ export function AuthLinkScreen({
         <SprinkleField />
         <h1>Ahhh, un gim!</h1>
         <p className='page-sub'>
-          Ejercicio, comidas y rosquillas. Una competencia privada para dos.
+          Ejercicio, comidas y rosquillas. Una competencia privada con tu gente.
         </p>
         <GlazeEdge />
       </section>

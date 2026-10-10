@@ -239,6 +239,11 @@ fieldset {
   background: var(--coral);
 }
 
+.btn-danger {
+  background: var(--accent-ink);
+  color: var(--surface);
+}
+
 .btn-block {
   width: 100%;
 }
@@ -936,8 +941,8 @@ fieldset {
 .free-note {
   flex: 1;
   min-width: 0;
-  height: 40px;
-  min-height: 40px;
+  height: 44px;
+  min-height: 44px;
   font-size: 16px;
 }
 
@@ -1661,8 +1666,8 @@ button.cell:active {
 }
 
 .share-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   min-height: 0;
   padding: 0;
 }
@@ -3136,9 +3141,9 @@ button.cell:active {
 
 .help-button {
   display: grid;
-  width: 30px;
-  height: 30px;
-  min-height: 30px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
   flex: none;
   place-items: center;
   border: 2px solid var(--ink);
@@ -3561,5 +3566,262 @@ button.cell:active {
     padding-top: 20px;
     cursor: default;
     touch-action: auto;
+  }
+}
+
+/* Cumbres */
+.comp-switcher {
+  display: flex;
+  padding: calc(72px + env(safe-area-inset-top)) 16px 8px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+.comp-switcher + .screen {
+  padding-top: 0;
+}
+.comp-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  color: var(--ink, #14110f);
+}
+.comp-select .comp-select-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  color: var(--accent-ink);
+}
+.comp-select select {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink, #14110f);
+  padding: 2px 2px 2px 0;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.comp-select > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-soft, #6d6156);
+}
+.cumbre-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cumbre-members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cumbre-members li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.cumbre-members .cumbre-count {
+  color: var(--ink-soft, #6d6156);
+  font-size: 12.5px;
+}
+.cumbre-members .cumbre-count svg {
+  width: 15px;
+  height: 15px;
+}
+.invite-box {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  border: 2px dashed var(--hair);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--paper, #fffdf8) 70%, transparent);
+}
+.invite-qr {
+  flex-shrink: 0;
+  padding: 6px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+}
+.invite-code {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.invite-code > strong {
+  font-size: 24px;
+  letter-spacing: 0.16em;
+}
+.invite-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.invite-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  padding: 5px 10px;
+}
+.invite-actions .btn svg {
+  width: 14px;
+  height: 14px;
+}
+@media (max-width: 560px) {
+  .invite-box {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .invite-qr {
+    align-self: center;
+  }
+  .invite-actions {
+    justify-content: center;
+  }
+}
+@media (min-width: 960px) {
+  .comp-switcher {
+    padding: 44px 48px 8px;
+  }
+}
+.cumbre-title-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.cumbre-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cumbre-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cumbre-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper, #fffdf8);
+  color: var(--ink, #14110f);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.cumbre-row:hover {
+  border-color: var(--ink-soft, #6d6156);
+}
+.cumbre-row .cumbre-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cumbre-row .cumbre-row-count {
+  color: var(--ink-soft, #6d6156);
+  font-size: 13px;
+  font-weight: 500;
+}
+.cumbre-row > svg:last-child {
+  width: 16px;
+  height: 16px;
+  color: var(--ink-soft, #6d6156);
+  flex-shrink: 0;
+}
+.cumbre-confirm > svg {
+  width: 34px;
+  height: 34px;
+  color: var(--accent-ink);
+}
+.invite-qr {
+  position: relative;
+}
+.invite-qr-logo {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fffdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.invite-qr-logo svg {
+  width: 26px;
+  height: 26px;
+}
+
+.invite-regen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--amber);
+  font-size: 13px;
+}
+.invite-regen .invite-actions {
+  justify-content: flex-end;
+}
+
+.invite-email {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+.invite-email-row {
+  display: flex;
+  gap: 8px;
+}
+.invite-email-row input {
+  flex: 1;
+  min-width: 0;
+}
+.invite-email-row .btn {
+  flex: none;
+}
+@media (max-width: 560px) {
+  .invite-regen .invite-actions .btn {
+    flex: 1 1 0;
   }
 }

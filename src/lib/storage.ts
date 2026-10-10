@@ -30,7 +30,12 @@ export async function saveDashboardSnapshot(
 export async function loadDashboardSnapshot(
   profileId: string
 ): Promise<Dashboard | null> {
-  return (await (await database()).get('snapshots', profileId)) ?? null
+  const snapshot =
+    (await (await database()).get('snapshots', profileId)) ?? null
+  // Snapshots from before competitions existed are discarded: the next sync
+  // refreshes them with the new shape.
+  if (snapshot && !Array.isArray(snapshot.competitions)) return null
+  return snapshot
 }
 
 export async function saveQueue(

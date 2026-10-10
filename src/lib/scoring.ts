@@ -204,12 +204,23 @@ export function isPerfectWeek(
   )
 }
 
+// In a competition-scoped dashboard each profile may carry joinedAt: the
+// member's scoring floor is max(group start, join date), same as SQL.
+function memberStart(dashboard: Dashboard, profileId: string): string | null {
+  const competitionStart = dashboard.settings?.startsOn ?? null
+  if (!competitionStart) return null
+  const joinedAt = dashboard.profiles
+    .find((profile) => profile.id === profileId)
+    ?.joinedAt?.slice(0, 10)
+  return joinedAt && joinedAt > competitionStart ? joinedAt : competitionStart
+}
+
 export function consecutiveMealDays(
   dashboard: Dashboard,
   profileId: string,
   asOfDate: string
 ): number {
-  const competitionStart = dashboard.settings?.startsOn
+  const competitionStart = memberStart(dashboard, profileId)
   if (!competitionStart || asOfDate < competitionStart) return 0
 
   let date = asOfDate
@@ -243,7 +254,7 @@ export function perfectWeekStreak(
   profileId: string,
   asOfDate: string
 ): number {
-  const competitionStart = dashboard.settings?.startsOn
+  const competitionStart = memberStart(dashboard, profileId)
   if (!competitionStart || asOfDate < competitionStart) return 0
 
   let week = isoWeekStart(asOfDate)
@@ -327,9 +338,14 @@ function computeParticipantScore(
     freeMeals: { used: 0, quota: 0 },
     extraPoints: 0
   }
-  if (!competitionStart || cutoff < competitionStart) return empty
+  const joinedAt = profile.joinedAt?.slice(0, 10)
+  const memberFloor =
+    competitionStart && joinedAt && joinedAt > competitionStart
+      ? joinedAt
+      : competitionStart
+  if (!memberFloor || cutoff < memberFloor) return empty
 
-  const eligibleStart = maxDate(monthStartDate, competitionStart)
+  const eligibleStart = maxDate(monthStartDate, memberFloor)
   const eligibleEnd = minDate(monthEndDate, cutoff)
   if (eligibleStart > eligibleEnd) return empty
 
@@ -390,11 +406,11 @@ function computeParticipantScore(
   ) {
     const weekEnd = addDays(week, 6)
     if (
-      week >= competitionStart &&
+      week >= memberFloor &&
       weekEnd <= eligibleEnd &&
       weekEnd >= monthStartDate &&
       weekEnd <= monthEndDate &&
-      isPerfectWeek(dashboard, profile.id, week, competitionStart)
+      isPerfectWeek(dashboard, profile.id, week, memberFloor)
     ) {
       bonus = Math.min(10, bonus + 2)
     }
@@ -444,7 +460,7 @@ export function dayStatus(
   date: string,
   today: string
 ): DayStatus {
-  const start = dashboard.settings?.startsOn ?? null
+  const start = memberStart(dashboard, profileId)
   const meals = mealsForDate(dashboard, profileId, date)
   const entries = meals.map((meal) =>
     mealEntryFor(dashboard, profileId, meal.id, date)

@@ -75,7 +75,7 @@ export function TodayScreen({
           <DonutIcon className='notice-donut' />
           <div>
             <strong>La competencia aún no arranca</strong>
-            <p>Empieza cuando ambos terminen de configurar su plan.</p>
+            <p>Empieza cuando todos configuren su plan.</p>
           </div>
         </section>
       )}

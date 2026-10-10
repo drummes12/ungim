@@ -6,6 +6,7 @@ import { ShareIcon } from '../components/icons'
 
 export function ScoreboardScreen({
   dashboard,
+  competitionId,
   today,
   online,
   pendingCount,
@@ -13,6 +14,7 @@ export function ScoreboardScreen({
   onShare
 }: {
   dashboard: Dashboard
+  competitionId: string
   today: string
   online: boolean
   pendingCount: number
@@ -20,6 +22,7 @@ export function ScoreboardScreen({
   onShare: () => void
 }) {
   const currentMonth = monthKeyForDate(today)
+  const compMonths = dashboard.months[competitionId] ?? {}
   const score = computeMonthScore(dashboard, currentMonth, today)
   const series = scoreSeries(dashboard, currentMonth, today)
   const closableMonths: string[] = []
@@ -29,7 +32,7 @@ export function ScoreboardScreen({
       month >= monthKeyForDate(dashboard.settings.startsOn);
       month = previousMonthKey(month)
     ) {
-      if (!dashboard.months[month]?.closedAt) closableMonths.unshift(month)
+      if (!compMonths[month]?.closedAt) closableMonths.unshift(month)
     }
   }
 
@@ -46,7 +49,7 @@ export function ScoreboardScreen({
       </header>
 
       {closableMonths.map((monthKey) => {
-        const confirmed = dashboard.months[monthKey]?.confirmedBy ?? []
+        const confirmed = compMonths[monthKey]?.confirmedBy ?? []
         const mine = confirmed.includes(dashboard.currentProfileId)
         return (
           <section className='close-banner' key={monthKey}>
@@ -55,7 +58,7 @@ export function ScoreboardScreen({
               <p>
                 {confirmed.length
                   ? `Confirmado por ${confirmed.length} de ${dashboard.profiles.length}.`
-                  : 'Ambos deben confirmar el resultado.'}
+                  : 'Todos los compañeros deben confirmar el resultado.'}
               </p>
               {(!online || pendingCount > 0) && (
                 <small>

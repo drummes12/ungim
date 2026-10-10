@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createBackend } from './lib/api'
+import { createBackend, scopeDashboard } from './lib/api'
 import {
   formatDay,
   formatMonth,
@@ -50,6 +50,10 @@ import {
   HelpPanel,
   WorkoutDetailsForm
 } from './components/sheets'
+import {
+  CompetitionSwitcher,
+  CumbresPanel
+} from './components/Competitions'
 import { RoutinePanel } from './components/routine'
 import {
   CalendarIcon,
@@ -134,7 +138,25 @@ function friendlySyncError(message: string): string {
     return 'No se permiten fechas futuras.'
   if (message.includes('date_before_competition_start'))
     return 'La fecha es anterior al inicio de la competencia.'
+  if (message.includes('invite_code_invalid'))
+    return 'Esa barrita no existe. Revisa el código.'
+  if (message.includes('competition_full'))
+    return 'Esa Cumbre ya llegó al límite de 5 compañeros.'
+  if (message.includes('competition_limit'))
+    return 'Ya escalas el máximo de 3 Cumbres.'
+  if (message.includes('not_a_competition_member'))
+    return 'Ya no eres miembro de esa Cumbre.'
+  if (message.includes('competition_not_found'))
+    return 'Esa Cumbre ya no existe.'
+  if (message.includes('invite_failed'))
+    return 'No se pudo enviar la invitación.'
   return message
+}
+
+function competitionError(cause: unknown): string {
+  const message = cause instanceof Error ? cause.message : String(cause)
+  const friendly = friendlySyncError(message)
+  return friendly === message ? 'Algo falló, inténtalo otra vez.' : friendly
 }
 
 export function App({ onReady }: { onReady?: () => void } = {}) {
@@ -172,6 +194,14 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const [detailsDate, setDetailsDate] = useState<string | null>(null)
   const [routineDate, setRoutineDate] = useState<string | null>(null)
   const [closeMonthKey, setCloseMonthKey] = useState<string | null>(null)
+  const [activeCompId, setActiveCompId] = useState<string | null>(null)
+  const [cumbresOpen, setCumbresOpen] = useState(false)
+  const [joinCode] = useState<string | null>(() => {
+    const code = new URLSearchParams(window.location.search).get('join')
+    if (!code) return null
+    window.history.replaceState(null, '', window.location.pathname)
+    return code
+  })
   const queueRef = useRef(queue)
   const queueWriteRef = useRef(Promise.resolve())
   const dashboardRef = useRef(dashboard)
@@ -191,6 +221,22 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   useEffect(() => {
     dashboardRef.current = dashboard
   }, [dashboard])
+
+  const joinAttempted = useRef(false)
+  useEffect(() => {
+    if (!dashboard || !joinCode || joinAttempted.current) return
+    joinAttempted.current = true
+    if (dashboard.competitions.some((item) => item.inviteCode === joinCode))
+      return
+    void joinCompetition(joinCode).catch((cause) =>
+      setNotice(
+        cause instanceof Error
+          ? cause.message
+          : 'No se pudo unir a la Cumbre.'
+      )
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- join once when the dashboard lands
+  }, [dashboard, joinCode])
 
   const timezone =
     dashboard?.settings?.homeTimezone ??
@@ -625,10 +671,90 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   }
 
   async function confirmMonth(monthKey: string) {
-    if (!backend) return
-    await backend.confirmMonth(monthKey)
+    if (!backend || !compId) return
+    await backend.confirmMonth(compId, monthKey)
     await refreshDashboard()
     setNotice('Mes confirmado.')
+  }
+
+  async function createCompetition(name: string, timezone: string) {
+    if (!backend) return
+    let next: Dashboard
+    try {
+      next = await backend.createCompetition(
+        crypto.randomUUID(),
+        name,
+        timezone
+      )
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
+    dashboardRef.current = next
+    setDashboard(next)
+    const created = next.competitions.find(
+      (item) => item.createdBy === profileId && !dashboard?.competitions.some(
+        (existing) => existing.id === item.id
+      )
+    )
+    if (created) setActiveCompId(created.id)
+  }
+
+  async function inviteMember(
+    competitionId: string,
+    email: string
+  ): Promise<'sent' | 'existing_user'> {
+    if (!backend) throw new Error('invite_failed')
+    try {
+      return await backend.inviteMember(competitionId, email)
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
+  }
+
+  async function joinCompetition(code: string) {
+    if (!backend) return
+    let next: Dashboard
+    try {
+      next = await backend.joinCompetition(crypto.randomUUID(), code)
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
+    dashboardRef.current = next
+    setDashboard(next)
+    const joined = next.competitions.find(
+      (item) => !dashboard?.competitions.some((existing) => existing.id === item.id)
+    )
+    if (joined) setActiveCompId(joined.id)
+  }
+
+  async function leaveCompetition(competitionId: string) {
+    if (!backend) return
+    let next: Dashboard
+    try {
+      next = await backend.leaveCompetition(
+        crypto.randomUUID(),
+        competitionId
+      )
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
+    dashboardRef.current = next
+    setDashboard(next)
+  }
+
+  async function regenerateInviteCode(competitionId: string) {
+    if (!backend) return
+    let next: Dashboard
+    try {
+      next = await backend.regenerateInviteCode(
+        crypto.randomUUID(),
+        competitionId
+      )
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
+    dashboardRef.current = next
+    setDashboard(next)
   }
 
   async function restoreVisibleFromSnapshot(nextQueue: QueuedMutation[]) {
@@ -757,7 +883,13 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   const queueError = failedItem?.error
     ? friendlySyncError(failedItem.error)
     : null
-  const partner = dashboard.profiles.find(
+  const competitions = dashboard.competitions
+  const compId =
+    activeCompId && competitions.some((item) => item.id === activeCompId)
+      ? activeCompId
+      : (competitions[0]?.id ?? null)
+  const scoped = compId ? scopeDashboard(dashboard, compId) : dashboard
+  const rivals = scoped.profiles.filter(
     (item) => item.id !== dashboard.currentProfileId
   )
   const pendingCount = queue.filter((item) => item.status === 'pending').length
@@ -767,7 +899,12 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       startsOn &&
       date >= startsOn &&
       date <= today &&
-      !dashboard.months[monthKeyForDate(date)]?.closedAt
+      (dashboard.competitions.length === 0 ||
+        dashboard.competitions.some(
+          (competition) =>
+            !dashboard.months[competition.id]?.[monthKeyForDate(date)]
+              ?.closedAt
+        ))
     )
 
   const tabs: Array<{
@@ -784,6 +921,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   function signOut() {
     void backend?.signOut().then(() => {
       setAccountOpen(false)
+      setActiveCompId(null)
       setProfileId(null)
       setDashboard(null)
     })
@@ -871,17 +1009,18 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
             <button
               className='account-button'
               type='button'
-              aria-label={`Cuenta de ${profile?.displayName ?? 'usuario'}${partner ? `, en reto con ${partner.displayName}` : ''}`}
+              aria-label={`Cuenta de ${profile?.displayName ?? 'usuario'}${rivals.length ? `, en reto con ${rivals.map((item) => item.displayName).join(', ')}` : ''}`}
               onClick={() => setAccountOpen(true)}
             >
               <span className='avatar-stack'>
-                {partner && (
+                {rivals.slice(0, 2).map((rival) => (
                   <Avatar
-                    name={partner.displayName}
-                    color={partner.avatarColor}
+                    key={rival.id}
+                    name={rival.displayName}
+                    color={rival.avatarColor}
                     size='sm'
                   />
-                )}
+                ))}
                 <Avatar
                   name={profile?.displayName ?? '?'}
                   color={profile?.avatarColor ?? '#14110f'}
@@ -950,9 +1089,17 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 }}
               />
             )}
-            {route === 'score' && (
+            {(route === 'score' || route === 'history') && (
+              <CompetitionSwitcher
+                competitions={competitions}
+                activeId={compId}
+                onSelect={setActiveCompId}
+              />
+            )}
+            {route === 'score' && compId && (
               <ScoreboardScreen
-                dashboard={dashboard}
+                dashboard={scoped}
+                competitionId={compId}
                 today={today}
                 online={online}
                 pendingCount={queue.length}
@@ -963,9 +1110,28 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 }}
               />
             )}
-            {route === 'history' && (
+            {route === 'score' && !compId && (
+              <main className='screen'>
+                <section className='block empty-copy'>
+                  <h2 className='block-title'>Todavía no escalas ninguna Cumbre</h2>
+                  <p>
+                    Crea una Cumbre o únete con una barrita desde Mis Cumbres en
+                    tu cuenta.
+                  </p>
+                  <button
+                    className='btn btn-primary'
+                    type='button'
+                    onClick={() => setCumbresOpen(true)}
+                  >
+                    Mis Cumbres
+                  </button>
+                </section>
+              </main>
+            )}
+            {route === 'history' && compId && (
               <HistoryScreen
-                dashboard={dashboard}
+                dashboard={scoped}
+                competitionId={compId}
                 today={today}
                 onOpenDay={setDaySheet}
               />
@@ -985,7 +1151,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       {shareOpen && (
         <ShareSheet
           key={shareKind}
-          dashboard={dashboard}
+          dashboard={shareKind === 'race' ? scoped : dashboard}
           today={today}
           initialKind={shareKind}
           onClose={() => setShareOpen(false)}
@@ -997,7 +1163,11 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
           {(close) => (
             <AccountPanel
               profile={profile}
-              partner={partner}
+              rivals={rivals}
+              onManageCompetitions={() => {
+                setAccountOpen(false)
+                setCumbresOpen(true)
+              }}
               onEditPlan={
                 needsSetup
                   ? close
@@ -1105,6 +1275,20 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
         </Sheet>
       )}
 
+      {cumbresOpen && (
+        <Sheet title='Mis Cumbres' wide onClose={() => setCumbresOpen(false)}>
+          <CumbresPanel
+            dashboard={dashboard}
+            initialJoinCode={joinCode ?? undefined}
+            onCreate={createCompetition}
+            onJoin={joinCompetition}
+            onLeave={leaveCompetition}
+            onRegenerate={regenerateInviteCode}
+            onInvite={inviteMember}
+          />
+        </Sheet>
+      )}
+
       {installOpen && (
         <Sheet title='Instalar la app' onClose={() => setInstallOpen(false)}>
           <InstallHelp />
@@ -1124,7 +1308,8 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
         >
           {(close) => (
             <ConfirmMonthForm
-              dashboard={dashboard}
+              dashboard={scoped}
+              competitionId={compId!}
               monthKey={closeMonthKey}
               online={online}
               pendingCount={queue.length}
