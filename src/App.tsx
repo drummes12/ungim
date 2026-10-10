@@ -653,8 +653,8 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   }
 
   async function confirmMonth(monthKey: string) {
-    if (!backend || !activeCompId) return
-    await backend.confirmMonth(activeCompId, monthKey)
+    if (!backend || !compId) return
+    await backend.confirmMonth(compId, monthKey)
     await refreshDashboard()
     setNotice('Mes confirmado.')
   }
@@ -869,9 +869,12 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       startsOn &&
       date >= startsOn &&
       date <= today &&
-      !Object.values(dashboard.months).some(
-        (compMonths) => compMonths[monthKeyForDate(date)]?.closedAt
-      )
+      (dashboard.competitions.length === 0 ||
+        dashboard.competitions.some(
+          (competition) =>
+            !dashboard.months[competition.id]?.[monthKeyForDate(date)]
+              ?.closedAt
+        ))
     )
 
   const tabs: Array<{
@@ -888,6 +891,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   function signOut() {
     void backend?.signOut().then(() => {
       setAccountOpen(false)
+      setActiveCompId(null)
       setProfileId(null)
       setDashboard(null)
     })
