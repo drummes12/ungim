@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import QRCode from 'react-qr-code'
 import type { Competition, Dashboard } from '../lib/types'
 import { Avatar } from './Avatar'
@@ -308,11 +309,7 @@ export function CumbresPanel({
   const [createError, setCreateError] = useState<string | null>(null)
   const [joined, setJoined] = useState<string | null>(null)
   const [created, setCreated] = useState<string | null>(null)
-  const [detailId, setDetailId] = useState<string | null>(
-    dashboard.competitions.length === 1
-      ? dashboard.competitions[0]!.id
-      : null
-  )
+  const [detailId, setDetailId] = useState<string | null>(null)
   const detected =
     Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC'
   const timezones = [
@@ -486,17 +483,19 @@ export function CumbresPanel({
         </button>
       </form>
 
-      {detail && (
-        <Sheet title={detail.name} onClose={() => setDetailId(null)}>
-          <CompetitionDetail
-            competition={detail}
-            dashboard={dashboard}
-            onLeave={onLeave}
-            onRegenerate={onRegenerate}
-            onClose={() => setDetailId(null)}
-          />
-        </Sheet>
-      )}
+      {detail &&
+        createPortal(
+          <Sheet title={detail.name} onClose={() => setDetailId(null)}>
+            <CompetitionDetail
+              competition={detail}
+              dashboard={dashboard}
+              onLeave={onLeave}
+              onRegenerate={onRegenerate}
+              onClose={() => setDetailId(null)}
+            />
+          </Sheet>,
+          document.body
+        )}
     </div>
   )
 }
