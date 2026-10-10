@@ -21,6 +21,7 @@
     "idb": "8.0.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-qr-code": "^2.2.0",
     "workbox-window": "7.4.1"
   },
   "devDependencies": {

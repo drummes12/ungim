@@ -8,7 +8,9 @@ declare
   month_start date := (month_key || '-01')::date;
   week_start date := month_start - (extract(isodow from month_start)::int - 1);
 begin
-  update public.competition_settings set starts_on = month_start where id;
+  update public.competitions
+    set starts_on = month_start
+    where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   insert into public.plan_versions (id, profile_id, effective_week_start, workout_target)
   values
     ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', week_start, 1),
@@ -28,10 +30,15 @@ end $$;
 
 set role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
-select public.confirm_month(to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')) is not null as first_confirmation;
+select public.confirm_month(
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')
+) is not null as first_confirmation;
 
 select is(
-  (select cardinality(confirmed_by) from public.months where month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
+  (select cardinality(confirmed_by) from public.months
+    where competition_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+      and month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
   1,
   'first member confirmation is stored'
 );
@@ -45,19 +52,29 @@ select public.upsert_meal_entry(
 ) is not null as correction_applied;
 
 select is(
-  (select cardinality(confirmed_by) from public.months where month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
+  (select cardinality(confirmed_by) from public.months
+    where competition_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+      and month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
   0,
   'a correction invalidates earlier confirmations'
 );
 
-select public.confirm_month(to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')) is not null as first_reconfirmation;
+select public.confirm_month(
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')
+) is not null as first_reconfirmation;
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
-select public.confirm_month(to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')) is not null as second_confirmation;
+select public.confirm_month(
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')
+) is not null as second_confirmation;
 
 select is(
-  (select closed_at is not null from public.months where month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
+  (select closed_at is not null from public.months
+    where competition_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+      and month_key = to_char(date_trunc('month', current_date) - interval '1 month', 'YYYY-MM')),
   true,
-  'both confirmations close the month atomically'
+  'all member confirmations close the month atomically'
 );
 
 select throws_ok(

@@ -7,15 +7,18 @@ import { ChartLegend, MonthGrid } from '../components/charts'
 
 export function HistoryScreen({
   dashboard,
+  competitionId,
   today,
   onOpenDay
 }: {
   dashboard: Dashboard
+  competitionId: string
   today: string
   onOpenDay: (date: string) => void
 }) {
   const currentMonth = monthKeyForDate(today)
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const compMonths = dashboard.months[competitionId] ?? {}
   const competitionStart = dashboard.settings?.startsOn ?? null
 
   const months = useMemo(() => {
@@ -31,7 +34,7 @@ export function HistoryScreen({
     return result
   }, [competitionStart, currentMonth])
 
-  const selectedRecord = dashboard.months[selectedMonth]
+  const selectedRecord = compMonths[selectedMonth]
   const score =
     selectedRecord?.result ?? computeMonthScore(dashboard, selectedMonth, today)
   const closed = Boolean(selectedRecord?.closedAt)
@@ -39,7 +42,7 @@ export function HistoryScreen({
     .map((id) => dashboard.profiles.find((p) => p.id === id)?.displayName)
     .filter(Boolean)
   const verdict = closed
-    ? winnerNames.length === 2
+    ? winnerNames.length !== 1
       ? 'Empate.'
       : `Ganó ${winnerNames[0] ?? 'nadie'}.`
     : winnerNames.length === 1
@@ -65,7 +68,7 @@ export function HistoryScreen({
 
       <div className='month-tabs' role='tablist' aria-label='Meses'>
         {months.map((month) => {
-          const record = dashboard.months[month]
+          const record = compMonths[month]
           const monthScore =
             record?.result ?? computeMonthScore(dashboard, month, today)
           const winners = monthScore.winnerIds
@@ -85,7 +88,7 @@ export function HistoryScreen({
               <span>{formatMonth(month)}</span>
               <strong>
                 {record?.closedAt
-                  ? winners.length === 2
+                  ? winners.length !== 1
                     ? 'Empate'
                     : winners[0]?.displayName || 'Sin ganador'
                   : month === currentMonth

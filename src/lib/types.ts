@@ -9,11 +9,33 @@ export interface Profile {
   avatarColor: string
   configuredAt: string | null
   createdAt: string
+  // Set on competition-scoped dashboards: when this member joined the group.
+  joinedAt?: string
 }
 
 export interface CompetitionSettings {
   homeTimezone: string
   startsOn: string | null
+}
+
+export type CompetitionMemberStatus = 'active' | 'paused'
+
+export interface CompetitionMember {
+  profileId: string
+  status: CompetitionMemberStatus
+  joinedAt: string
+}
+
+// A "Cumbre": a private competition group (max 5 members) joined by invite code.
+export interface Competition {
+  id: string
+  name: string
+  inviteCode: string
+  homeTimezone: string
+  startsOn: string | null
+  createdBy: string
+  createdAt: string
+  members: CompetitionMember[]
 }
 
 export interface MealSlot {
@@ -112,6 +134,7 @@ export interface RoutineDay {
 }
 
 export interface MonthRecord {
+  competitionId: string
   monthKey: string
   confirmedBy: string[]
   closedAt: string | null
@@ -132,7 +155,9 @@ export interface Dashboard {
   routines: RoutineTemplate[]
   routineSchedule: (string | null)[]
   routineDays: RoutineDay[]
-  months: Record<string, MonthRecord>
+  competitions: Competition[]
+  // competitionId -> monthKey -> record
+  months: Record<string, Record<string, MonthRecord>>
 }
 
 export interface ParticipantScore {
@@ -295,6 +320,10 @@ export interface BackendApi {
   loadDashboard(): Promise<Dashboard>
   applyMutation(mutation: EntryMutation): Promise<Dashboard>
   savePlan(mutationId: string, input: PlanInput): Promise<Dashboard>
-  confirmMonth(monthKey: string): Promise<MonthRecord>
+  confirmMonth(competitionId: string, monthKey: string): Promise<MonthRecord>
+  createCompetition(mutationId: string, name: string, timezone: string): Promise<Dashboard>
+  joinCompetition(mutationId: string, code: string): Promise<Dashboard>
+  leaveCompetition(mutationId: string, competitionId: string): Promise<Dashboard>
+  regenerateInviteCode(mutationId: string, competitionId: string): Promise<Dashboard>
   subscribe?(listener: () => void): () => void
 }

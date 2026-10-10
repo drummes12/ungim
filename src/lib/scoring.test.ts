@@ -52,6 +52,7 @@ function dashboard(
     routines: [],
     routineSchedule: Array<string | null>(7).fill(null),
     routineDays: [],
+    competitions: [],
     months: {}
   }
 }

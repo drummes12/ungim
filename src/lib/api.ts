@@ -5,6 +5,8 @@ import { computeMonthScore } from './scoring'
 import type {
   AuthLinkInput,
   BackendApi,
+  Competition,
+  CompetitionMemberStatus,
   Dashboard,
   EntryMutation,
   ExtraEntry,
@@ -24,10 +26,77 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value : String(value ?? '')
 }
 
-function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
-  const settings = raw.settings as Record<string, unknown> | null
+function normalizeMonth(
+  competitionId: string,
+  month: Record<string, unknown>
+): MonthRecord {
   return {
-    currentProfileId: text(raw.currentProfileId ?? raw.current_profile_id),
+    competitionId: text(month.competitionId ?? month.competition_id) ||
+      competitionId,
+    monthKey: text(month.monthKey ?? month.month_key),
+    confirmedBy:
+      ((month.confirmedBy ?? month.confirmed_by) as string[]) ?? [],
+    closedAt: (month.closedAt ?? month.closed_at) as string | null,
+    result: month.result as MonthRecord['result'],
+    createdAt: text(month.createdAt ?? month.created_at),
+    updatedAt: text(month.updatedAt ?? month.updated_at)
+  }
+}
+
+// Personal-view settings derived from the caller's active Cumbres: the first
+// group's timezone and the earliest start date across groups.
+function deriveSettings(competitions: Competition[], profileId: string) {
+  const active = competitions.filter((competition) =>
+    competition.members.some(
+      (member) => member.profileId === profileId && member.status === 'active'
+    )
+  )
+  if (!active.length) return null
+  const starts = active
+    .map((competition) => competition.startsOn)
+    .filter((start): start is string => Boolean(start))
+    .sort()
+  return {
+    homeTimezone: active[0].homeTimezone,
+    startsOn: starts[0] ?? null
+  }
+}
+
+function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
+  const rawSettings = raw.settings as Record<string, unknown> | null
+  const currentProfileId = text(raw.currentProfileId ?? raw.current_profile_id)
+  const competitions: Competition[] = (
+    (raw.competitions as Record<string, unknown>[]) ?? []
+  ).map((competition) => ({
+    id: text(competition.id),
+    name: text(competition.name),
+    inviteCode: text(competition.inviteCode ?? competition.invite_code),
+    homeTimezone: text(competition.homeTimezone ?? competition.home_timezone),
+    startsOn: (competition.startsOn ?? competition.starts_on) as
+      | string
+      | null,
+    createdBy: text(competition.createdBy ?? competition.created_by),
+    createdAt: text(competition.createdAt ?? competition.created_at),
+    members: ((competition.members as Record<string, unknown>[]) ?? []).map(
+      (member) => ({
+        profileId: text(member.profileId ?? member.profile_id),
+        status: text(member.status) as CompetitionMemberStatus,
+        joinedAt: text(member.joinedAt ?? member.joined_at)
+      })
+    )
+  }))
+  const settings = rawSettings
+    ? {
+        homeTimezone: text(
+          rawSettings.homeTimezone ?? rawSettings.home_timezone
+        ),
+        startsOn: (rawSettings.startsOn ?? rawSettings.starts_on) as
+          | string
+          | null
+      }
+    : deriveSettings(competitions, currentProfileId)
+  return {
+    currentProfileId,
     profiles: ((raw.profiles as Record<string, unknown>[]) ?? []).map(
       (profile) => ({
         id: text(profile.id),
@@ -39,12 +108,7 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
         createdAt: text(profile.createdAt ?? profile.created_at)
       })
     ),
-    settings: settings
-      ? {
-          homeTimezone: text(settings.homeTimezone ?? settings.home_timezone),
-          startsOn: (settings.startsOn ?? settings.starts_on) as string | null
-        }
-      : null,
+    settings,
     planVersions: (
       ((raw.planVersions ?? raw.plan_versions) as Record<string, unknown>[]) ??
       []
@@ -169,22 +233,61 @@ function normalizeDashboard(raw: Record<string, unknown>): Dashboard {
         updatedAt: text(day.updatedAt ?? day.updated_at)
       })
     ),
+    competitions,
     months: Object.fromEntries(
       Object.entries(
-        (raw.months as Record<string, Record<string, unknown>>) ?? {}
-      ).map(([key, month]) => [
-        key,
-        {
-          monthKey: text(month.monthKey ?? month.month_key),
-          confirmedBy:
-            ((month.confirmedBy ?? month.confirmed_by) as string[]) ?? [],
-          closedAt: (month.closedAt ?? month.closed_at) as string | null,
-          result: month.result as MonthRecord['result'],
-          createdAt: text(month.createdAt ?? month.created_at),
-          updatedAt: text(month.updatedAt ?? month.updated_at)
-        } satisfies MonthRecord
+        (raw.months as Record<
+          string,
+          Record<string, Record<string, unknown>>
+        >) ?? {}
+      ).map(([competitionId, compMonths]) => [
+        competitionId,
+        Object.fromEntries(
+          Object.entries(compMonths).map(([key, month]) => [
+            key,
+            normalizeMonth(competitionId, month)
+          ])
+        )
       ])
     )
+  }
+}
+
+// Returns a dashboard scoped to one Cumbre: only its active members, their
+// entries and that group's months. Scoring code runs unchanged per group.
+export function scopeDashboard(
+  dashboard: Dashboard,
+  competitionId: string
+): Dashboard {
+  const competition = dashboard.competitions.find(
+    (item) => item.id === competitionId
+  )
+  if (!competition) return dashboard
+  const active = competition.members.filter(
+    (member) => member.status === 'active'
+  )
+  const memberIds = new Set(active.map((member) => member.profileId))
+  const joinedAt = new Map(
+    competition.members.map((member) => [member.profileId, member.joinedAt])
+  )
+  const keep = <T extends { profileId: string }>(items: T[]): T[] =>
+    items.filter((item) => memberIds.has(item.profileId))
+  return {
+    ...dashboard,
+    profiles: dashboard.profiles
+      .filter((profile) => memberIds.has(profile.id))
+      .map((profile) => ({ ...profile, joinedAt: joinedAt.get(profile.id) })),
+    settings: {
+      homeTimezone: competition.homeTimezone,
+      startsOn: competition.startsOn
+    },
+    planVersions: keep(dashboard.planVersions),
+    mealEntries: keep(dashboard.mealEntries),
+    workoutEntries: keep(dashboard.workoutEntries),
+    freeMealEntries: keep(dashboard.freeMealEntries),
+    extraEntries: keep(dashboard.extraEntries),
+    routineDays: keep(dashboard.routineDays),
+    months: { [competitionId]: dashboard.months[competitionId] ?? {} }
   }
 }
 
@@ -371,22 +474,69 @@ class SupabaseBackend implements BackendApi {
     return normalizeDashboard(data as Record<string, unknown>)
   }
 
-  async confirmMonth(monthKey: string): Promise<MonthRecord> {
+  async confirmMonth(
+    competitionId: string,
+    monthKey: string
+  ): Promise<MonthRecord> {
     const client = await this.client()
     const { data, error } = await client.rpc('confirm_month', {
+      p_competition_id: competitionId,
       p_month_key: monthKey
     })
     if (error) throw error
-    const month = data as Record<string, unknown>
-    return {
-      monthKey: text(month.monthKey ?? month.month_key),
-      confirmedBy:
-        ((month.confirmedBy ?? month.confirmed_by) as string[]) ?? [],
-      closedAt: (month.closedAt ?? month.closed_at) as string | null,
-      result: month.result as MonthRecord['result'],
-      createdAt: text(month.createdAt ?? month.created_at),
-      updatedAt: text(month.updatedAt ?? month.updated_at)
-    }
+    return normalizeMonth(
+      competitionId,
+      data as Record<string, unknown>
+    )
+  }
+
+  private async rpcDashboard(
+    name: string,
+    params: Record<string, unknown>
+  ): Promise<Dashboard> {
+    const client = await this.client()
+    const { data, error } = await client.rpc(name, params)
+    if (error) throw error
+    return normalizeDashboard(data as Record<string, unknown>)
+  }
+
+  createCompetition(
+    mutationId: string,
+    name: string,
+    timezone: string
+  ): Promise<Dashboard> {
+    return this.rpcDashboard('create_competition', {
+      p_mutation_id: mutationId,
+      p_name: name,
+      p_timezone: timezone
+    })
+  }
+
+  joinCompetition(mutationId: string, code: string): Promise<Dashboard> {
+    return this.rpcDashboard('join_competition', {
+      p_mutation_id: mutationId,
+      p_code: code
+    })
+  }
+
+  leaveCompetition(
+    mutationId: string,
+    competitionId: string
+  ): Promise<Dashboard> {
+    return this.rpcDashboard('leave_competition', {
+      p_mutation_id: mutationId,
+      p_competition_id: competitionId
+    })
+  }
+
+  regenerateInviteCode(
+    mutationId: string,
+    competitionId: string
+  ): Promise<Dashboard> {
+    return this.rpcDashboard('regenerate_invite_code', {
+      p_mutation_id: mutationId,
+      p_competition_id: competitionId
+    })
   }
 
   subscribe(listener: () => void): () => void {
@@ -397,12 +547,14 @@ class SupabaseBackend implements BackendApi {
       const channel = client.channel('ungim-live')
       for (const table of [
         'profiles',
-        'competition_settings',
+        'competitions',
+        'competition_members',
         'plan_versions',
         'meal_slots',
         'meal_entries',
         'workout_entries',
         'free_meal_entries',
+        'extra_entries',
         'routines',
         'routine_exercises',
         'routine_schedule',
@@ -425,11 +577,12 @@ class SupabaseBackend implements BackendApi {
   }
 }
 
-const demoStorageKey = 'ungim-demo-dashboard-v1'
+const demoStorageKey = 'ungim-demo-dashboard-v2'
 const demoSessionKey = 'ungim-demo-session-v1'
 const demoUsers = new Map([
   ['ana@ungim.test', 'demo-ana'],
-  ['leo@ungim.test', 'demo-leo']
+  ['leo@ungim.test', 'demo-leo'],
+  ['max@ungim.test', 'demo-max']
 ])
 
 function demoEntries(
@@ -447,11 +600,13 @@ function demoEntries(
 > {
   const slots: Record<string, string[]> = {
     'demo-ana': ['meal-ana-1', 'meal-ana-2', 'meal-ana-3'],
-    'demo-leo': ['meal-leo-1', 'meal-leo-2']
+    'demo-leo': ['meal-leo-1', 'meal-leo-2'],
+    'demo-max': ['meal-max-1', 'meal-max-2']
   }
   const workoutDays: Record<string, number[]> = {
     'demo-ana': [0, 2, 3, 5],
-    'demo-leo': [1, 3, 5]
+    'demo-leo': [1, 3, 5],
+    'demo-max': [1, 4]
   }
   const stamp = new Date().toISOString()
   const mealEntries: MealEntry[] = []
@@ -523,7 +678,7 @@ function demoEntries(
           createdAt: stamp,
           updatedAt: stamp
         })
-      if (profileId === 'demo-ana' && day % 10 === 4)
+      if ((profileId === 'demo-ana' || profileId === 'demo-max') && day % 10 === 4)
         freeMealEntries.push({
           id: `demo-${profileId}-free-${date}`,
           profileId,
@@ -580,12 +735,64 @@ class DemoBackend implements BackendApi {
         avatarColor: '#557fd8',
         configuredAt: new Date().toISOString(),
         createdAt: new Date(Date.now() + 1).toISOString()
+      },
+      {
+        id: 'demo-max',
+        displayName: 'Max',
+        avatarColor: '#3a9d6e',
+        configuredAt: new Date().toISOString(),
+        createdAt: new Date(Date.now() + 2).toISOString()
+      }
+    ]
+    const competitions: Competition[] = [
+      {
+        id: 'demo-comp-pareja',
+        name: 'Primera Cumbre',
+        inviteCode: 'POWER1',
+        homeTimezone: timezone,
+        startsOn: firstWeek,
+        createdBy: 'demo-ana',
+        createdAt: new Date().toISOString(),
+        members: [
+          {
+            profileId: 'demo-ana',
+            status: 'active',
+            joinedAt: '1970-01-01T00:00:00.000Z'
+          },
+          {
+            profileId: 'demo-leo',
+            status: 'active',
+            joinedAt: '1970-01-01T00:00:00.000Z'
+          }
+        ]
+      },
+      {
+        id: 'demo-comp-amigos',
+        name: 'Amigos del Gim',
+        inviteCode: 'DUFF21',
+        homeTimezone: timezone,
+        startsOn: firstWeek,
+        createdBy: 'demo-leo',
+        createdAt: new Date().toISOString(),
+        members: [
+          {
+            profileId: 'demo-leo',
+            status: 'active',
+            joinedAt: '1970-01-01T00:00:00.000Z'
+          },
+          {
+            profileId: 'demo-max',
+            status: 'active',
+            joinedAt: '1970-01-01T00:00:00.000Z'
+          }
+        ]
       }
     ]
     return {
       currentProfileId: 'demo-ana',
       profiles,
       settings: { homeTimezone: timezone, startsOn: firstWeek },
+      competitions,
       planVersions: [
         {
           id: 'plan-ana',
@@ -636,6 +843,28 @@ class DemoBackend implements BackendApi {
               position: 2
             }
           ]
+        },
+        {
+          id: 'plan-max',
+          profileId: 'demo-max',
+          effectiveWeekStart: firstWeek,
+          workoutTarget: 2,
+          freeMealsPerMonth: 2,
+          createdAt: new Date().toISOString(),
+          meals: [
+            {
+              id: 'meal-max-1',
+              name: 'Desayuno',
+              rule: 'Avena y huevo',
+              position: 1
+            },
+            {
+              id: 'meal-max-2',
+              name: 'Comida',
+              rule: 'Sin ultraprocesados',
+              position: 2
+            }
+          ]
         }
       ],
       ...demoEntries(firstWeek, today),
@@ -671,11 +900,48 @@ class DemoBackend implements BackendApi {
     return localStorage.getItem(demoSessionKey)
   }
 
+  // Mirrors the RLS rules: the caller sees profiles sharing any Cumbre and
+  // entries only from members sharing an active Cumbre.
   private withSession(dashboard: Dashboard): Dashboard {
     const profileId = localStorage.getItem(demoSessionKey)
+    const uid = profileId ?? dashboard.currentProfileId
+    const mine = dashboard.competitions.filter((competition) =>
+      competition.members.some((member) => member.profileId === uid)
+    )
+    const profileVisible = new Set([uid])
+    const entryVisible = new Set([uid])
+    for (const competition of mine) {
+      const me = competition.members.find(
+        (member) => member.profileId === uid
+      )
+      for (const member of competition.members) {
+        profileVisible.add(member.profileId)
+        if (me?.status === 'active' && member.status === 'active')
+          entryVisible.add(member.profileId)
+      }
+    }
+    const keep = <T extends { profileId: string }>(items: T[]): T[] =>
+      items.filter((item) => entryVisible.has(item.profileId))
+    const myCompIds = new Set(mine.map((competition) => competition.id))
     return {
       ...dashboard,
-      currentProfileId: profileId ?? dashboard.currentProfileId
+      currentProfileId: uid,
+      profiles: dashboard.profiles.filter((profile) =>
+        profileVisible.has(profile.id)
+      ),
+      competitions: mine,
+      planVersions: keep(dashboard.planVersions),
+      mealEntries: keep(dashboard.mealEntries),
+      workoutEntries: keep(dashboard.workoutEntries),
+      freeMealEntries: keep(dashboard.freeMealEntries),
+      extraEntries: keep(dashboard.extraEntries),
+      routineDays: keep(dashboard.routineDays),
+      settings: deriveSettings(mine, uid),
+      months: Object.fromEntries(
+        Object.entries(dashboard.months).filter(([competitionId]) =>
+          myCompIds.has(competitionId)
+        )
+      )
     }
   }
 
@@ -731,40 +997,197 @@ class DemoBackend implements BackendApi {
         ),
         version
       ],
-      settings: {
-        homeTimezone: dashboard.settings?.homeTimezone ?? input.timezone,
-        startsOn:
-          dashboard.settings?.startsOn ?? todayInTimezone(input.timezone)
-      }
+      competitions: dashboard.competitions.map((competition) =>
+        competition.startsOn ||
+        !competition.members.every(
+          (member) =>
+            member.status !== 'active' ||
+            (member.profileId === profileId
+              ? true
+              : dashboard.profiles.find(
+                    (profile) => profile.id === member.profileId
+                  )?.configuredAt)
+        )
+          ? competition
+          : { ...competition, startsOn: todayInTimezone(input.timezone) }
+      )
     })
     return this.withSession(saved)
   }
 
-  async confirmMonth(monthKey: string): Promise<MonthRecord> {
+  async confirmMonth(
+    competitionId: string,
+    monthKey: string
+  ): Promise<MonthRecord> {
     const dashboard = this.load()
     const profileId =
       localStorage.getItem(demoSessionKey) ?? dashboard.currentProfileId
-    const previous = dashboard.months[monthKey]
+    const competition = dashboard.competitions.find(
+      (item) => item.id === competitionId
+    )
+    if (!competition) throw new Error('La Cumbre no existe.')
+    const compMonths = dashboard.months[competitionId] ?? {}
+    const previous = compMonths[monthKey]
     const confirmedBy = [
       ...new Set([...(previous?.confirmedBy ?? []), profileId])
     ]
-    const closed = confirmedBy.length === dashboard.profiles.length
+    const activeCount = competition.members.filter(
+      (member) => member.status === 'active'
+    ).length
+    const closed = confirmedBy.length >= activeCount
     const month: MonthRecord = {
+      competitionId,
       monthKey,
       confirmedBy,
       closedAt: closed ? new Date().toISOString() : null,
       result: closed
-        ? computeMonthScore(dashboard, monthKey, monthEnd(monthKey))
+        ? computeMonthScore(
+            scopeDashboard(this.withSession(dashboard), competitionId),
+            monthKey,
+            monthEnd(monthKey)
+          )
         : null,
       createdAt: previous?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
     this.save({
       ...dashboard,
-      months: { ...dashboard.months, [monthKey]: month }
+      months: {
+        ...dashboard.months,
+        [competitionId]: { ...compMonths, [monthKey]: month }
+      }
     })
     return month
   }
+
+  async createCompetition(
+    mutationId: string,
+    name: string,
+    timezone: string
+  ): Promise<Dashboard> {
+    const dashboard = this.load()
+    const profileId =
+      localStorage.getItem(demoSessionKey) ?? dashboard.currentProfileId
+    const me = dashboard.profiles.find((profile) => profile.id === profileId)
+    const myMemberships = dashboard.competitions.filter((item) =>
+      item.members.some((member) => member.profileId === profileId)
+    ).length
+    if (myMemberships >= 3) throw new Error('competition_limit')
+    const competition: Competition = {
+      id: `comp-${mutationId}`,
+      name: name.trim(),
+      inviteCode: demoInviteCode(),
+      homeTimezone: timezone,
+      startsOn: me?.configuredAt ? todayInTimezone(timezone) : null,
+      createdBy: profileId,
+      createdAt: new Date().toISOString(),
+      members: [
+        { profileId, status: 'active', joinedAt: new Date().toISOString() }
+      ]
+    }
+    return this.withSession(
+      this.save({
+        ...dashboard,
+        competitions: [...dashboard.competitions, competition]
+      })
+    )
+  }
+
+  async joinCompetition(
+    mutationId: string,
+    code: string
+  ): Promise<Dashboard> {
+    const dashboard = this.load()
+    const profileId =
+      localStorage.getItem(demoSessionKey) ?? dashboard.currentProfileId
+    const competition = dashboard.competitions.find(
+      (item) => item.inviteCode === code.trim().toUpperCase()
+    )
+    if (!competition) throw new Error('invite_code_invalid')
+    if (
+      competition.members.some((member) => member.profileId === profileId)
+    )
+      return this.withSession(dashboard)
+    if (competition.members.length >= 5)
+      throw new Error('competition_full')
+    if (
+      dashboard.competitions.filter((item) =>
+        item.members.some((member) => member.profileId === profileId)
+      ).length >= 3
+    )
+      throw new Error('competition_limit')
+    void mutationId
+    const me = dashboard.profiles.find((profile) => profile.id === profileId)
+    const updated = {
+      ...competition,
+      members: [
+        ...competition.members,
+        { profileId, status: 'active' as const, joinedAt: new Date().toISOString() }
+      ],
+      startsOn:
+        competition.startsOn ??
+        (me?.configuredAt
+          ? todayInTimezone(competition.homeTimezone)
+          : null)
+    }
+    return this.withSession(
+      this.save({
+        ...dashboard,
+        competitions: dashboard.competitions.map((item) =>
+          item.id === competition.id ? updated : item
+        )
+      })
+    )
+  }
+
+  async leaveCompetition(
+    mutationId: string,
+    competitionId: string
+  ): Promise<Dashboard> {
+    const dashboard = this.load()
+    const profileId =
+      localStorage.getItem(demoSessionKey) ?? dashboard.currentProfileId
+    void mutationId
+    const competitions = dashboard.competitions
+      .map((competition) =>
+        competition.id === competitionId
+          ? {
+              ...competition,
+              members: competition.members.filter(
+                (member) => member.profileId !== profileId
+              )
+            }
+          : competition
+      )
+      .filter((competition) => competition.members.length > 0)
+    return this.withSession(this.save({ ...dashboard, competitions }))
+  }
+
+  async regenerateInviteCode(
+    mutationId: string,
+    competitionId: string
+  ): Promise<Dashboard> {
+    const dashboard = this.load()
+    void mutationId
+    return this.withSession(
+      this.save({
+        ...dashboard,
+        competitions: dashboard.competitions.map((competition) =>
+          competition.id === competitionId
+            ? { ...competition, inviteCode: demoInviteCode() }
+            : competition
+        )
+      })
+    )
+  }
+}
+
+function demoInviteCode(): string {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  return Array.from(
+    { length: 6 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)]
+  ).join('')
 }
 
 export function createBackend(): BackendApi {
