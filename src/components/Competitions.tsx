@@ -150,7 +150,7 @@ function CompetitionDetail({
             Quedarme
           </button>
           <button
-            className='btn btn-primary'
+            className='btn btn-danger'
             type='button'
             disabled={busy}
             onClick={() =>
@@ -204,7 +204,7 @@ function CompetitionDetail({
           <strong className='num'>{competition.inviteCode}</strong>
           <div className='invite-actions'>
             <button
-              className='btn btn-quiet'
+              className='btn btn-primary'
               type='button'
               onClick={() => void copy(competition.inviteCode, 'code')}
             >
@@ -240,7 +240,7 @@ function CompetitionDetail({
                   Cancelar
                 </button>
                 <button
-                  className='btn btn-quiet'
+                  className='btn btn-danger'
                   type='button'
                   disabled={busy}
                   onClick={() =>
@@ -271,7 +271,7 @@ function CompetitionDetail({
         </p>
       )}
       <button
-        className='btn btn-block btn-quiet'
+        className='btn btn-block btn-danger'
         type='button'
         onClick={() => setConfirmLeave(true)}
       >

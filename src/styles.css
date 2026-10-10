@@ -239,6 +239,11 @@ fieldset {
   background: var(--coral);
 }
 
+.btn-danger {
+  background: var(--accent-ink);
+  color: var(--surface);
+}
+
 .btn-block {
   width: 100%;
 }
@@ -3793,4 +3798,9 @@ button.cell:active {
 }
 .invite-regen .invite-actions {
   justify-content: flex-end;
+}
+@media (max-width: 560px) {
+  .invite-regen .invite-actions .btn {
+    flex: 1 1 0;
+  }
 }
