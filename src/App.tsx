@@ -1134,6 +1134,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
                 competitionId={compId}
                 today={today}
                 onOpenDay={setDaySheet}
+                historyStart={dashboard.settings?.startsOn ?? null}
               />
             )}
           </>

@@ -1,5 +1,5 @@
 import type { EmailOtpType, SupabaseClient } from '@supabase/supabase-js'
-import { addDays, isoWeekStart, monthEnd, todayInTimezone } from './dates'
+import { addDays, isoWeekStart, monthEnd, monthKeyForDate, todayInTimezone } from './dates'
 import { applyMutationLocally } from './mutations'
 import { computeMonthScore } from './scoring'
 import type {
@@ -788,7 +788,7 @@ class DemoBackend implements BackendApi {
         name: 'Amigos del Gim',
         inviteCode: 'DUFF21',
         homeTimezone: timezone,
-        startsOn: firstWeek,
+        startsOn: `${monthKeyForDate(today)}-01`,
         createdBy: 'demo-leo',
         createdAt: new Date().toISOString(),
         members: [

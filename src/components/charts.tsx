@@ -261,7 +261,8 @@ function DayCell({
   color,
   index,
   tall = false,
-  onSelect
+  onSelect,
+  activeFrom
 }: {
   dashboard: Dashboard
   profileId: string
@@ -271,8 +272,15 @@ function DayCell({
   index: number
   tall?: boolean
   onSelect?: (date: string) => void
+  // Personal horizon: the owner's own days stay openable even before this
+  // Cumbre started (they exist but never scored here).
+  activeFrom?: string | null
 }) {
-  const status = dayStatus(dashboard, profileId, date, today)
+  const raw = dayStatus(dashboard, profileId, date, today)
+  const status =
+    !raw.active && activeFrom && date >= activeFrom && date <= today
+      ? { ...raw, active: true }
+      : raw
   const fill = status.planned ? status.met / status.planned : 0
   const complete =
     status.active &&
@@ -381,7 +389,8 @@ export function MonthGrid({
   monthKey,
   today,
   color,
-  onSelect
+  onSelect,
+  activeFrom
 }: {
   dashboard: Dashboard
   profileId: string
@@ -389,6 +398,7 @@ export function MonthGrid({
   today: string
   color: string
   onSelect?: (date: string) => void
+  activeFrom?: string | null
 }) {
   const first = monthStart(monthKey)
   const last = monthEnd(monthKey)
@@ -415,6 +425,7 @@ export function MonthGrid({
           color={color}
           index={index}
           onSelect={onSelect}
+          activeFrom={activeFrom}
         />
       ))}
     </div>

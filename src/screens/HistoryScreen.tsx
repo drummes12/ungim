@@ -9,30 +9,41 @@ export function HistoryScreen({
   dashboard,
   competitionId,
   today,
-  onOpenDay
+  onOpenDay,
+  historyStart
 }: {
   dashboard: Dashboard
   competitionId: string
   today: string
   onOpenDay: (date: string) => void
+  historyStart: string | null
 }) {
   const currentMonth = monthKeyForDate(today)
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const compMonths = dashboard.months[competitionId] ?? {}
   const competitionStart = dashboard.settings?.startsOn ?? null
+  // The day history is personal: navigate back to the earliest Cumbre the
+  // user belongs to, not just to this one's start.
+  const navStart =
+    [historyStart, competitionStart]
+      .filter((start): start is string => Boolean(start))
+      .sort()[0] ?? null
+  const beforeCumbre = (month: string) =>
+    !competitionStart || month < monthKeyForDate(competitionStart)
+  const selectedBeforeCumbre = beforeCumbre(selectedMonth)
 
   const months = useMemo(() => {
-    if (!competitionStart) return [currentMonth]
+    if (!navStart) return [currentMonth]
     const result: string[] = []
     for (
       let month = currentMonth;
-      month >= monthKeyForDate(competitionStart);
+      month >= monthKeyForDate(navStart);
       month = previousMonthKey(month)
     ) {
       result.push(month)
     }
     return result
-  }, [competitionStart, currentMonth])
+  }, [navStart, currentMonth])
 
   const selectedRecord = compMonths[selectedMonth]
   const score =
@@ -66,6 +77,13 @@ export function HistoryScreen({
         </div>
       </header>
 
+      {!competitionStart && (
+        <p className='field-note'>
+          Esta Cumbre aún no arranca — arranca cuando todos configuren su
+          plan.
+        </p>
+      )}
+
       <div className='month-tabs' role='tablist' aria-label='Meses'>
         {months.map((month) => {
           const record = compMonths[month]
@@ -87,7 +105,9 @@ export function HistoryScreen({
             >
               <span>{formatMonth(month)}</span>
               <strong>
-                {record?.closedAt
+                {beforeCumbre(month)
+                  ? '—'
+                  : record?.closedAt
                   ? winners.length !== 1
                     ? 'Empate'
                     : winners[0]?.displayName || 'Sin ganador'
@@ -104,22 +124,33 @@ export function HistoryScreen({
         <div className='split-main'>
           <section className='block' aria-label='Resumen del mes'>
             <h2 className='block-title'>{formatMonth(selectedMonth)}</h2>
-            <ul className='rule-list'>
-              {score.participants.map((participant) => (
-                <li key={participant.profileId}>
-                  <span>{participant.name}</span>
-                  <strong className='num'>
-                    {participant.noData ? '—' : participant.total.toFixed(1)}
-                  </strong>
-                </li>
-              ))}
-            </ul>
-            <p className='field-note'>
-              {verdict}{' '}
-              {closed
-                ? 'Mes cerrado e inmutable.'
-                : 'Este mes sigue abierto a correcciones.'}
-            </p>
+            {selectedBeforeCumbre ? (
+              <p className='field-note'>
+                Antes de esta Cumbre — aún no existía. Tus días de ese mes
+                viven en tu historial personal.
+              </p>
+            ) : (
+              <>
+                <ul className='rule-list'>
+                  {score.participants.map((participant) => (
+                    <li key={participant.profileId}>
+                      <span>{participant.name}</span>
+                      <strong className='num'>
+                        {participant.noData
+                          ? '—'
+                          : participant.total.toFixed(1)}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+                <p className='field-note'>
+                  {verdict}{' '}
+                  {closed
+                    ? 'Mes cerrado e inmutable.'
+                    : 'Este mes sigue abierto a correcciones.'}
+                </p>
+              </>
+            )}
           </section>
         </div>
 
@@ -141,6 +172,7 @@ export function HistoryScreen({
                 today={today}
                 color={me.avatarColor}
                 onSelect={onOpenDay}
+                activeFrom={historyStart}
               />
             </section>
           )}
