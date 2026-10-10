@@ -34,8 +34,14 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    // New API keys arrive as JSON objects keyed by name ('default');
+    // fall back to the legacy anon/service_role JWTs while they still exist.
+    const anonKey =
+      JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') ?? '{}')['default'] ??
+      Deno.env.get('SUPABASE_ANON_KEY')!
+    const serviceKey =
+      JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}')['default'] ??
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const jwt = req.headers.get('Authorization') ?? ''
 
     const caller = createClient(supabaseUrl, anonKey, {
