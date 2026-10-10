@@ -92,7 +92,7 @@ function shell({ preheader, heading, body, cta, code, note }) {
           ${codeRow}
           <tr>
             <td style="border-top: 2px solid ${INK}; padding: 16px 32px;">
-              <p style="margin: 0; font-family: ${FONT}; font-size: 12px; line-height: 18px; color: ${MUTED}; text-align: center;">${note ?? 'Ejercicio, comidas y rosquillas. Una competencia privada para dos.'}</p>
+              <p style="margin: 0; font-family: ${FONT}; font-size: 12px; line-height: 18px; color: ${MUTED}; text-align: center;">${note ?? 'Ejercicio, comidas y rosquillas. Una competencia privada por Cumbres.'}</p>
             </td>
           </tr>
         </table>
@@ -108,7 +108,7 @@ const templates = {
   'invite.html': {
     subject: 'Te invitaron a Ahhh, un gim!',
     heading: 'Te guardaron una rosquilla',
-    body: 'Tu compañero de entrenamientos te invitó a <strong>Ahhh, un gim!</strong>: ejercicio, comidas y rosquillas en una competencia privada para dos. Crea tu contraseña y entra a competir.',
+    body: 'Te invitaron a una Cumbre en a <strong>Ahhh, un gim!</strong>: ejercicio, comidas y rosquillas en una competencia privada por Cumbres. Crea tu contraseña y entra a competir.',
     cta: { label: 'Crear mi contraseña', url: link('invite') }
   },
   'recovery.html': {

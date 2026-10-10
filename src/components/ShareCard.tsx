@@ -650,11 +650,16 @@ function RaceArtwork({
   const me = score.participants.find(
     (item) => item.profileId === dashboard.currentProfileId
   )
-  const partner = score.participants.find(
+  const rivals = score.participants.filter(
     (item) => item.profileId !== dashboard.currentProfileId
   )
+  const topRival = rivals.reduce<typeof rivals[number] | undefined>(
+    (best, item) => (item.total > (best?.total ?? -Infinity) ? item : best),
+    undefined
+  )
   const left = me ?? score.participants[0]
-  const right = partner ?? score.participants[1]
+  const right = topRival ?? score.participants[1]
+  const rightLabel = right?.name ? right.name.toUpperCase().slice(0, 12) : 'LA CIMA'
   const leftTotal = left?.total ?? 0
   const rightTotal = right?.total ?? 0
   const maxPoints = 116
@@ -746,7 +751,7 @@ function RaceArtwork({
           fontSize='30'
           fontWeight='900'
         >
-          MI DUPLA
+          {rightLabel}
         </text>
         <BigText x={310} y={622} size={100} family={mono} anchor='middle'>
           {formatted(leftTotal)}
@@ -862,7 +867,7 @@ function RaceArtwork({
         fontSize='42'
         fontWeight='900'
       >
-        MI DUPLA
+        {rightLabel}
       </text>
       <BigText x={118} y={680} size={140} family={mono}>
         {formatted(leftTotal)}
