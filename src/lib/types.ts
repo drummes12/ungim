@@ -325,5 +325,6 @@ export interface BackendApi {
   joinCompetition(mutationId: string, code: string): Promise<Dashboard>
   leaveCompetition(mutationId: string, competitionId: string): Promise<Dashboard>
   regenerateInviteCode(mutationId: string, competitionId: string): Promise<Dashboard>
+  inviteMember(competitionId: string, email: string): Promise<'sent' | 'existing_user'>
   subscribe?(listener: () => void): () => void
 }

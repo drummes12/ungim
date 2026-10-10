@@ -14,7 +14,7 @@ import {
 } from './icons'
 
 export function inviteLink(code: string): string {
-  return `${window.location.origin}/?join=${encodeURIComponent(code)}`
+  return `${window.location.origin}/app?join=${encodeURIComponent(code)}`
 }
 
 const CURATED_TIMEZONES = [
@@ -90,12 +90,17 @@ function CompetitionDetail({
   dashboard,
   onLeave,
   onRegenerate,
+  onInvite,
   onClose
 }: {
   competition: Competition
   dashboard: Dashboard
   onLeave: (competitionId: string) => Promise<void>
   onRegenerate: (competitionId: string) => Promise<void>
+  onInvite: (
+    competitionId: string,
+    email: string
+  ) => Promise<'sent' | 'existing_user'>
   onClose: () => void
 }) {
   const [confirmLeave, setConfirmLeave] = useState(false)
@@ -104,6 +109,7 @@ function CompetitionDetail({
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
+  const [inviteEmail, setInviteEmail] = useState('')
 
   async function copy(value: string, what: 'code' | 'link') {
     try {
@@ -263,6 +269,44 @@ function CompetitionDetail({
               </p>
             )
           )}
+          <form
+            className='invite-email'
+            onSubmit={(event) => {
+              event.preventDefault()
+              const email = inviteEmail.trim()
+              if (!email) return
+              void run(async () => {
+                const status = await onInvite(competition.id, email)
+                setNotice(
+                  status === 'existing_user'
+                    ? 'Esa persona ya tiene cuenta — compártale la barrita.'
+                    : `Invitación enviada a ${email}.`
+                )
+                setInviteEmail('')
+              })
+            }}
+          >
+            <label htmlFor='invite-email'>Invitar por correo</label>
+            <div className='invite-email-row'>
+              <input
+                id='invite-email'
+                type='email'
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                placeholder='correo@ejemplo.com'
+                autoComplete='off'
+                inputMode='email'
+                required
+              />
+              <button
+                className='btn btn-quiet'
+                type='submit'
+                disabled={busy || !inviteEmail.trim()}
+              >
+                Invitar
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -288,7 +332,8 @@ export function CumbresPanel({
   onCreate,
   onJoin,
   onLeave,
-  onRegenerate
+  onRegenerate,
+  onInvite
 }: {
   dashboard: Dashboard
   initialJoinCode?: string
@@ -296,6 +341,10 @@ export function CumbresPanel({
   onJoin: (code: string) => Promise<void>
   onLeave: (competitionId: string) => Promise<void>
   onRegenerate: (competitionId: string) => Promise<void>
+  onInvite: (
+    competitionId: string,
+    email: string
+  ) => Promise<'sent' | 'existing_user'>
 }) {
   const [joinCode, setJoinCode] = useState(initialJoinCode ?? '')
   const [name, setName] = useState('')
@@ -491,6 +540,7 @@ export function CumbresPanel({
               dashboard={dashboard}
               onLeave={onLeave}
               onRegenerate={onRegenerate}
+              onInvite={onInvite}
               onClose={() => setDetailId(null)}
             />
           </Sheet>,

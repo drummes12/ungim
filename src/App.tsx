@@ -148,6 +148,8 @@ function friendlySyncError(message: string): string {
     return 'Ya no eres miembro de esa Cumbre.'
   if (message.includes('competition_not_found'))
     return 'Esa Cumbre ya no existe.'
+  if (message.includes('invite_failed'))
+    return 'No se pudo enviar la invitación.'
   return message
 }
 
@@ -219,6 +221,22 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
   useEffect(() => {
     dashboardRef.current = dashboard
   }, [dashboard])
+
+  const joinAttempted = useRef(false)
+  useEffect(() => {
+    if (!dashboard || !joinCode || joinAttempted.current) return
+    joinAttempted.current = true
+    if (dashboard.competitions.some((item) => item.inviteCode === joinCode))
+      return
+    void joinCompetition(joinCode).catch((cause) =>
+      setNotice(
+        cause instanceof Error
+          ? cause.message
+          : 'No se pudo unir a la Cumbre.'
+      )
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- join once when the dashboard lands
+  }, [dashboard, joinCode])
 
   const timezone =
     dashboard?.settings?.homeTimezone ??
@@ -679,6 +697,18 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
       )
     )
     if (created) setActiveCompId(created.id)
+  }
+
+  async function inviteMember(
+    competitionId: string,
+    email: string
+  ): Promise<'sent' | 'existing_user'> {
+    if (!backend) throw new Error('invite_failed')
+    try {
+      return await backend.inviteMember(competitionId, email)
+    } catch (cause) {
+      throw new Error(competitionError(cause), { cause })
+    }
   }
 
   async function joinCompetition(code: string) {
@@ -1254,6 +1284,7 @@ export function App({ onReady }: { onReady?: () => void } = {}) {
             onJoin={joinCompetition}
             onLeave={leaveCompetition}
             onRegenerate={regenerateInviteCode}
+            onInvite={inviteMember}
           />
         </Sheet>
       )}

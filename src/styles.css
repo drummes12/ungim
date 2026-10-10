@@ -3799,6 +3799,27 @@ button.cell:active {
 .invite-regen .invite-actions {
   justify-content: flex-end;
 }
+
+.invite-email {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+.invite-email-row {
+  display: flex;
+  gap: 8px;
+}
+.invite-email-row input {
+  flex: 1;
+  min-width: 0;
+}
+.invite-email-row .btn {
+  flex: none;
+}
 @media (max-width: 560px) {
   .invite-regen .invite-actions .btn {
     flex: 1 1 0;

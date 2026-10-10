@@ -539,6 +539,23 @@ class SupabaseBackend implements BackendApi {
     })
   }
 
+  async inviteMember(
+    competitionId: string,
+    email: string
+  ): Promise<'sent' | 'existing_user'> {
+    const client = await this.client()
+    const { data, error } = await client.functions.invoke('invite-member', {
+      body: {
+        competition_id: competitionId,
+        email,
+        redirect_to: window.location.origin
+      }
+    })
+    if (error) throw new Error('invite_failed')
+    const status = (data as { status?: string } | null)?.status
+    return status === 'existing_user' ? 'existing_user' : 'sent'
+  }
+
   subscribe(listener: () => void): () => void {
     let active = true
     let removeChannel: (() => Promise<unknown>) | null = null
@@ -1179,6 +1196,15 @@ class DemoBackend implements BackendApi {
         )
       })
     )
+  }
+
+  async inviteMember(
+    competitionId: string,
+    email: string
+  ): Promise<'sent' | 'existing_user'> {
+    void competitionId
+    void email
+    return 'sent'
   }
 }
 
